@@ -1,0 +1,17 @@
+.test{
+
+    color:red;
+  
+    margin : 0 auto;
+    font-size: 4rem;
+    padding:1rem;
+}
+
+.container{
+    display: inline-block;
+    
+    
+    height: 20vh;
+    background-color: #f1f1f1;
+}
+

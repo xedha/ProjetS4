@@ -1,0 +1,23 @@
+.logo {
+    display: flex;
+    align-items: center;
+    width: 3.12525rem;
+height: 1.731rem;
+transform: rotate(90deg);
+flex-shrink: 0;
+  }
+  
+  .logo-icon {
+    width: 24px;
+    height: 24px;
+    stroke-width: 0.189px;
+stroke: #B7C4D4;
+  }
+  
+  .logo-text {
+    margin-left: 0.25rem;
+    font-weight: 700;
+    color: #1e88e5;
+  }
+  
+  

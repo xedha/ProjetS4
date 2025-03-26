@@ -1,0 +1,36 @@
+.login-page {
+  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  overflow: hidden;
+}
+
+.login-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.login-left {
+  width: 40%;
+  height: 100%;
+}
+
+.login-right {
+  width: 60%;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-left,
+  .login-right {
+    width: 100%;
+    height: 50%;
+  }
+}
+

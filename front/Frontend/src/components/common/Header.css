@@ -1,0 +1,67 @@
+.header {
+    background-color: white;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.75rem 1.5rem;
+  }
+  
+  .header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .header-left {
+    display: flex;
+    align-items: center;
+  }
+  
+  .header-title {
+    margin-left: 1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a202c;
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .notification-button {
+    color: #718096;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  
+  .notification-button:hover {
+    color: #4a5568;
+  }
+  
+  .notification-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  
+  .user-profile {
+    display: flex;
+    align-items: center;
+  }
+  
+  .user-avatar {
+    height: 2rem;
+    width: 2rem;
+    border-radius: 9999px;
+    object-fit: cover;
+  }
+  
+  .user-name {
+    margin-left: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4a5568;
+  }
+  
+  

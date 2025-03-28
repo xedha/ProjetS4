@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Enseignants</title>
+</head>
+<body>
+    <h1>Liste des Enseignants</h1>
+    <table border="1">
+        <tr>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Email</th>
+            <th>Grade</th>
+            <th>Département</th>
+        </tr>
+        {% for enseignant in enseignants %}
+        <tr>
+            <td>{{ enseignant.nom }}</td>
+            <td>{{ enseignant.prenom }}</td>
+            <td>{{ enseignant.email1 }}</td>
+            <td>{{ enseignant.grade }}</td>
+            <td>{{ enseignant.departement }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">Aucun enseignant trouvé.</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+</body>
+</html>

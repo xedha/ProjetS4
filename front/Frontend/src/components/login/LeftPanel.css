@@ -16,32 +16,34 @@
   }
   
   .left-panel-title {
-    width: 84.38681rem;
-    height: 6.74rem;
-    flex-shrink: 0;
-    color: var(--White, #FFF);
-
-
-font-size: 4rem;
-font-style: normal;
-font-weight: 600;
-line-height: 0rem; /* 6rem */
-padding-bottom: 12rem;
-letter-spacing: -0.08rem;
+    width: 60.38681rem;
+ height: 8.74rem;
+ flex-shrink: 0;
+  color: var(--White, #FFF);
+ position: relative;
+  top: -10rem;
+  left: 8rem;;
+  font-size: 4rem;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%; /* 6rem */
+  letter-spacing: -0.08rem;
   }
   
   .left-panel-text {
+    
+
+    width: 45.375rem;
+    height: 7.5625rem;
+    flex-shrink: 0;
     color: var(--White, #FFF);
-
-font-size: 1.475rem;
-font-weight: bold;
-font-style: normal;
-
-line-height: 150%; /* 2.25rem */
-letter-spacing: -0.03rem;
-width: 34.375rem;
-height: 20.5625rem;
-flex-shrink: 0;
+    text-align: center;
+   
+    font-size: 1.5rem;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 150%; /* 2.25rem */
+    letter-spacing: -0.03rem;
   }
  
   

@@ -1,5 +1,5 @@
 import type React from "react"
-import "./Logo.css"
+import "./logo.css"
 
 export const Logo: React.FC = () => {
   return (

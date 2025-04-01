@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-p&=)ok5r_)#(y*p2f0af$qw!347--(!#56rrpe8chyw8407(ge'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     'rest_framework',  # Django REST Framework
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',  # JWT Authentication
-    'link_db',  # Authentication app
+    'link_db', 
 ]
 
 MIDDLEWARE = [

@@ -1,4 +1,7 @@
+"use client"
+
 import type React from "react"
+import { useState } from "react"
 import { Logo } from "./logo"
 import "./Header.css"
 
@@ -7,15 +10,74 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ title }) => {
+  const [language, setLanguage] = useState("English")
+  const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false)
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
+
+  const languages = ["English", "Français", "العربية"]
+
   return (
     <header className="header">
       <div className="header-container">
         <div className="header-left">
           <Logo />
-          <h1 className="header-title">{title}</h1>
+      
+        </div>
+
+        <div className="header-center">
+          <div className="header-search-container">
+          <input type="text" placeholder="Search..." className="header-search-input" />
+            <button className="header-search-button">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="header-search-icon"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div className="header-right">
+          <div className="language-selector">
+            <button className="language-button" onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}>
+              {language}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="language-icon"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {isLanguageDropdownOpen && (
+              <div className="language-dropdown">
+                {languages.map((lang) => (
+                  <button
+                    key={lang}
+                    className="language-option"
+                    onClick={() => {
+                      setLanguage(lang)
+                      setIsLanguageDropdownOpen(false)
+                    }}
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <button className="notification-button">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -35,7 +97,26 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
 
           <div className="user-profile">
             <img src="/placeholder.svg?height=32&width=32" alt="User avatar" className="user-avatar" />
-            <span className="user-name">John Doe</span>
+            <div className="user-info" onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}>
+              <span className="user-name">John Doe</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="user-dropdown-icon"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            {isUserDropdownOpen && (
+              <div className="user-dropdown">
+                <button className="user-dropdown-option">My Profile</button>
+                <button className="user-dropdown-option">Switch User</button>
+                <button className="user-dropdown-option">Settings</button>
+                <button className="user-dropdown-option logout">Logout</button>
+              </div>
+            )}
           </div>
         </div>
       </div>

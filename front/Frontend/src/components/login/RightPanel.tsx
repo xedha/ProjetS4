@@ -34,7 +34,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ onLogin }) => {
     <div className="right-panel">
       <div className="login-form-container">
         <div className="login-header">
-          <Logo />
+         /* <Logo /> */
           <span className="login-title">USER LOGIN</span>
         </div>
 

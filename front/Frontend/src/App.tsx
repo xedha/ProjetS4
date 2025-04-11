@@ -8,33 +8,51 @@ import { TeacherManagementPage } from "./components/teachers/TeacherManagementPa
 import { TeachingManagementPage } from "./components/teaching/TeachingManagementPage"
 import "./App.css"
 
-// Import other pages as needed
-// import { CourseManagementPage } from './components/courses/CourseManagementPage';
-// import { ExamSchedulingPage } from './components/exams/ExamSchedulingPage';
-// import { SettingsPage } from './components/settings/SettingsPage';
+/**
+ * Main App Component
+ *
+ * This component serves as the entry point for the ExamTrack application.
+ * It handles:
+ * - Routing between different pages
+ * - Authentication state management
+ * - Protected routes that require authentication
+ * - Redirects for unauthorized access attempts
+ */
 
+// Define the User interface to type-check the user state
 interface User {
   email: string
   name: string
 }
 
 const App: React.FC = () => {
+  // Authentication state management
+
   // User state to track authentication
+  // null means not authenticated, object means authenticated
   const [user, setUser] = useState<User | null>(null)
 
-  // Handle login functionality
+  /**
+   * Handle login functionality
+   * In a real app, this would validate credentials with an API
+   * @param data - Object containing email and password
+   */
   const handleLogin = (data: { email: string; password: string }) => {
-    // In a real app, you would validate credentials with an API
+    // Log login attempt for debugging
     console.log("Login attempt with:", data)
 
-    // For demo purposes, we'll just set a user
+    // For demo purposes, we'll just set a user without actual validation
+    // In a production app, this would include API calls to validate credentials
     setUser({
       email: data.email,
-      name: "redha bouras",
+      name: "Admin", // Changed from "John Doe" to "Admin"
     })
   }
 
-  // Handle logout functionality
+  /**
+   * Handle logout functionality
+   * Clears the user state to null, effectively logging the user out
+   */
   const handleLogout = () => {
     setUser(null)
   }
@@ -106,4 +124,3 @@ const App: React.FC = () => {
 }
 
 export default App
-

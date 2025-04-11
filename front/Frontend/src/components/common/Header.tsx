@@ -6,7 +6,7 @@ import { Logo } from "./logo"
 import "./Header.css"
 
 interface HeaderProps {
-  title: string
+  title: string // This will now be the current page name
 }
 
 export const Header: React.FC<HeaderProps> = ({ title }) => {
@@ -20,13 +20,12 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
     <header className="header">
       <div className="header-container">
         <div className="header-left">
-          <Logo />
-      
+         
+          <h1 className="header-title">{title}</h1>
         </div>
 
         <div className="header-center">
           <div className="header-search-container">
-          <input type="text" placeholder="Search..." className="header-search-input" />
             <button className="header-search-button">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -43,6 +42,7 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
                 />
               </svg>
             </button>
+            <input type="text" placeholder="Search..." className="header-search-input" />
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
           <div className="user-profile">
             <img src="/placeholder.svg?height=32&width=32" alt="User avatar" className="user-avatar" />
             <div className="user-info" onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}>
-              <span className="user-name">John Doe</span>
+              <span className="user-name">Admin</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="user-dropdown-icon"
@@ -123,4 +123,3 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
     </header>
   )
 }
-

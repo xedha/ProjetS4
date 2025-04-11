@@ -6,8 +6,23 @@ import { Sidebar } from "../common/Sidebar"
 import { teachingApi } from "../../services/api"
 import type { Teaching } from "../../types/teaching"
 import "./TeachingManagementPage.css"
+import Search from "../common/Search"
+import AddButton from "../common/AddButton"
+
+/**
+ * TeachingManagementPage Component
+ *
+ * This component is responsible for displaying and managing teaching assignments.
+ * It includes functionality for:
+ * - Fetching teaching assignments from the API
+ * - Searching teaching assignments
+ * - Pagination
+ * - Deleting teaching assignments
+ * - Displaying teaching assignment details in a table
+ */
 
 export const TeachingManagementPage: React.FC = () => {
+  // State variables for managing teaching assignments data and UI
   const [teachings, setTeachings] = useState<Teaching[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
@@ -81,49 +96,12 @@ export const TeachingManagementPage: React.FC = () => {
         <main className="teaching-management-content">
           <div className="teaching-management-actions">
             <div className="search-and-actions">
-              <div className="search-container">
-                <input
-                  type="text"
-                  placeholder="Search teaching assignments..."
-                  className="search-input"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <button className="search-button">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                  </svg>
-                </button>
-                <button className="filter-button" title="Filter">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                  </svg>
-                </button>
-              </div>
-              <button className="add-teacher-button">
-                <span>+</span> Add Teacher
-              </button>
+              <Search
+                placeholder="Search teaching assignments..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <AddButton text="Add Teaching" onClick={() => console.log("Add teaching clicked")} />
             </div>
           </div>
 
@@ -285,4 +263,3 @@ export const TeachingManagementPage: React.FC = () => {
     </div>
   )
 }
-

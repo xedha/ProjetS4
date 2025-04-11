@@ -4,10 +4,8 @@ import "./Logo.css"
 export const Logo: React.FC = () => {
   return (
     <div className="logo">
-      <img src="/Users/redha/Downloads/coding /ProjetS4/front/Frontend/src/components/common/logo.svg" alt="ExamTrack Logo" className="logo-icon" />
+      <img src="./public/images/logo.svg" alt="ExamTrack Logo" className="logo-icon" />
       <span className="logo-text">ExamTrack</span>
     </div>
   )
 }
-
-

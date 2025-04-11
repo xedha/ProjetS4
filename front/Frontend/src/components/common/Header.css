@@ -41,7 +41,7 @@
 .header-search-input {
   width: 100%;
   padding: 0.5rem 1rem;
-  padding-right: 2.5rem;
+  padding-left: 2.5rem; /* Increased left padding for the icon */
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
   background-color: #f7fafc;
@@ -58,7 +58,7 @@
 
 .header-search-button {
   position: absolute;
-  right: 0.75rem;
+  left: 0.75rem; /* Changed from right to left */
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -142,10 +142,10 @@
 
 .notification-button {
   color: #718096;
-  background: none;
+  background-color: rgba(255, 235, 153, 0.3); /* Added yellowish background */
   border: none;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.2s, background-color 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -156,7 +156,7 @@
 
 .notification-button:hover {
   color: #4a5568;
-  background-color: #f7fafc;
+  background-color: rgba(255, 235, 153, 0.5); /* Darker on hover */
 }
 
 .notification-icon {
@@ -247,4 +247,3 @@
 .user-dropdown-option.logout:hover {
   background-color: #fff5f5;
 }
-

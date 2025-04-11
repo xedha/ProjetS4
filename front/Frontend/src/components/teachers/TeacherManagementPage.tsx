@@ -5,9 +5,25 @@ import { Header } from "../common/Header"
 import { Sidebar } from "../common/Sidebar"
 import { teacherApi } from "../../services/api"
 import type { Teacher } from "../../types/teacher"
+import Search from "../common/Search"
+import AddButton from "../common/AddButton"
 import "./TeacherManagementPage.css"
 
+/**
+ * TeacherManagementPage Component
+ *
+ * This component is responsible for displaying and managing the list of teachers.
+ * It includes functionality for:
+ * - Fetching teachers from the API
+ * - Searching teachers
+ * - Pagination
+ * - Deleting teachers
+ * - Displaying teacher details in a table
+ */
 export const TeacherManagementPage: React.FC = () => {
+  // State variables for managing teachers data and UI
+
+  // State management for teachers data
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
@@ -18,11 +34,13 @@ export const TeacherManagementPage: React.FC = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("")
 
   // Debounce search term to avoid too many API calls
+  // This creates a delay between user typing and API request
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm)
     }, 500)
 
+    // Cleanup function to clear the timeout if component unmounts or searchTerm changes again
     return () => {
       clearTimeout(timerId)
     }
@@ -30,47 +48,73 @@ export const TeacherManagementPage: React.FC = () => {
 
   // Fetch teachers when page, items per page, or search term changes
   useEffect(() => {
+    /**
+     * Async function to fetch teachers from the API
+     * Updates state based on API response
+     */
     const fetchTeachers = async () => {
       try {
+        // Set loading state to true while fetching data
         setLoading(true)
+        
+        // Call the API to get teachers with pagination and search
         const response = await teacherApi.getTeachers(currentPage, itemsPerPage, debouncedSearchTerm)
+        
+        // Update state with the fetched data
         setTeachers(response.teachers)
         setTotalTeachers(response.total)
         setError(null)
       } catch (err) {
+        // Handle any errors that occur during the API call
         console.error("Error fetching teachers:", err)
         setError("Failed to fetch teachers. Please try again later.")
         setTeachers([])
       } finally {
+        // Set loading to false regardless of success or failure
         setLoading(false)
       }
     }
 
+    // Call the fetch function
     fetchTeachers()
   }, [currentPage, itemsPerPage, debouncedSearchTerm])
 
-  // Handle page change
+  /**
+   * Handle page change for pagination
+   * @param page - The page number to navigate to
+   */
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
   }
 
-  // Handle teacher deletion
+  /**
+   * Handle teacher deletion
+   * Confirms with user before deleting and refreshes the list afterward
+   * @param id - The ID of the teacher to delete
+   */
   const handleDeleteTeacher = async (id: number) => {
     if (window.confirm("Are you sure you want to delete this teacher?")) {
       try {
+        // Call API to delete the teacher
         await teacherApi.deleteTeacher(id)
-        // Refresh the teacher list
+        
+        // Refresh the teacher list after successful deletion
         const response = await teacherApi.getTeachers(currentPage, itemsPerPage, debouncedSearchTerm)
         setTeachers(response.teachers)
         setTotalTeachers(response.total)
       } catch (err) {
+        // Handle any errors during deletion
         console.error("Error deleting teacher:", err)
         alert("Failed to delete teacher. Please try again later.")
       }
     }
   }
 
-  // Get status class
+  /**
+   * Get CSS class for status badge based on status value
+   * @param status - The status string
+   * @returns The CSS class name for the status
+   */
   const getStatusClass = (status: string) => {
     switch (status.toUpperCase()) {
       case "ADMIN":
@@ -86,8 +130,17 @@ export const TeacherManagementPage: React.FC = () => {
     }
   }
 
-  // Calculate total pages
+  // Calculate total pages for pagination
   const totalPages = Math.ceil(totalTeachers / itemsPerPage)
+
+  /**
+   * Handle adding a new teacher
+   * This would typically open a form or modal
+   */
+  const handleAddTeacher = () => {
+    // In a real app, this would open a form or navigate to a create page
+    alert("Add teacher functionality would open a form here")
+  }
 
   return (
     <div className="teacher-management-layout">
@@ -97,49 +150,12 @@ export const TeacherManagementPage: React.FC = () => {
         <main className="teacher-management-content">
           <div className="teacher-management-actions">
             <div className="search-and-actions">
-              <div className="search-container">
-                <input
-                  type="text"
-                  placeholder="Search teachers..."
-                  className="search-input"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <button className="search-button">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                  </svg>
-                </button>
-                <button className="filter-button" title="Filter">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                  </svg>
-                </button>
-              </div>
-              <button className="add-teacher-button">
-                <span>+</span> Add Teacher
-              </button>
+              <Search 
+                placeholder="Search teachers..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <AddButton text="Add Teacher" onClick={handleAddTeacher} />
             </div>
           </div>
 
@@ -306,4 +322,3 @@ export const TeacherManagementPage: React.FC = () => {
     </div>
   )
 }
-

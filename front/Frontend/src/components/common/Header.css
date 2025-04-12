@@ -51,7 +51,7 @@
 
 .header-search-input:focus {
   outline: none;
-  border-color: #1e88e5;
+  border-color: #0B8FAC;
   background-color: white;
   box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
 }
@@ -63,7 +63,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #718096;
+  color: #0b8fac; /* Updated color to #0B8FAC */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -141,17 +141,18 @@
 }
 
 .notification-button {
-  color: #718096;
-  background-color: rgba(255, 235, 153, 0.3); /* Added yellowish background */
+  
+  border-radius: 7.944px;
+background: var(--Supporting-Color-yellow-Shade, #FFFAF1);
   border: none;
   cursor: pointer;
   transition: color 0.2s, background-color 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9999px;
+  width: 55.62px;
+height: 52.991px;
+flex-shrink: 0;
 }
 
 .notification-button:hover {

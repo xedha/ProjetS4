@@ -1,12 +1,14 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import type React from "react"
+import { useState, useEffect } from "react"
 import { Header } from "../common/Header"
 import { Sidebar } from "../common/Sidebar"
 import { teacherApi } from "../../services/api"
 import type { Teacher } from "../../types/teacher"
 import Search from "../common/Search"
 import AddButton from "../common/AddButton"
+import TeacherTable from "./TeacherTable"
 import "./TeacherManagementPage.css"
 
 /**
@@ -56,10 +58,10 @@ export const TeacherManagementPage: React.FC = () => {
       try {
         // Set loading state to true while fetching data
         setLoading(true)
-        
+
         // Call the API to get teachers with pagination and search
         const response = await teacherApi.getTeachers(currentPage, itemsPerPage, debouncedSearchTerm)
-        
+
         // Update state with the fetched data
         setTeachers(response.teachers)
         setTotalTeachers(response.total)
@@ -97,7 +99,7 @@ export const TeacherManagementPage: React.FC = () => {
       try {
         // Call API to delete the teacher
         await teacherApi.deleteTeacher(id)
-        
+
         // Refresh the teacher list after successful deletion
         const response = await teacherApi.getTeachers(currentPage, itemsPerPage, debouncedSearchTerm)
         setTeachers(response.teachers)
@@ -111,23 +113,12 @@ export const TeacherManagementPage: React.FC = () => {
   }
 
   /**
-   * Get CSS class for status badge based on status value
-   * @param status - The status string
-   * @returns The CSS class name for the status
+   * Handle editing a teacher
+   * @param id - The ID of the teacher to edit
    */
-  const getStatusClass = (status: string) => {
-    switch (status.toUpperCase()) {
-      case "ADMIN":
-        return "status-admin"
-      case "MED":
-        return "status-med"
-      case "MUTATED":
-        return "status-mutated"
-      case "RETIRED":
-        return "status-retired"
-      default:
-        return ""
-    }
+  const handleEditTeacher = (id: number) => {
+    // In a real app, this would open a form or navigate to an edit page
+    window.location.href = `/teachers/edit/${id}`
   }
 
   // Calculate total pages for pagination
@@ -150,8 +141,8 @@ export const TeacherManagementPage: React.FC = () => {
         <main className="teacher-management-content">
           <div className="teacher-management-actions">
             <div className="search-and-actions">
-              <Search 
-                placeholder="Search teachers..." 
+              <Search
+                placeholder="Search teachers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -178,144 +169,14 @@ export const TeacherManagementPage: React.FC = () => {
               </button>
             </div>
           ) : (
-            <>
-              <div className="teacher-table-container">
-                <table className="teacher-table">
-                  <thead>
-                    <tr>
-                      <th>Teacher Code</th>
-                      <th>First & last name</th>
-                      <th>Birth Name</th>
-                      <th>Gender</th>
-                      <th>Department</th>
-                      <th>Grade</th>
-                      <th>Email</th>
-                      <th>Phone</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {teachers.length === 0 ? (
-                      <tr>
-                        <td colSpan={10} className="no-data">
-                          No teachers found
-                        </td>
-                      </tr>
-                    ) : (
-                      teachers.map((teacher) => (
-                        <tr key={teacher.id}>
-                          <td>
-                            <div className="teacher-code">
-                              <div className="teacher-avatar"></div>
-                              {teacher.code}
-                            </div>
-                          </td>
-                          <td>{`${teacher.firstName} ${teacher.lastName}`}</td>
-                          <td>{teacher.birthName}</td>
-                          <td>{teacher.gender}</td>
-                          <td>{teacher.department}</td>
-                          <td>{teacher.grade}</td>
-                          <td>{teacher.email}</td>
-                          <td>{teacher.phone}</td>
-                          <td>
-                            <span className={`status-badge ${getStatusClass(teacher.status)}`}>{teacher.status}</span>
-                          </td>
-                          <td>
-                            <div className="action-buttons">
-                              <button
-                                className="edit-button"
-                                onClick={() => (window.location.href = `/teachers/edit/${teacher.id}`)}
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                              </button>
-                              <button className="delete-button" onClick={() => handleDeleteTeacher(teacher.id)}>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <polyline points="3 6 5 6 21 6"></polyline>
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {totalPages > 1 && (
-                <div className="pagination">
-                  <button
-                    className="pagination-button"
-                    disabled={currentPage === 1}
-                    onClick={() => handlePageChange(currentPage - 1)}
-                  >
-                    Previous
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter((page) => {
-                      // Show first page, last page, and pages around current page
-                      return page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)
-                    })
-                    .map((page, index, array) => {
-                      // Add ellipsis if there are gaps
-                      if (index > 0 && array[index - 1] !== page - 1) {
-                        return (
-                          <React.Fragment key={`ellipsis-${page}`}>
-                            <span className="pagination-ellipsis">...</span>
-                            <button
-                              className={`pagination-number ${currentPage === page ? "active" : ""}`}
-                              onClick={() => handlePageChange(page)}
-                            >
-                              {page}
-                            </button>
-                          </React.Fragment>
-                        )
-                      }
-                      return (
-                        <button
-                          key={page}
-                          className={`pagination-number ${currentPage === page ? "active" : ""}`}
-                          onClick={() => handlePageChange(page)}
-                        >
-                          {page}
-                        </button>
-                      )
-                    })}
-                  <button
-                    className="pagination-button"
-                    disabled={currentPage === totalPages}
-                    onClick={() => handlePageChange(currentPage + 1)}
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
+            <TeacherTable
+              teachers={teachers}
+              onEdit={handleEditTeacher}
+              onDelete={handleDeleteTeacher}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           )}
         </main>
       </div>

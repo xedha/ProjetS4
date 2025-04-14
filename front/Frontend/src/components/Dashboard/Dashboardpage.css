@@ -1,0 +1,90 @@
+.dashboard-layout {
+    display: flex;
+    height: 100vh;
+    background-color: #f9fafb;
+  }
+  
+  .dashboard-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .dashboard-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+  }
+  
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 768px) {
+    .dashboard-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  .dashboard-card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .card-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 1rem;
+  }
+  
+  .chart-container {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .chart-circle {
+    position: relative;
+    width: 10rem;
+    height: 10rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .chart-circle.blue {
+    border: 0.5rem solid #1e88e5;
+  }
+  
+  .chart-circle.red {
+    border: 0.5rem solid #e53935;
+  }
+  
+  .chart-circle.teal {
+    border: 0.5rem solid #26a69a;
+  }
+  
+  .chart-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  
+  .chart-circle.blue .chart-value {
+    color: #1e88e5;
+  }
+  
+  .chart-circle.red .chart-value {
+    color: #e53935;
+  }
+  
+  .chart-circle.teal .chart-value {
+    color: #26a69a;
+  }
+  
+  

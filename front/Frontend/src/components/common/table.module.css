@@ -1,0 +1,213 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap");
+
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0px 4px 12px 0px rgba(13, 10, 44, 0.06);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.tableHeader {
+  height: 4.5625rem;
+  border-radius: 1rem 1rem 0rem 0rem;
+  border: 1px solid #000;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(180deg, #45d699 0%, #08b2ac 100%);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.tableHeaderCell {
+  color: #fff;
+  font-family: Montserrat, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 1rem;
+  text-align: left;
+}
+
+.tableRow {
+  height: 4.625rem;
+  border: 1px solid #e2e8f0;
+}
+
+.tableRow:nth-child(odd) {
+  background-color: #eaf2f9;
+}
+
+.tableRow:nth-child(even) {
+  background-color: white;
+}
+
+.tableRow:last-child {
+  border-radius: 0rem 0rem 1rem 1rem;
+}
+
+.tableCell {
+  padding: 1rem;
+  color: #000;
+  font-family: Montserrat, sans-serif;
+  font-size: 0.99rem;
+  font-weight: 500;
+}
+
+.actionCell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.editButton {
+  width: 2rem;
+  height: 2rem;
+  background-color: #ebf8ff;
+  color: #4299e1;
+  border: none;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.editButton:hover {
+  background-color: #bee3f8;
+}
+
+.deleteButton {
+  width: 2rem;
+  height: 2rem;
+  background-color: #fff5f5;
+  color: #f56565;
+  border: none;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.deleteButton:hover {
+  background-color: #fed7d7;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.statusAdmin {
+  background-color: #e6fffa;
+  color: #38b2ac;
+}
+
+.statusMed {
+  background-color: #ebf8ff;
+  color: #4299e1;
+}
+
+.statusMutated {
+  background-color: #fffaf0;
+  color: #ed8936;
+}
+
+.statusRetired {
+  background-color: #fff5f5;
+  color: #f56565;
+}
+
+.teacherAvatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  margin-right: 0.75rem;
+}
+
+.teacherCode {
+  display: flex;
+  align-items: center;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.paginationButton,
+.paginationNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  background-color: white;
+  color: #4a5568;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.paginationButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.paginationNumber.active {
+  background-color: #0b8fac;
+  color: white;
+  border-color: #0b8fac;
+}
+
+.paginationButton:not(:disabled):hover,
+.paginationNumber:not(.active):hover {
+  background-color: #f7fafc;
+}
+
+.paginationEllipsis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  color: #4a5568;
+}
+
+.tooltip {
+  position: absolute;
+  background-color: #f56565;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+
+.deleteButton:hover .tooltip {
+  opacity: 1;
+}

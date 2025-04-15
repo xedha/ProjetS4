@@ -2,26 +2,12 @@
 
 import React from "react"
 import styles from "../common/table.module.css"
-
-interface Teacher {
-  id: number
-  code: string
-  firstName: string
-  lastName: string
-  birthName: string
-  gender: string
-  department: string
-  grade: string
-  email: string
-  phone: string
-  // Marking status as optional to guard against missing values.
-  status?: string
-}
+import { Teacher } from "../../types/teacher";
 
 interface TeacherTableProps {
   teachers: Teacher[]
   onEdit: (id: number) => void
-  onDelete: (id: number) => void
+  onDelete: (teacher: Teacher) => void;  
   currentPage: number
   totalPages: number
   onPageChange: (page: number) => void
@@ -55,13 +41,17 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
   }
 
   return (
-    <>
+    <div className={styles.tableWrapper}>
+      {/* New title header for the table */}
+      <h2 className={styles.tableTitle}>Teacher List</h2>
+
       <div className={styles.tableContainer}>
         <table className={styles.table}>
           <thead>
             <tr className={styles.tableHeader}>
               <th className={styles.tableHeaderCell}>Teacher Code</th>
-              <th className={styles.tableHeaderCell}>First & last name</th>
+              {/* Updated header to be more concise */}
+              <th className={styles.tableHeaderCell}>Name</th>
               <th className={styles.tableHeaderCell}>Birth Name</th>
               <th className={styles.tableHeaderCell}>Gender</th>
               <th className={styles.tableHeaderCell}>Department</th>
@@ -75,7 +65,8 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
           <tbody>
             {teachers.length === 0 ? (
               <tr className={styles.tableRow}>
-                <td colSpan={10} style={{ textAlign: "center", padding: "2rem" }}>
+                {/* You might move this style into your CSS for consistent formatting */}
+                <td colSpan={10} className={styles.noData}>
                   No teachers found
                 </td>
               </tr>
@@ -84,11 +75,14 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
                 <tr key={teacher.id} className={styles.tableRow}>
                   <td className={styles.tableCell}>
                     <div className={styles.teacherCode}>
+                      {/* This avatar element can be styled as needed to match the design */}
                       <div className={styles.teacherAvatar}></div>
-                      {teacher.code}
+                      {teacher.code_enseignant}
                     </div>
                   </td>
-                  <td className={styles.tableCell}>{`${teacher.firstName} ${teacher.lastName}`}</td>
+                  <td className={styles.tableCell}>
+                    {`${teacher.firstName} ${teacher.lastName}`}
+                  </td>
                   <td className={styles.tableCell}>{teacher.birthName}</td>
                   <td className={styles.tableCell}>{teacher.gender}</td>
                   <td className={styles.tableCell}>{teacher.department}</td>
@@ -101,7 +95,11 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
                     </span>
                   </td>
                   <td className={styles.actionCell}>
-                    <button className={styles.editButton} onClick={() => onEdit(teacher.id)} aria-label="Edit teacher">
+                    <button
+                      className={styles.editButton}
+                      onClick={() => onEdit(teacher.id)}
+                      aria-label="Edit teacher"
+                    >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"
@@ -119,7 +117,7 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
                     </button>
                     <button
                       className={styles.deleteButton}
-                      onClick={() => onDelete(teacher.id)}
+                      onClick={() => onDelete(teacher)}
                       aria-label="Delete teacher"
                     >
                       <svg
@@ -157,7 +155,7 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
           </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1)
             .filter((page) => {
-              // Show first page, last page, and pages around current page
+              // Show the first page, the last page, and pages near the current page
               return page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)
             })
             .map((page, index, array) => {
@@ -194,7 +192,7 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
           </button>
         </div>
       )}
-    </>
+    </div>
   )
 }
 

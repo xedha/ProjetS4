@@ -1,0 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+/* From Uiverse.io by alexruix */ 
+.group {
+   
+display: flex;
+width: 63.5rem;
+height: 3.75rem;
+overflow: hidden;
+
+border-radius: 2rem;
+border: 1px solid #9A9696;
+box-shadow: 0px 4px 12px 0px rgba(13, 10, 44, 0.06);
+background: var(--White-White, #FFF);
+align-items: center;
+gap: 0.375rem;
+flex-shrink: 0;
+
+position: absolute; /* This is required */
+  
+top: 10.3rem;
+right: 24.7rem;
+
+
+   }
+   
+   .input {
+        width: 2rem;
+        height: 40px;
+        line-height: 28px;
+        padding: 0 1rem;
+        padding-left: 2.5rem;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        outline: none;
+        background-color: #ffffff;
+        color: #0d0c22;
+        transition: .3s ease;
+        color: var(--Gray, #ABB7C2);
+font-family: Poppins;
+font-size: 1.125rem;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+
+display: flex;
+width: 63.5rem;
+height: 3.75rem;
+overflow: hidden;
+padding-left: 3rem;
+border-radius: 2rem;
+border: 1px solid #9A9696;
+box-shadow: 0px 4px 12px 0px rgba(13, 10, 44, 0.06);
+background: var(--White-White, #FFF);
+align-items: center;
+gap: 0.375rem;
+flex-shrink: 0;
+   }
+   
+   .input::placeholder {
+    color: #9e9ea7;
+   }
+   
+   .input:focus, input:hover {
+    outline: none;
+    border-color: #1CD8D2;
+    border-radius: 2rem;
+    border: 5px solid #1CD8D2;
+    background-color: #fff;
+    box-shadow: 0 0 0 6px rgb(234 76 137 / 10%);
+    color: #53535f;
+   }
+   
+   .icon {
+    position: absolute;
+    left: 1rem;
+    fill: #9e9ea7;
+    width: 1rem;
+    height: 1rem;
+    display: flex;
+padding: 0;
+align-items: center;
+gap: 0.625rem;
+
+width: 1.5rem;
+height: 1.5rem;
+   }
+   
+   
+   .search-and-actions {
+  display: flex;
+  align-items: center;
+  position: relative; /* Added for absolute positioning of children */
+}
+
+.search-container {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto; /* Center the search container */
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.875rem 1.25rem 0.875rem 2.75rem;
+  padding-right: 3.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.625rem;
+  background-color: white;
+  font-size: 1rem;
+  height: 3.25rem;
+}
+
+.search-button {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #a0aec0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.filter-button {
+  position: absolute;
+  right: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: #4a5568;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+   
+   
+   

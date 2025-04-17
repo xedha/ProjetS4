@@ -3,7 +3,7 @@
 .group {
    
 display: flex;
-width: 65.5rem;
+width: 50%;
 height: 3.75rem;
 overflow: hidden;
 
@@ -24,7 +24,7 @@ right: 24.7rem;
    }
    
    .input {
-        width: 100%;
+        width: 2rem;
         height: 40px;
         line-height: 28px;
         padding: 0 1rem;
@@ -43,7 +43,7 @@ font-weight: 400;
 line-height: normal;
 
 display: flex;
-width: 72.5rem;
+width: 100%;
 height: 3.75rem;
 overflow: hidden;
 padding-left: 3rem;

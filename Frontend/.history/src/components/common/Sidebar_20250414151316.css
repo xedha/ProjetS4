@@ -1,0 +1,178 @@
+.sidebar {
+  background-color: white;
+  width: 21.41025rem;
+  border-right: 1px solid #e2e8f0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: /* Add relative positioning to contain absolutely positioned children */
+}
+
+.content {
+  padding-left: 1rem;  /* Optional: extra space from the left edge */
+}
+
+.sidebar-header {
+  padding: 4rem 2.5rem; /* Increased padding to match header */
+  height: 5rem; /* Set explicit height to match header */
+  display: flex;
+  align-items: center;
+  /* Removed border-bottom to eliminate horizontal line */
+  position: relative; /* Add relative positioning to contain logo and title */
+  margin-bottom: 2.5rem; /* Add space below header */
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%; /* Ensure it takes full width */
+  padding-left: -rem; /* Match the left positioning of logo */
+}
+
+.sidebar-logo {
+  width: 4.24644rem;
+  height: 3.64219rem;
+  object-fit: contain;
+  stroke-width: 0.189px;
+  stroke: #B7C4D4;
+  flex-shrink: 0;
+  /* Remove absolute positioning */
+  position: relative;
+  left: auto;
+  top: auto;
+}
+
+.sidebar-title {
+  font-size: 1.86175rem;
+  font-weight: 800;
+  color: var(--Greys-Blue-Grey-900, #151D48);
+  font-family: Poppins;
+  line-height: 150%;
+  /* Remove absolute positioning */
+  position: relative;
+  left: auto;
+  top: auto;
+  margin-left: 0.75rem; /* Keep space between logo and title */
+}
+
+.sidebar-nav {
+  margin-top: 0; /* Adjusted since we added margin to header */
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 5rem; /* Make space for the sign-out button */
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  color: var(--Greys-Blue-Grey-700, #737791);
+  font-family: Poppins;
+  font-size: 1.11706rem;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.sidebar-menu-item {
+  margin: 0;
+  margin-bottom: 1rem;
+  padding: 0.875rem 0.95rem;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4a5568;
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+  border-radius: 15px;
+  height: 67px; /* Set height for all sidebar links */
+  width: 100%; /* Full width by default */
+}
+
+.sidebar-link:hover {
+  background-color: #c2e8f3; /* hover:bg-purple-100 */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05); 
+}
+
+.sidebar-link.active {
+  background: linear-gradient(90deg, #0b8fac 0%, #165867 76.4%); /* Updated gradient */
+  color: white; /* Text color to white for better contrast */
+  width: 100%; /* Set width as requested */
+  border-right: none; /* Remove the right border */
+  flex-shrink: 0;
+  font-family: Poppins;
+  font-size: 1.11706rem;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.sidebar-icon-wrapper {
+  margin-right: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* When active, change the SVG stroke/fill to white */
+.sidebar-link.active .sidebar-icon path {
+  stroke: white;
+  fill: white;
+}
+
+.sidebar-footer {
+  width: 100%;
+  padding: 1.5rem;
+  margin-top: auto;
+  position: relative; /* Add relative positioning */
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem; /* Add some space at the bottom */
+}
+
+.sign-out-button {
+  display: flex;
+  align-items: center;
+  width: 16.5rem;
+  height: 3.54513rem;
+  padding: 0.875rem 1.25rem;
+  background-color: #0b8fac;
+  color: white;
+  border: none;
+  border-radius: 1.24119rem;
+  font-size: 1.25rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-family: Poppins;
+  font-style: normal;
+  line-height: normal;
+  /* Remove absolute positioning */
+  position: relative;
+  left: auto;
+  top: auto;
+  margin: 0 auto; /* Center horizontally */
+  justify-content: center;
+}
+
+.sign-out-button:hover {
+  background-color: #0a7d96; /* Slightly darker shade for hover state */
+}
+
+.sign-out-button .sidebar-icon {
+  width: 1.98156rem;
+  height: 2.56994rem;
+  flex-shrink: 0;
+  margin-right: 0.5rem; /* Add space between icon and text */
+}

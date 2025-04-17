@@ -1,0 +1,43 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap");
+
+.addbuttongreen {
+  position: absolute; /* This is required */
+  top: 0.5rem; /* Adjusted to lower the button */
+  right: 0;
+
+  display: flex;
+  width: 10.625rem;
+  height: 2.9375rem;
+  padding: 0.5rem 0.75rem;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  background: var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));
+  color: #fff;
+  font-family: Montserrat, sans-serif;
+  font-size: 0.9375rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  border: none;
+  cursor: pointer;
+}
+
+.addbuttongreen:hover {
+  background-color: #0B8FAC;
+  box-shadow: 0px 15px 20px rgba(20, 133, 154, 0.4);
+  color: #fff;
+  transform: translateY(-7px);
+}
+
+.addbuttongreen:active {
+  transform: translateY(-1px);
+}
+.add {
+  width: 1.25rem;
+  height: 1.0625rem;
+  flex-shrink: 0;
+}
+

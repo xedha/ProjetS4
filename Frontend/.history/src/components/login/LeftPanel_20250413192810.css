@@ -1,0 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+
+
+html {
+  font-size: min(1vw, 1.8vh); /* Adapts to both width and height */
+}
+
+
+.left-panel {
+  width: 62.875rem;
+  height: 67.5rem;
+  border-radius: 0rem 11.5rem 11.5625rem 0rem;
+  background: linear-gradient(325deg, #2E6DA4 0.74%, #0F70DA 100%);
+  flex-shrink: 0;
+
+  
+}
+  
+
+  
+  .left-panel-title {
+ 
+  }
+  
+  
+  .left-panel-text {
+    
+
+  }
+ 
+  

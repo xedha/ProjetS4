@@ -1,0 +1,35 @@
+import styles from './addbutton.module.css';
+import { useState } from 'react';
+import Form from './form';
+import Form2 from './Form2';
+import add from ".../assets/add.svg'
+function AddButton() {
+  const [showModuleForm, setShowModuleForm] = useState(false);
+  const [showSpecialtyForm, setShowSpecialtyForm] = useState(false);
+
+  return (
+    <>
+      {/* Add Module Button */}
+     
+
+      {showModuleForm && <Form setShowPopup={setShowModuleForm} />}
+
+      {/* Add Specialty Button */}
+      <button
+        className={styles.addbuttonblue}
+        onClick={() => setShowSpecialtyForm(true)}
+      >
+        <img
+          src={add}
+          alt="Add"
+          className={styles.add}
+        />{' '}
+        Add Exam
+      </button>
+
+      {showSpecialtyForm && <Form setShowPopup={setShowSpecialtyForm} />}
+    </>
+  );
+}
+
+export default AddButton;

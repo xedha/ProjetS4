@@ -1,0 +1,58 @@
+{
+    "teachers": [
+      {
+        "id": 1,
+        "code": "43245123123",
+        "firstName": "Matt",
+        "lastName": "Dickerson",
+        "birthName": "Matt Dickerson",
+        "gender": "Male",
+        "department": "SIQ",
+        "grade": "Prof",
+        "email": "matt@example.com",
+        "phone": "0558855663",
+        "status": "ADMIN"
+      },
+      {
+        "id": 2,
+        "code": "43245123124",
+        "firstName": "Wiktoria",
+        "lastName": "Smith",
+        "birthName": "Wiktoria Smith",
+        "gender": "Female",
+        "department": "IASD",
+        "grade": "MCA",
+        "email": "wiktoria@example.com",
+        "phone": "0558855664",
+        "status": "ADMIN"
+      }
+    ],
+    "teachings": [
+      {
+        "id": 1,
+        "level": "L2",
+        "specialty": "CS",
+        "semester": "S1",
+        "section": "A",
+        "group": "G1",
+        "type": "Cours",
+        "moduleName": "Programming",
+        "moduleAbbreviation": "PRG1",
+        "teacher": "Mr. Ahmed",
+        "hours": "30"
+      },
+      {
+        "id": 2,
+        "level": "L2",
+        "specialty": "CS",
+        "semester": "S1",
+        "section": "A",
+        "group": "G1",
+        "type": "TD",
+        "moduleName": "Data Structures",
+        "moduleAbbreviation": "CPRG1",
+        "teacher": "Mr. Ahmed",
+        "hours": "50"
+      }
+    ]
+  }

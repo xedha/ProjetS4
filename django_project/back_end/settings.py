@@ -28,12 +28,12 @@ SECRET_KEY = 'django-insecure-p&=)ok5r_)#(y*p2f0af$qw!347--(!#56rrpe8chyw8407(ge
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
-
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
 
 
 # Application definition
 from datetime import timedelta
+import os
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -58,12 +58,14 @@ INSTALLED_APPS = [
     'rest_framework',  # Django REST Framework
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',  # JWT Authentication
-    'link_db', 
+    'corsheaders',  # CORS headers
+    'link_db',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -71,12 +73,21 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = True
+# For production, specify exact origins:
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",
+#     "http://127.0.0.1:5173",
+# ]
+CORS_ALLOW_CREDENTIALS = True
+
 ROOT_URLCONF = 'back_end.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'myapp', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -94,6 +105,7 @@ WSGI_APPLICATION = 'back_end.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+
 
 DATABASES = {
     'default': {

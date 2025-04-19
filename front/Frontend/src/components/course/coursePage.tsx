@@ -8,8 +8,6 @@ import Addbutton from "./addbutton/Addbutton"
 import Search from "./search bar/seach"
 import { courseApi } from "../../services/api"
 import type { Course } from "../../types/course"
-// Add this import at the top of the file
-import "./course-management.css"
 
 function CoursePage() {
   // State variables for managing courses data and UI
@@ -85,41 +83,40 @@ function CoursePage() {
         <Sidebar />
         <div className="teacher-management-main">
           <Header title="Course Management" />
-          <main className="course-management-content">
-            {loading ? (
-              <div className="loading-container">
-                <div className="loading-spinner"></div>
-                <p>Loading courses...</p>
-              </div>
-            ) : error ? (
-              <div className="error-container">
-                <p>{error}</p>
-                <button
-                  className="retry-button"
-                  onClick={() => {
-                    setCurrentPage(1)
-                    setDebouncedSearchTerm(searchTerm)
-                  }}
-                >
-                  Retry
-                </button>
-              </div>
-            ) : (
-              <Tabel
-                data={courses}
-                onEdit={handleEditCourse}
-                onDelete={handleDeleteCourse}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            )}
-          </main>
         </div>
       </div>
 
+      {loading ? (
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading courses...</p>
+        </div>
+      ) : error ? (
+        <div className="error-container">
+          <p>{error}</p>
+          <button
+            className="retry-button"
+            onClick={() => {
+              setCurrentPage(1)
+              setDebouncedSearchTerm(searchTerm)
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      ) : (
+        <Tabel
+          data={courses}
+          onEdit={handleEditCourse}
+          onDelete={handleDeleteCourse}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
       <Addbutton />
-      <Search />
+      <Search value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
     </>
   )
 }

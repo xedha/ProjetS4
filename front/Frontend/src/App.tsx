@@ -1,12 +1,18 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
-import { LoginPage } from "./Pages/LoginPage"
-import { TeacherManagementPage } from "./components/teachers/TeacherManagementPage"
-import { TeachingManagementPage } from "./components/teaching/TeachingManagementPage"
-import "./App.css"
+import type React from "react";
+import { useState } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { LoginPage } from "./Pages/LoginPage";
+import { TeacherManagementPage } from "./components/teachers/TeacherManagementPage";
+import { TeachingManagementPage } from "./components/teaching/TeachingManagementPage";
+import { CourseManagementPage } from "../../../testing/courses/CourseManagementPage";
+import "./App.css";
 
 /**
  * Main App Component
@@ -21,8 +27,8 @@ import "./App.css"
 
 // Define the User interface to type-check the user state
 interface User {
-  email: string
-  name: string
+  email: string;
+  name: string;
 }
 
 const App: React.FC = () => {
@@ -30,7 +36,7 @@ const App: React.FC = () => {
 
   // User state to track authentication
   // null means not authenticated, object means authenticated
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<User | null>(null);
 
   /**
    * Handle login functionality
@@ -39,23 +45,23 @@ const App: React.FC = () => {
    */
   const handleLogin = (data: { email: string; password: string }) => {
     // Log login attempt for debugging
-    console.log("Login attempt with:", data)
+    console.log("Login attempt with:", data);
 
     // For demo purposes, we'll just set a user without actual validation
     // In a production app, this would include API calls to validate credentials
     setUser({
       email: data.email,
       name: "Admin", // Changed from "John Doe" to "Admin"
-    })
-  }
+    });
+  };
 
   /**
    * Handle logout functionality
    * Clears the user state to null, effectively logging the user out
    */
   const handleLogout = () => {
-    setUser(null)
-  }
+    setUser(null);
+  };
 
   return (
     <Router>
@@ -65,7 +71,16 @@ const App: React.FC = () => {
             Public routes - accessible without authentication
             If user is already logged in, redirect to teachers page
           */}
-          <Route path="/login" element={user ? <Navigate to="/teachers" /> : <LoginPage onLogin={handleLogin} />} />
+          <Route
+            path="/login"
+            element={
+              user ? (
+                <Navigate to="/teachers" />
+              ) : (
+                <LoginPage onLogin={handleLogin} />
+              )
+            }
+          />
 
           {/* 
             Protected routes - require authentication
@@ -73,20 +88,29 @@ const App: React.FC = () => {
           */}
 
           {/* Teacher Management route */}
-          <Route path="/teachers" element={user ? <TeacherManagementPage /> : <Navigate to="/login" />} />
+          <Route
+            path="/teachers"
+            element={
+              user ? <TeacherManagementPage /> : <Navigate to="/login" />
+            }
+          />
 
           {/* Teaching Management route */}
-          <Route path="/teaching" element={user ? <TeachingManagementPage /> : <Navigate to="/login" />} />
+          <Route
+            path="/teaching"
+            element={
+              user ? <TeachingManagementPage /> : <Navigate to="/login" />
+            }
+          />
+
+          {/* Course Management route */}
+          <Route
+            path="/courses"
+            element={user ? <CourseManagementPage /> : <Navigate to="/login" />}
+          />
 
           {/* 
             Additional routes to be implemented:
-            
-            <Route 
-              path="/courses" 
-              element={
-                user ? <CourseManagementPage /> : <Navigate to="/login" />
-              } 
-            />
             
             <Route 
               path="/exams" 
@@ -107,7 +131,10 @@ const App: React.FC = () => {
             Root path redirect
             If user is logged in, go to teachers page, otherwise go to login
           */}
-          <Route path="/" element={<Navigate to={user ? "/teachers" : "/login"} />} />
+          <Route
+            path="/"
+            element={<Navigate to={user ? "/teachers" : "/login"} />}
+          />
 
           {/* Redirect dashboard to teachers */}
           <Route path="/dashboard" element={<Navigate to="/teachers" />} />
@@ -116,11 +143,14 @@ const App: React.FC = () => {
             Catch-all route for any undefined paths
             Redirects to teachers if logged in, or login if not
           */}
-          <Route path="*" element={<Navigate to={user ? "/teachers" : "/login"} />} />
+          <Route
+            path="*"
+            element={<Navigate to={user ? "/teachers" : "/login"} />}
+          />
         </Routes>
       </div>
     </Router>
-  )
-}
+  );
+};
 
-export default App
+export default App;

@@ -9,7 +9,7 @@ interface SearchProps {
   placeholder?: string
 }
 
-function Search({ value, onChange, placeholder = "Search ... " }: SearchProps = {}) {
+function Search({ value = "", onChange, placeholder = "Search ... " }: SearchProps) {
   return (
     <>
       <div className={styles.group}>

@@ -3,7 +3,7 @@
     .addbuttongreen {
         position: absolute; /* This is required */
   
-        top: 10.62rem;
+        top: 9rem;
        right: 0.62rem;
 
         display: flex;
@@ -52,7 +52,7 @@ cursor: pointer;
   .addbuttonblue{
     position: absolute; /* This is required */
 
-    top: 10.6rem;
+    top: 9rem;
    right: 12.7rem;
 
     display: flex;

@@ -3,12 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
 import logging
-
 logger = logging.getLogger(__name__)
-
-
-
-
 @csrf_exempt
 def delete_model(request):
     if request.method != 'POST':
@@ -44,29 +39,7 @@ def delete_model(request):
         logger.exception("Error deleting model row")
         return JsonResponse({'error': str(e)}, status=500)
     
-@csrf_exempt
-def get_model_data(request):
-    if request.method != 'GET':
-        return JsonResponse({'error': 'Only GET requests are allowed'}, status=405)
 
-    model_name = request.GET.get('model')
-    if not model_name:
-        return JsonResponse({'error': 'Model name is required in the query string'}, status=400)
-
-    
-    logger.debug(f"Fetching data for model: {model_name}")
-
-    try:
-        Model = apps.get_model('link_db', model_name)
-        if not Model:
-            return JsonResponse({'error': f'Model "{model_name}" not found'}, status=404)
-
-        data = list(Model.objects.all().values())
-        return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False})
-
-    except Exception as e:
-        logger.exception("Error fetching model data")
-        return JsonResponse({'error': str(e)}, status=500)
     
 @csrf_exempt
 def add_model_row(request):
@@ -136,3 +109,27 @@ def Edit_Model(request):
     except Exception as e:
         logger.exception("Error editing model row")
         return JsonResponse({'error': f'Unexpected error: {str(e)}'}, status=500)
+    
+    
+def get_model_data(request):
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Only GET requests are allowed'}, status=405)
+
+    model_name = request.GET.get('model')
+    if not model_name:
+        return JsonResponse({'error': 'Model name is required in the query string'}, status=400)
+
+    
+    logger.debug(f"Fetching data for model: {model_name}")
+
+    try:
+        Model = apps.get_model('link_db', model_name)
+        if not Model:
+            return JsonResponse({'error': f'Model "{model_name}" not found'}, status=404)
+
+        data = list(Model.objects.all().values())
+        return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False})
+
+    except Exception as e:
+        logger.exception("Error fetching model data")
+        return JsonResponse({'error': str(e)}, status=500)

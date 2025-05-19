@@ -11,6 +11,9 @@ urlpatterns = [
     path('delete_model/', views.delete_model),
     path('get_model_data/',views.get_model_data),
     path('add_model_row/',views.add_model_row),
-    path('Edit_Model/',views.Edit_Model)
+    path('Edit_Model/',views.Edit_Model),
+    path('distinct_creneau/',views.distinct_creneau),
+    path('check_enseignant_schedule_conflict/',views.check_enseignant_schedule_conflict),
+    path('check_salle_schedule_conflict/',views.check_salle_schedule_conflict),
     ]
 

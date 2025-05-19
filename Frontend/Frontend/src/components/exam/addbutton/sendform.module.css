@@ -1,0 +1,257 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
+
+
+
+/* Blur overlay to cover entire screen */
+.blurOverlay {
+    font-family: 'Poppins', sans-serif;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  backdrop-filter: blur(10px);
+  background-color: rgba(0, 0, 0, 0.3); /* Optional dark layer */
+  z-index: 1000;
+}
+
+/* Container for the form */
+.container {
+    font-family: 'Poppins', sans-serif;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 700px;
+  width: 100%;
+  background-color: #fff;
+  padding: 25px 30px;
+  border-radius: 5px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+  z-index: 1001; /* above blur */
+}
+
+/* Title section */
+.title {
+    font-family: 'Poppins', sans-serif;
+  font-size: 25px;
+  font-weight: 500;
+  position: relative;
+}
+
+.title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 30px;
+  border-radius: 5px;
+  background: #45D699
+}
+
+/* Input fields container */
+.userDetails {
+    font-family: 'Poppins', sans-serif;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin: 20px 0 12px 0;
+}
+
+/* Individual input box */
+.inputBox {
+    font-family: 'Poppins', sans-serif;
+  margin-bottom: 15px;
+  width: calc(100% - 20px);
+}
+
+.inputBox span.details {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.inputBox input {
+  height: 45px;
+  width: 100%;
+  outline: none;
+  font-size: 16px;
+  border-radius: 5px;
+  padding-left: 15px;
+  border: 1px solid #ccc;
+  border-bottom-width: 2px;
+  transition: all 0.3s ease;
+}
+
+.inputBox input:focus,
+.inputBox input:valid {
+  border-color:var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));;
+}
+
+/* Button */
+.button {
+    font-family: 'Poppins', sans-serif;
+  height: 45px;
+  margin: 35px 0;
+}
+
+.button input {
+  height: 100%;
+  width: 100%;
+  border-radius: 5px;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));
+}
+
+.button input:hover {
+  background: white
+
+}
+
+/* Responsive for mobile */
+@media (max-width: 584px) {
+  .container {
+    max-width: 100%;
+  }
+
+  .userDetails .inputBox {
+    width: 100%;
+  }
+
+  .userDetails {
+    font-family: 'Poppins', sans-serif;
+    max-height: 300px;
+    overflow-y: scroll;
+  }
+
+  .userDetails::-webkit-scrollbar {
+    width: 5px;
+  }
+}
+
+.close {
+    background: transparent; /* Make the background transparent */
+    border: none; /* Remove the border */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 17px; /* Space around the SVG */
+    cursor: pointer;
+    position: absolute; /* Make the button absolute */
+    top: 1rem;
+    right: 1rem;
+    z-index: 10; /* Ensure the close button is on top of other elements */
+  }
+  
+  .svg {
+    cursor: pointer; /* Make the SVG clickable */
+    position: absolute; /* Ensure it's placed properly */
+    top: 0.3rem;
+    right: 0.2rem;
+    pointer-events: auto; /* Ensure the SVG is interactive */
+  }
+  
+  .inputBox {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+  }
+  
+  .details {
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #333;
+  }
+  
+  /* Style the select element */
+  .inputBox select {
+    padding: 10px 12px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.25s ease;
+    background-color: #fff;
+    cursor: pointer;
+  }
+  
+  /* Blue glow on hover */
+  .inputBox select:hover {
+    border-color: #2684ff;
+    box-shadow: 0 0 5px rgba(38, 132, 255, 0.4);
+  }
+  
+  /* Animation on focus (click) */
+  .inputBox select:focus {
+    border-color: #2684ff;
+    box-shadow: 0 0 8px rgba(38, 132, 255, 0.6);
+    transform: scale(1.01);
+  }
+  
+/* Mobile Responsive Styles */
+@media screen and (max-width: 600px) {
+  .container {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+  }
+
+  .formTitle {
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+
+  .formGroup {
+    margin-bottom: 15px;
+  }
+
+  .formLabel {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+
+  .formInput,
+  .formSelect {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+  }
+
+  .buttonContainer {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .sendButton,
+  .cancelButton {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  .recipientList {
+    max-height: 200px;
+    margin: 10px 0;
+  }
+
+  .recipient {
+    padding: 8px;
+    margin: 5px 0;
+    font-size: 14px;
+  }
+
+  .removeButton {
+    padding: 5px 10px;
+    font-size: 14px;
+  }
+}
+  

@@ -2,53 +2,54 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import logging
 from django.db.models import  Count
-from link_db.models import Planning, Surveillant,Creneau,Salle
+from link_db.models import Planning, Surveillant,Creneau,Salle,Formations
 logger = logging.getLogger(__name__)
+def check_exam_date(request):
+    exams = Planning.objects.select_related('formation', 'id_creneau').all()
 
+    # Group slots by formation
+    exam_checker = {}
+    for exam in exams:
+        formation = exam.formation_id
+        creneau   = exam.id_creneau
 
-from django.db.models import Count
+        exam_checker.setdefault(formation, []).append({
+            'planning_id': exam.id_planning,
+            'date':        creneau.date_creneau,
+            'time':        creneau.heure_creneau,
+        })
+    # Find any “conflict” where date OR time differ
+    conflicts_report = []
+    Module = Formations.objects.filter(pk=exam.formation_id).values_list('modules', flat=True).first()
+    for formation, slots in exam_checker.items():
+        if len(slots) <= 1:
+            continue
 
+        formation_conflicts = []
+        for i in range(len(slots)):
+            for j in range(i + 1, len(slots)):
+                s1, s2 = slots[i], slots[j]
+                if s1['date'] != s2['date'] or s1['time'] != s2['time']:
+                    formation_conflicts.append({
+                        'planning1_id': s1['planning_id'],
+                        'planning2_id': s2['planning_id'],
+                        'date_1':       str(s1['date']),
+                        'time_1':       str(s1['time']),
+                        'date_2':       str(s2['date']),
+                        'time_2':       str(s2['time']),
+                    })
 
-def distinct_creneau(request):
-    # Group by formation, id_creneau, and section and count how many records in each group
-    duplicates = Planning.objects.values('formation', 'id_creneau', 'section').annotate(
-        group_creneau=Count('id_creneau')
-    ).filter(group_creneau__gt=1)
-
-    if duplicates.exists():
-        occurence = []
-        warnings = []
-
-        for group in duplicates:
-            # Get all planning ids for this formation & id_creneau & section
-            planning_ids = list(
-                Planning.objects.filter(
-                    formation=group['formation'],
-                    id_creneau=group['id_creneau'],
-                    section=group['section'],
-                ).values_list('id_planning', flat=True)
-            )
-            warning_msg = (
-                f"There are exams with the same schedule "
-                f"having multiple slots (found {group['group_creneau']} groups)."
-            )
-            warnings.append(warning_msg)
-            occurence.append({
-                'formation': group['formation'],
-                'id_creneau': group['id_creneau'],
-                'section': group['section'],
-                'group_creneau': group['group_creneau'],
-                'planning_ids': planning_ids
+        if formation_conflicts:
+            conflicts_report.append({
+                'Module':    Module,   # adapt as needed
+                'conflicts': formation_conflicts,
             })
 
-        return JsonResponse({
-            'warnings': warnings,
-            'duplicates': occurence
-        })
-
-    return JsonResponse({
-        'message': 'All exams have distinct scheduling.'
-    })
+    # Return one of two JSON responses
+    if conflicts_report:
+        return JsonResponse({'conflicts': conflicts_report})
+    else:
+        return JsonResponse({'message': 'No date/time conflicts of this type found.'})
 
 
 def check_enseignant_schedule_conflict(request):
@@ -81,11 +82,6 @@ def check_enseignant_schedule_conflict(request):
             'surveillance_id': surveillant.id_surveillance
         })
     
-    # Debug - print what we found for each teacher
-    for code_enseignant, surveillances in enseignants_surveillances.items():
-        print(f"Teacher {code_enseignant} has {len(surveillances)} assignments:")
-        for s in surveillances:
-            print(f"  Planning {s['planning_id']} at {s['date']} {s['time']}")
     
     # Check for conflicts - same teacher assigned to different plannings at the same time
     for code_enseignant, surveillances in enseignants_surveillances.items():

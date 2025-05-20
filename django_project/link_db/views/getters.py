@@ -25,6 +25,9 @@ def get_model_data(request):
         return JsonResponse({'error': str(e)}, status=500)
     
     
+def get_supervisor(request):
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Only GET requests are allowed'}, status=405)
     
 
          

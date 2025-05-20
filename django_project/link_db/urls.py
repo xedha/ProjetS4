@@ -12,7 +12,7 @@ urlpatterns = [
     path('get_model_data/',views.get_model_data),
     path('add_model_row/',views.add_model_row),
     path('Edit_Model/',views.Edit_Model),
-    path('distinct_creneau/',views.distinct_creneau),
+    path('check_exam_date/',views.check_exam_date),
     path('check_enseignant_schedule_conflict/',views.check_enseignant_schedule_conflict),
     path('check_salle_schedule_conflict/',views.check_salle_schedule_conflict),
     ]

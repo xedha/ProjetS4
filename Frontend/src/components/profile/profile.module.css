@@ -1,0 +1,391 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
+
+
+.bdd{
+  position: absolute;
+top : 9.69rem;
+left : 24.13rem;
+
+}
+/* Blur overlay to cover entire screen */
+.blurOverlay {
+    font-family: 'Poppins', sans-serif;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 60.125rem;
+  height: 30rem;
+  backdrop-filter: blur(10px);
+  background-color: rgba(0, 0, 0, 0.3); /* Optional dark layer */
+  z-index: 1;
+  position: absolute;
+  top : 200rem;
+    width: 60.125rem;
+    height: 10.1875rem;
+    border-radius: 1.5625rem;
+    background: #F5F5F5;
+    flex-shrink: 0;
+    
+}
+
+/* Container for the form */
+.container {
+width: 80.125rem;
+height: 40.1875rem;
+border-radius: 1.5625rem;
+background: #F5F5F5;
+flex-shrink: 0;
+
+
+}
+
+
+/* Title section */
+.title {
+width: 6.88863rem;
+height: 1.42269rem;
+flex-shrink: 0;
+color: #1814F3;
+font-family: Inter;
+font-size: 1rem;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
+  ; 
+
+
+}
+
+
+.edit{
+
+}
+.title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 30px;
+  border-radius: 5px;
+  background: #45D699
+}
+
+/* Input fields container */
+.userDetails {
+    font-family: 'Poppins', sans-serif;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin: 20px 0 12px 0;
+    width:60.69213rem;
+
+    position: absolute;
+top : 10.84rem;
+left : 17.13rem;
+
+  
+}
+
+/* Individual input box */
+.inputBox {
+    font-family: 'Poppins', sans-serif;
+  margin-bottom: 15px;
+  width: calc(50% - 20px);
+    
+}
+
+.inputBox span.details {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.inputBox input {
+  height: 45px;
+  width: 100%;
+  outline: none;
+  font-size: 16px;
+  border-radius: 5px;
+  padding-left: 15px;
+  border: 1px solid #ccc;
+  border-bottom-width: 2px;
+  transition: all 0.3s ease;
+}
+
+.inputBox input:focus,
+.inputBox input:valid {
+  border-color:var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));;
+}
+
+/* Button */
+.button {
+    font-family: 'Poppins', sans-serif;
+  height: 45px;
+  margin: 35px 0;
+    width: 15.76913rem;
+    height: 3.74388rem;
+    border-radius: 0.9375rem;
+   
+    flex-shrink: 0;
+
+    position: absolute;
+top : 35.44rem;
+left : 59rem;
+
+}
+
+.button input {
+  height: 100%;
+  width: 100%;
+  border-radius: 5px;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+width: 15.76913rem;
+height: 3.74388rem;
+border-radius: 0.9375rem;
+background: #1814F3;
+flex-shrink: 0;
+}
+
+.button input:hover {
+  background: white
+}
+
+/* Responsive for mobile */
+@media (max-width: 584px) {
+  .container {
+    max-width: 100%;
+  }
+
+  .userDetails .inputBox {
+    width: 100%;
+  }
+
+  .userDetails {
+    font-family: 'Poppins', sans-serif;
+    max-height: 300px;
+    overflow-y: scroll;
+  }
+
+  .userDetails::-webkit-scrollbar {
+    width: 5px;
+  }
+}
+
+.close {
+    background: transparent; /* Make the background transparent */
+    border: none; /* Remove the border */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 17px; /* Space around the SVG */
+    cursor: pointer;
+    position: absolute; /* Make the button absolute */
+    top: 1rem;
+    right: 1rem;
+    z-index: 10; /* Ensure the close button is on top of other elements */
+  }
+  
+  .svg {
+    cursor: pointer; /* Make the SVG clickable */
+    position: absolute; /* Ensure it's placed properly */
+    top: 0.3rem;
+    right: 0.2rem;
+    pointer-events: auto; /* Ensure the SVG is interactive */
+  }
+  
+  .radio-inputs {
+    position: relative;
+    display: flex;
+    border-radius: 0.5rem;
+    box-sizing: border-box;
+    font-size: 14px;
+    width: 100%;
+    padding: 1rem 1rem 0 1rem;
+  }
+  
+  .radio-inputs .radio input {
+    display: none;
+  }
+  
+  .radio-inputs .radio .name {
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+   
+    border: none;
+    padding: 0.5rem 2rem;
+    color: blue;
+    transition: all 0.15s ease-in-out;
+    position: relative;
+    color: #1814F3;
+    font-family: Inter;
+    font-size: 1.2rem;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    background-color: #D3D3D3;
+    
+    border-top-left-radius:1rem ;
+    border-top-right-radius:1rem ;
+    margin-left: 0.3rem;
+ /* Default gray when not active */
+  }
+  
+  .radio-inputs .radio input:checked + .name {
+    background-color: #F5F5F5; /* Blue when active */
+    font-weight: 600;
+    color: #1814F3; /* White text on blue */
+    
+  }
+  
+  .radio-inputs .radio input + .name:hover {
+    color: #53ddf5;
+  }
+  
+  .radio-inputs .radio input:checked + .name:hover {
+    color: #1d1d29;
+  }
+  
+  .radio-inputs .radio input:checked + .name::after,
+  .radio-inputs .radio input:checked + .name::before {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    bottom: 0;
+  }
+  
+  .radio-inputs .radio input:checked + .name::after {
+    right: -10px;
+    border-bottom-left-radius: 300px;
+    box-shadow: -3px 3px 0px 3px #F5F5F5;
+    width: 9.4615rem;
+    height: 0.22463rem;
+    flex-shrink: 0;
+    border-radius: 0.625rem 0.625rem 0rem 0rem;
+    background: #1814F3; /* Blue underline when active */
+    padding: 4rem\;
+  }
+  
+  .radio-inputs .radio input:checked + .name::before {
+    left: -10px;
+    border-bottom-right-radius: 300px;
+    box-shadow: 3px 3px 0px 3px #F5F5F5;
+  }
+  
+  .radio-inputs .radio input:not(:checked) + .name {
+    background-color: #F5F5F5; /* Gray when not active */
+    color: #7A7A7A; /* Gray text when not active */
+  }
+  
+  .radio-inputs .radio input:not(:checked) + .name:hover {
+    color: #A9A9A9; /* Darker gray when hovering over inactive state */
+  }
+  
+  .profilePic{
+    width: 11.125rem;
+height: 9.75rem;
+flex-shrink: 0;
+border-radius: 8rem;
+
+  }
+  .iconWrapper {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    background: url('/src/assets/blue.svg');
+    background-size: cover;
+    background-position: center;
+  }
+  
+  .editicon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3rem;
+    height: 1.7rem;
+    cursor: pointer;
+  }
+  
+  .profilePicSection{
+    position: absolute;
+    top : 7rem;
+    left : 2rem;
+    
+  }
+.editPic{
+  position: absolute;
+  top : 6.69rem;
+  left : 8.13rem;
+  
+
+}
+.content{
+  
+position : absolute;
+top:8rem;
+left:4rem;
+width: 68.875rem;
+height: 8.125rem;
+
+}
+.change{
+  position : absolute;
+  top:-2rem;
+  left:0rem;
+
+  color: #333B69;
+  font-family: Inter;
+  font-size: 1.3625rem;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+
+} 
+.button2 {
+  font-family: 'Poppins', sans-serif;
+height: 45px;
+margin: 35px 0;
+  width: 15.76913rem;
+  height: 3.74388rem;
+  border-radius: 0.9375rem;
+ 
+  flex-shrink: 0;
+
+  position: absolute;
+top : 27.44rem;
+left : 59rem;
+
+}
+
+.button2 input {
+height: 100%;
+width: 100%;
+border-radius: 5px;
+border: none;
+color: #fff;
+font-size: 18px;
+font-weight: 500;
+letter-spacing: 1px;
+cursor: pointer;
+transition: all 0.3s ease;
+width: 15.76913rem;
+height: 3.74388rem;
+border-radius: 0.9375rem;
+background: #1814F3;
+flex-shrink: 0;
+}
+
+.button2 input:hover {
+background: white
+}

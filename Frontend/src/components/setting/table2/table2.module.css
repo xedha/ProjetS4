@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+
+
+html {
+  font-size: min(1vw, 1.8vh); /* Adapts to both width and height */
+}
+
+
+.table{
+ 
+  width: 80.375rem;
+height: 2.9375rem;
+   
+position: absolute;
+top:64rem;
+right: 4%;
+
+color: #000;
+font-family: Montserrat;
+font-size: 0.875rem;
+font-style: normal;
+font-weight: 700;
+line-height: normal;
+font-size: 0.9rem;
+
+
+
+
+
+width: 68%;   
+
+}
+
+/* Optional: Round top cells */
+.table thead tr:first-child th:first-child {
+  border-top-left-radius: 16px;
+}
+.table thead tr:first-child th:last-child {
+  border-top-right-radius: 16px;
+}
+
+/* Optional: Round bottom cells */
+.table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 16px;
+}
+.table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 16px;
+}
+
+.check{
+
+  width: 150px;         /* Wider select box */
+  font-size: 16px;      /* Bigger text */
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+.check:hover {
+  border-color: #3182ce;      /* Border turns blue on hover */
+  background-color: #ebf8ff;  /* Light blue background on hover */
+  color: #2b6cb0;              /* Text turns blue */
+}
+.semster{
+  width: 150px;         /* Wider select box */
+  font-size: 16px;      /* Bigger text */
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  width: 150px;  
+  font-size: 18px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background-color: #f7fafc;
+  border: 1px solid #cbd5e0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+  outline: none;
+}
+.semster:hover{
+  background-color: #ebf8ff;
+  border-color: #3182ce;
+  color: #2b6cb0;
+  
+}
+
+
+.selectBox {
+  width: 15rem;  
+  font-size: 1.2rem;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background-color: #f7fafc;
+  border: 1px solid #cbd5e0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+  outline: none;
+}
+
+.selectBox:hover {
+  background-color: #ebf8ff;
+  border-color: #3182ce;
+  color: #2b6cb0;
+}
+
+.selectBox:focus {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.6);
+}
+
+.head{
+ 
+  height: 2.75rem;
+  padding: 0.8125rem 0.8125rem 0.8125rem 1.375rem;
+  border: 0.5px solid #000;
+  background: var(--Style, linear-gradient(180deg, #45D699 0%, #08B2AC 100%));
+  justify-content: space-between;
+  align-items: center;
+  flex: 1 0 0;
+  color: #FFF;
+  font-family: Poppins;
+  font-size: 1.25rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.125rem; /* 90% */
+  letter-spacing: 0.03125rem;
+
+}

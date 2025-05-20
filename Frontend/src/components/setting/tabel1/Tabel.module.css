@@ -1,0 +1,309 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+
+
+html {
+  font-size: min(1vw, 1.8vh); /* Adapts to both width and height */
+}
+
+
+
+.tabel {
+  position: absolute;
+  top: 27rem;
+  right: 4%;
+  
+
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;           /* Remove inner spacing */
+  border: 1px solid #000;       /* Outer border */
+  border-radius: 0.75rem;  
+  width: 68%;      /* Outer border radius */
+}
+
+
+
+
+thead, .mainraw {
+  border-radius: 0;
+
+}
+
+/* Apply compact border-radius on the first and last header cells */
+.tabel thead th:first-child {
+  border-top-left-radius: 0.75rem;
+}
+
+.tabel thead th:last-child {
+  border-top-right-radius: 0.75rem;
+}
+
+.mainraw {
+  
+
+  height: 4.625rem;
+  padding: 1rem;
+  border-radius: 0.75rem 0.75rem 0rem 0rem;
+  border: 1px solid #000;
+
+  /* Use solid background */
+  background: var(--tabel, #EBEBEB); /* same color but 100% opacity */
+  backdrop-filter: none; /* just in case something else is blurring it */
+  
+  border-radius: 1rem 1rem 0rem 0rem;
+border: 1px solid #000;
+background: var(--Style, linear-gradient(180deg, #45D699 0%, #08B2AC 100%));
+box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+
+}
+
+
+
+
+.lines {
+ height: 4.625rem;
+  padding: 1rem;
+  border: 1px solid #000;
+  background: var(--light-blue, #EAF2F9);
+  
+}
+
+/* Alternate coloring using one class */
+.lines:nth-child(odd) {
+  background-color: var(--light-blue, #EAF2F9);
+}
+
+.lines:nth-child(even) {
+  background-color: white;
+}
+
+/* Add extra padding to the last line */
+.lines:last-child {
+  position: relative;
+  overflow: hidden;
+  border: none; /* remove the border from the row */
+  background: #FFF;
+}
+
+.textnormal {
+  width: 6.5625rem;
+  color: #000;
+  font-family: Montserrat;
+  font-size: 0.99rem;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  word-wrap: break-word;  /* Allow text to wrap */
+  overflow-wrap: break-word; /* Ensures text breaks if it overflows */
+  white-space: normal; /* Ensure that the text can wrap onto the next line */
+  padding: 0.5rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #050505;
+  color: #000;
+font-family: Montserrat;
+font-size: 0.875rem;
+font-style: normal;
+font-weight: 500;
+line-height: normal
+
+  
+}
+
+.headtext {
+  flex: 1 0 0;
+  color: #ffffff;
+  font-family: Montserrat;
+  font-size: 0.875rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #fffbfb;
+  
+}
+
+.buttonss{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem; 
+  
+}
+
+.modifybutton{
+  
+  width: 2rem;
+  height: 2rem; 
+ 
+    background-image: url('/src/components/exam/assets/edit.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    
+    margin-right: 0.3rem;
+    
+ 
+}
+.trashbutton{
+
+
+
+  
+  width: 2rem;
+height: 2rem;
+background-image: url('/src/components/exam/assets/trash.svg');
+background-size: contain;
+background-repeat: no-repeat;
+border: none;
+}
+
+
+
+/* From Uiverse.io by mrhyddenn */ 
+.uiverse {
+
+ 
+  position: relative;
+  background-image: url('/src/components/exam/assets/trash.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  border: none;
+  color: #000;
+  
+  
+ 
+  width: 2rem;
+  height: 2rem;
+  
+  font-size: 17px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.tooltip {
+  font-family: popins;
+  position: absolute;
+  right: 130%; /* push it to the left side */
+  top: 50%;
+  transform: translateY(-50%);
+
+  font-size: 13px;
+  padding: 2px 10px;
+  border-radius: 10px;
+  box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+    width: 200px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    font-size: clamp(10px, 5vw, 25px); /* Auto-scaling font */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  
+  
+}
+
+/* Adjust the small triangle to the right side */
+.tooltip::before {
+  content: "";
+  position: absolute;
+  height: 8px;
+  width: 8px;
+  right: -4px; /* place the arrow on the right */
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.uiverse:hover .tooltip {
+  right: 130%; /* make sure this matches .tooltip's right */
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+
+svg:hover span,
+svg:hover .tooltip {
+  text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.1);
+}
+
+.uiverse:hover,
+.uiverse:hover .tooltip,
+.uiverse:hover .tooltip::before {
+  background: linear-gradient(320deg, rgb(146, 3, 3), rgb(255, 0, 0));
+  color: #ffffff;
+}
+
+
+
+
+.modifybutton {
+ 
+  position: relative;
+ 
+  
+  outline: none;
+  background-color: transparent;
+  color: white;
+
+  border-radius: 0.3em;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.modifybutton::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 3%;
+  width: 95%;
+  height: 40%;
+  
+  transition: 0.5s;
+  transform-origin: center;
+  
+}
+
+.modifybutton::before {
+  content: "";
+  transform-origin: center;
+  position: absolute;
+  top: 80%;
+  left: 3%;
+  width: 95%;
+  height: 40%;
+
+  transition: 0.5s;
+}
+
+.modifybutton:hover::before, button:hover::after {
+  transform: scale(0)
+}
+
+.modifybutton:hover {
+  box-shadow: inset 0px 0px 25px #ffffff;
+}
+
+
+
+

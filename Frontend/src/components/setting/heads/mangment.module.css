@@ -1,0 +1,34 @@
+
+html {
+    font-size: min(1vw, 1.7vh); /* Adapts to both width and height */
+  }
+
+  body {
+    height: 89.3rem;;
+  }
+
+.header{
+display: flex;
+width: 68%;
+height: 2.9375rem;
+padding: 0.5rem 0.75rem;
+border-radius: 0.5rem;
+background: var(--Style, linear-gradient(180deg, #45D699 0%, #08B2AC 100%));
+justify-content: center;
+align-items: center;
+gap: 0.5rem;
+flex-shrink: 0;
+    color: #FFF;
+    font-family: Poppins;
+    font-size: 1.25rem;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 150.067%;
+    letter-spacing: 0.15rem;
+
+    position :absolute;
+    top : 59rem;
+    right: 4%;
+ 
+
+}

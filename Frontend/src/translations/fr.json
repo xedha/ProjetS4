@@ -191,7 +191,17 @@
     "statusRetired": "RETRAITÉ",
     "statusMutated": "MUTÉ",
     "statusMed": "MED",
-    "statusAdmin": "ADMIN"
+    "statusAdmin": "ADMIN",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "faculty": "Faculté",
+    "degree": "Diplôme",
+    "type": "Type",
+    "email1": "Email 1",
+    "email2": "Email 2",
+    "phone1": "Téléphone 1",
+    "phone2": "Téléphone 2",
+    "action": "Action"
   },
   "courses": {
     "title": "Cours",
@@ -223,7 +233,23 @@
     "enterTutorialHours": "Entrez les heures de TD",
     "practicalHours": "Heures de TP (VHTP)",
     "enterPracticalHours": "Entrez les heures de TP",
-    "addModule": "Ajouter le Module"
+    "addModule": "Ajouter le Module",
+    "domain": "Domaine",
+    "enterDomain": "Entrez le domaine",
+    "field": "Filière",
+    "enterField": "Entrez la filière",
+    "cycleLevel": "Niveau Cycle",
+    "enterCycleLevel": "Entrez le niveau du cycle",
+    "specialties": "Spécialités",
+    "enterSpecialties": "Entrez les spécialités",
+    "numSections": "Nombre de Sections",
+    "enterNumSections": "Entrez le nombre de sections",
+    "numGroups": "Nombre de Groupes",
+    "enterNumGroups": "Entrez le nombre de groupes",
+    "modules": "Modules",
+    "enterModule": "Entrez le module",
+    "noCoursesFound": "Aucun cours trouvé",
+    "action": "Actions"
   },
   "teaching": {
     "assignTeacher": "Assigner un Enseignant",
@@ -247,6 +273,17 @@
     "enterTeacher": "Entrez le nom de l'enseignant",
     "hours": "Heures",
     "enterHours": "Entrez les heures",
-    "addModule": "Ajouter le Module"
+    "addModule": "Ajouter le Module",
+    "noTeachingsFound": "Aucun enseignement trouvé",
+    "editTeaching": "Modifier l'enseignement",
+    "deleteTeaching": "Supprimer l'enseignement",
+    "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer cet enseignement ?",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "action": "Action",
+    "academicYear": "Année Universitaire",
+    "typeCOURS": "COURS",
+    "typeTD": "TD",
+    "typeTP": "TP"
   }
 } 

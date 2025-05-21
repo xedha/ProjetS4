@@ -1,7 +1,6 @@
 import styles from './addbutton.module.css';
 import { useState } from 'react';
 import Form from './form';
-import Form2 from './Form2';
 import add from "./assets/add.svg"
 import { useTranslation } from 'react-i18next';
 
@@ -39,8 +38,6 @@ function AddButton() {
         />{' '}
         {t('form.addSpecialty')}
       </button>
-
-      {showSpecialtyForm && <Form2 setShowPopup={setShowSpecialtyForm} />}
     </>
   );
 }

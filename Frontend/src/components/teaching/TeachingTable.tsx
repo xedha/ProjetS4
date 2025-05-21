@@ -2,25 +2,29 @@
 
 import React from "react"
 import styles from "../common/table.module.css"
+import { useTranslation } from "react-i18next"
 
-interface Teaching {
-  id: number
-  level: string
-  specialty: string
-  semester: string
-  section: string
-  group: string
-  type: string
-  moduleName: string
-  moduleAbbreviation: string
-  teacher: string
-  hours: string
+// Maintain the original Teaching interface to match Django backend
+export interface Teaching {
+  id_charge: number;
+  palier?: string;                     // PALIER
+  specialite?: string;                // SPECIALITE
+  semestre?: string;                  // SEMESTRE
+  section?: string;                   // SECTION
+  groupe?: string;                    // Groupe
+  type?: string;                      // Type
+  "intitulé_module"?: string;       // Intitulé MODULE
+  abv_module?: string;                // Abv MODULE
+  code_enseignant?: string;           // Code_Enseignant (foreign key)
+  annee_universitaire: string;        // annee_universitaire
 }
+
+
 
 interface TeachingTableProps {
   teachings: Teaching[]
   onEdit: (id: number) => void
-  onDelete: (id: number) => void
+  onDelete: (TEA: Teaching) => void
   currentPage: number
   totalPages: number
   onPageChange: (page: number) => void
@@ -34,86 +38,94 @@ const TeachingTable: React.FC<TeachingTableProps> = ({
   totalPages,
   onPageChange,
 }) => {
+  const { t } = useTranslation();
+
+  // Add function to get appropriate class based on teaching type
+  const getTypeClass = (type: string = "") => {
+    switch (type.toUpperCase()) {
+      case "COURS":
+        return styles.statusCOURS
+      case "TD":
+        return styles.statusTD
+      case "TP":
+        return styles.statusTP
+      default:
+        return styles.statusUnknown
+    }
+  }
+
+  // Use translations for table headers
+  const tableHeaders = [
+    t('teaching.level'),
+    t('teaching.specialty'),
+    t('teaching.semester'),
+    t('teaching.section'),
+    t('teaching.group'),
+    t('teaching.type'),
+    t('teaching.moduleName'),
+    t('teaching.moduleAbbreviation'),
+    t('teaching.teacher'),
+    t('teaching.academicYear'),
+    t('teaching.action')
+  ];
+
   return (
     <>
       <div className={styles.tableContainer}>
         <table className={styles.table}>
           <thead>
             <tr className={styles.tableHeader}>
-              <th className={styles.tableHeaderCell}>Level</th>
-              <th className={styles.tableHeaderCell}>Specialty</th>
-              <th className={styles.tableHeaderCell}>Semester</th>
-              <th className={styles.tableHeaderCell}>Section</th>
-              <th className={styles.tableHeaderCell}>Group</th>
-              <th className={styles.tableHeaderCell}>Type</th>
-              <th className={styles.tableHeaderCell}>Module Name</th>
-              <th className={styles.tableHeaderCell}>Module Abbreviation</th>
-              <th className={styles.tableHeaderCell}>Teacher</th>
-              <th className={styles.tableHeaderCell}>Hours</th>
-              <th className={styles.tableHeaderCell}>Action</th>
+              {tableHeaders.map((header, index) => (
+                <th key={index} className={styles.tableHeaderCell}>{header}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {teachings.length === 0 ? (
               <tr className={styles.tableRow}>
                 <td colSpan={11} style={{ textAlign: "center", padding: "2rem" }}>
-                  No teaching assignments found
+                  {t('teaching.noTeachingsFound')}
                 </td>
               </tr>
             ) : (
               teachings.map((teaching) => (
-                <tr key={teaching.id} className={styles.tableRow}>
-                  <td className={styles.tableCell}>{teaching.level}</td>
-                  <td className={styles.tableCell}>{teaching.specialty}</td>
-                  <td className={styles.tableCell}>{teaching.semester}</td>
+                <tr key={teaching.id_charge} className={styles.tableRow}>
+                  <td className={styles.tableCell}>{teaching.palier}</td>
+                  <td className={styles.tableCell}>{teaching.specialite}</td>
+                  <td className={styles.tableCell}>{teaching.semestre}</td>
                   <td className={styles.tableCell}>{teaching.section}</td>
-                  <td className={styles.tableCell}>{teaching.group}</td>
-                  <td className={styles.tableCell}>{teaching.type}</td>
-                  <td className={styles.tableCell}>{teaching.moduleName}</td>
-                  <td className={styles.tableCell}>{teaching.moduleAbbreviation}</td>
-                  <td className={styles.tableCell}>{teaching.teacher}</td>
-                  <td className={styles.tableCell}>{teaching.hours}</td>
+                  <td className={styles.tableCell}>{teaching.groupe}</td>
+                  
+                  <td className={styles.tableCell}>
+                    <span className={`${styles.statusBadge} ${getTypeClass(teaching.type)}`}>
+                      {teaching.type}
+                    </span>
+                  </td>
+                  <td className={styles.tableCell}>{teaching['intitulé_module']}</td>
+                  <td className={styles.tableCell}>{teaching.abv_module}</td>
+                  <td className={styles.tableCell}>{teaching.code_enseignant}</td>
+                  <td className={styles.tableCell}>{teaching.annee_universitaire}</td>
                   <td className={styles.actionCell}>
                     <button
                       className={styles.editButton}
-                      onClick={() => onEdit(teaching.id)}
-                      aria-label="Edit teaching"
+                      onClick={() => onEdit(teaching.id_charge)}
+                      aria-label={t('teaching.editTeaching')}
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                       </svg>
                     </button>
                     <button
                       className={styles.deleteButton}
-                      onClick={() => onDelete(teaching.id)}
-                      aria-label="Delete teaching"
+                      onClick={() => onDelete(teaching)}
+                      aria-label={t('teaching.deleteTeaching')}
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                       </svg>
-                      <span className={styles.tooltip}>Are you sure?</span>
+                      <span className={styles.tooltip}>{t('teaching.deleteConfirmation')}</span>
                     </button>
                   </td>
                 </tr>
@@ -130,44 +142,14 @@ const TeachingTable: React.FC<TeachingTableProps> = ({
             disabled={currentPage === 1}
             onClick={() => onPageChange(currentPage - 1)}
           >
-            Previous
+            {t('teaching.previous')}
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .filter((page) => {
-              // Show first page, last page, and pages around current page
-              return page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)
-            })
-            .map((page, index, array) => {
-              // Add ellipsis if there are gaps
-              if (index > 0 && array[index - 1] !== page - 1) {
-                return (
-                  <React.Fragment key={`ellipsis-${page}`}>
-                    <span className={styles.paginationEllipsis}>...</span>
-                    <button
-                      className={`${styles.paginationNumber} ${currentPage === page ? styles.active : ""}`}
-                      onClick={() => onPageChange(page)}
-                    >
-                      {page}
-                    </button>
-                  </React.Fragment>
-                )
-              }
-              return (
-                <button
-                  key={page}
-                  className={`${styles.paginationNumber} ${currentPage === page ? styles.active : ""}`}
-                  onClick={() => onPageChange(page)}
-                >
-                  {page}
-                </button>
-              )
-            })}
           <button
             className={styles.paginationButton}
             disabled={currentPage === totalPages}
             onClick={() => onPageChange(currentPage + 1)}
           >
-            Next
+            {t('teaching.next')}
           </button>
         </div>
       )}

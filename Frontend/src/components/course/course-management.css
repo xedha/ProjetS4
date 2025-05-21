@@ -5,6 +5,15 @@
   position: relative;
 }
 
+.course-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 2rem;
+  position: relative;
+  height: 4rem;
+}
+
 .loading-container {
   display: flex;
   flex-direction: column;

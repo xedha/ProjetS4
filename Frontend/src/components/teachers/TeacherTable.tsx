@@ -2,25 +2,13 @@
 
 import React from "react"
 import styles from "../common/table.module.css"
-
-interface Teacher {
-  id: number
-  code: string
-  firstName: string
-  lastName: string
-  birthName: string
-  gender: string
-  department: string
-  grade: string
-  email: string
-  phone: string
-  status: string
-}
+import { useTranslation } from "react-i18next"
+import type { Teacher } from "../../types/teacher" // Import the Teacher type
 
 interface TeacherTableProps {
   teachers: Teacher[]
-  onEdit: (id: number) => void
-  onDelete: (teacher: Teacher) => void;
+  onEdit: (teacher: Teacher) => void
+  onDelete: (teacher: Teacher) => void
   currentPage: number
   totalPages: number
   onPageChange: (page: number) => void
@@ -34,8 +22,10 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
   totalPages,
   onPageChange,
 }) => {
+  const { t } = useTranslation();
+
   const getStatusClass = (status: string) => {
-    switch (status.toUpperCase()) {
+    switch (status?.toUpperCase()) {
       case "ADMIN":
         return styles.statusAdmin
       case "MED":
@@ -44,10 +34,39 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
         return styles.statusMutated
       case "RETIRED":
         return styles.statusRetired
+      case "UNKNOWN":
+        return styles.statusUnknown
+      case "MUTATION":
+        return styles.statusMUTATION
+      case "RETRAITE":
+        return styles.statusRETRAITE
+      case "ACTIF":
+        return styles.statusACTIF
+      case "INACTIF":
+        return styles.statusINACTIF
+      case "CONGE":
+        return styles.statusCONGE
+      case "DEMISSION":
+        return styles.statusDEMISSION
       default:
-        return ""
+        return styles.statusUnknown
     }
   }
+
+  const tableHeaders = [
+    t('teachers.firstName'),
+    t('teachers.lastName'),
+    t('teachers.birthName'),
+    t('teachers.gender'),
+    t('teachers.status'),
+    t('teachers.department'),
+    t('teachers.grade'),
+    t('teachers.email1'),
+    t('teachers.email2'),
+    t('teachers.tel1'),
+    t('teachers.tel2'),
+    t('teachers.action')
+  ];
 
   return (
     <>
@@ -55,46 +74,43 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
         <table className={styles.table}>
           <thead>
             <tr className={styles.tableHeader}>
-              <th className={styles.tableHeaderCell}>Teacher Code</th>
-              <th className={styles.tableHeaderCell}>First & last name</th>
-              <th className={styles.tableHeaderCell}>Birth Name</th>
-              <th className={styles.tableHeaderCell}>Gender</th>
-              <th className={styles.tableHeaderCell}>Department</th>
-              <th className={styles.tableHeaderCell}>Grade</th>
-              <th className={styles.tableHeaderCell}>Email</th>
-              <th className={styles.tableHeaderCell}>Phone</th>
-              <th className={styles.tableHeaderCell}>Status</th>
-              <th className={styles.tableHeaderCell}>Action</th>
+              {tableHeaders.map((header, index) => (
+                <th key={index} className={styles.tableHeaderCell}>{header}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {teachers.length === 0 ? (
               <tr className={styles.tableRow}>
-                <td colSpan={10} style={{ textAlign: "center", padding: "2rem" }}>
+                <td colSpan={tableHeaders.length} style={{ textAlign: "center", padding: "2rem" }}>
                   No teachers found
                 </td>
               </tr>
             ) : (
               teachers.map((teacher) => (
-                <tr key={teacher.id} className={styles.tableRow}>
+                <tr key={teacher.Code_Enseignant} className={styles.tableRow}>
+                  <td className={styles.tableCell}>{teacher.Code_Enseignant}</td>
+                  <td className={styles.tableCell}>{teacher.prenom}</td>
+                  <td className={styles.tableCell}>{teacher.nom}</td>
+                  <td className={styles.tableCell}>{teacher.nom_jeune_fille}</td>
+                  <td className={styles.tableCell}>{teacher.genre}</td>
                   <td className={styles.tableCell}>
-                    <div className={styles.teacherCode}>
-                      <div className={styles.teacherAvatar}></div>
-                      {teacher.code}
-                    </div>
+                    <span className={`${styles.statusBadge} ${getStatusClass(teacher.status)}`}>
+                      {teacher.status}
+                    </span>
                   </td>
-                  <td className={styles.tableCell}>{`${teacher.firstName} ${teacher.lastName}`}</td>
-                  <td className={styles.tableCell}>{teacher.birthName}</td>
-                  <td className={styles.tableCell}>{teacher.gender}</td>
-                  <td className={styles.tableCell}>{teacher.department}</td>
+                  <td className={styles.tableCell}>{teacher.departement}</td>
                   <td className={styles.tableCell}>{teacher.grade}</td>
-                  <td className={styles.tableCell}>{teacher.email}</td>
-                  <td className={styles.tableCell}>{teacher.phone}</td>
-                  <td className={styles.tableCell}>
-                    <span className={`${styles.statusBadge} ${getStatusClass(teacher.status)}`}>{teacher.status}</span>
-                  </td>
+                  <td className={styles.tableCell}>{teacher.email1}</td>
+                  <td className={styles.tableCell}>{teacher.email2}</td>
+                  <td className={styles.tableCell}>{teacher.tel1}</td>
+                  <td className={styles.tableCell}>{teacher.tel2}</td>
                   <td className={styles.actionCell}>
-                    <button className={styles.editButton} onClick={() => onEdit(teacher.id)} aria-label="Edit teacher">
+                    <button 
+                      className={styles.editButton} 
+                      onClick={() => onEdit(teacher)} 
+                      aria-label="Edit teacher"
+                    >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"

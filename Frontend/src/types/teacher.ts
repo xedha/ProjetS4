@@ -1,22 +1,24 @@
-// Define the Teacher interface based on your SQL database schema
 export interface Teacher {
-    id: number
-    code: string
-    firstName: string
-    lastName: string
-    birthName: string
-    gender: string
-    department: string
-    grade: string
-    email: string
-    phone: string
-    status: string
-  }
-  
-  // Response from the API
-  export interface TeacherResponse {
-    teachers: Teacher[]
-    total: number
-  }
-  
-  
+  gender: string;
+  birthName: string;
+  firstName: string;
+  lastName: string;       
+  Code_Enseignant?: string;       // Original backend field name (needed for API operations)
+  nom: string;
+  prenom: string;
+  nom_jeune_fille: string;
+  genre: string;
+  departement: string;
+  grade: string;
+  email1: string;
+  email2: string
+  tel1: string;
+  tel2: string;
+  status: string;
+}
+
+// Response from the API
+export interface TeacherResponse {
+  teachers: Teacher[]
+  total: number
+}

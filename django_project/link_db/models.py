@@ -90,11 +90,12 @@ class ChargesEnseignement(models.Model):
     type = models.CharField(db_column='Type', max_length=20, blank=True, null=True)  # Field name made lowercase.
     intitulé_module = models.CharField(db_column='Intitulé MODULE', max_length=100, blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
     abv_module = models.CharField(db_column='Abv MODULE', max_length=20, blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
-    Code_Enseignant = models.OneToOneField('Enseignants', models.DO_NOTHING, db_column='Code_Enseignant', blank=True, null=True)  # Field name made lowercase.
+    Code_Enseignant_id = models.OneToOneField('Enseignants', models.DO_NOTHING, db_column='Code_Enseignant', blank=True, null=True)  # Field name made lowercase.
     annee_universitaire = models.CharField(max_length=7)
+    formation = models.ForeignKey('Formations', models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'charges_enseignement'
 
 
@@ -102,9 +103,10 @@ class Creneau(models.Model):
     id_creneau = models.AutoField(primary_key=True)
     date_creneau = models.DateField()
     heure_creneau = models.TimeField()
+    salle = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'creneau'
 
 
@@ -155,7 +157,7 @@ class DjangoSession(models.Model):
 
 
 class Enseignants(models.Model):
-    code_enseignant = models.CharField(db_column='Code Enseignant', primary_key=True, max_length=20, blank=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
+    Code_Enseignant = models.CharField(db_column='Code Enseignant', unique=True, max_length=20, blank=True, primary_key=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
     nom = models.CharField(db_column='NOM', max_length=50, blank=True, null=True)  # Field name made lowercase.
     prenom = models.CharField(db_column='PRENOM', max_length=50, blank=True, null=True)  # Field name made lowercase.
     nom_jeune_fille = models.CharField(db_column='Nom Jeune Fille', max_length=255, blank=True, null=True)  # Field name made lowercase. Field renamed to remove unsuitable characters.
@@ -172,7 +174,7 @@ class Enseignants(models.Model):
     tel2 = models.CharField(db_column='TEL2', max_length=50, blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'enseignants'
 
 
@@ -187,7 +189,7 @@ class Formations(models.Model):
     modules = models.CharField(db_column='Modules', max_length=255, blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'formations'
 
 
@@ -200,46 +202,18 @@ class Planning(models.Model):
     id_creneau = models.ForeignKey(Creneau, models.DO_NOTHING, db_column='id_creneau')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'planning'
-
-
-class Salle(models.Model):
-    id_salle = models.AutoField(primary_key=True)
-    nom_salle = models.CharField(max_length=50)
-    zone = models.CharField(max_length=50, blank=True, null=True)
-    id_creneau = models.ForeignKey(Creneau, models.DO_NOTHING, db_column='id_creneau')
-
-    class Meta:
-        managed = False
-        db_table = 'salle'
-
-
-class Surveillance(models.Model):
-    palier = models.CharField(db_column='Palier', max_length=100, blank=True, null=True)  # Field name made lowercase.
-    spécialité = models.CharField(db_column='Spécialité', max_length=100, blank=True, null=True)  # Field name made lowercase.
-    semestre = models.CharField(db_column='Semestre', max_length=100, blank=True, null=True)  # Field name made lowercase.
-    section = models.CharField(db_column='Section', max_length=100, blank=True, null=True)  # Field name made lowercase.
-    date = models.DateField(db_column='Date', blank=True, null=True)  # Field name made lowercase.
-    horaire = models.CharField(db_column='Horaire', max_length=50, blank=True, null=True)  # Field name made lowercase.
-    salle = models.CharField(db_column='Salle', max_length=100, blank=True, null=True)  # Field name made lowercase.
-    module = models.CharField(db_column='Module', max_length=255, blank=True, null=True)  # Field name made lowercase.
-    surveillant = models.IntegerField(db_column='Surveillant', blank=True, null=True)  # Field name made lowercase.
-    ordre = models.CharField(db_column='ORDRE', max_length=50, blank=True, null=True)  # Field name made lowercase.
-
-    class Meta:
-        managed = False
-        db_table = 'surveillance'
 
 
 class Surveillant(models.Model):
     id_surveillance = models.AutoField(primary_key=True)
     id_planning = models.ForeignKey(Planning, models.DO_NOTHING, db_column='id_planning')
-    code_enseignant = models.ForeignKey(ChargesEnseignement, models.DO_NOTHING, db_column='code_enseignant', to_field='Code_Enseignant')
+    code_enseignant = models.ForeignKey(Enseignants, models.DO_NOTHING, db_column='code_enseignant')
     est_charge_cours = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'surveillant'
 
 
@@ -274,5 +248,5 @@ class Utilisateurs(models.Model):
     date_creation = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'utilisateurs'

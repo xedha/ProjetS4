@@ -1,6 +1,6 @@
 import styles from './addbutton.module.css';
 import { useState } from 'react';
-import Form2 from './Form2';
+import Form2 from './FormTeacher2';
 import { useTranslation } from 'react-i18next';
 
 function AddButton() {
@@ -10,7 +10,7 @@ function AddButton() {
 
   return (
     <>
-      {/* Add Module Button */}
+     
    
 
      

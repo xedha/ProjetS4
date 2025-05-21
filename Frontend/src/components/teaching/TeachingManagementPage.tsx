@@ -9,6 +9,7 @@ import type { Teaching } from "../../types/teaching"
 import Search from "../common/Search"
 import AddButton from "./Addbutton"
 import TeachingTable from "./TeachingTable"
+import EditTeachingForm from "./EditTeachingForm"
 import "./TeachingManagementPage.css"
 
 /**
@@ -33,23 +34,14 @@ export const TeachingManagementPage: React.FC = () => {
   const [totalTeachings, setTotalTeachings] = useState<number>(0)
   const [itemsPerPage] = useState<number>(10)
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("")
+  
+  // Edit form state
+  const [showEditForm, setShowEditForm] = useState<boolean>(false)
+  const [selectedTeaching, setSelectedTeaching] = useState<Teaching | null>(null)
 
   // Debounce search term to avoid too many API calls
   useEffect(() => {
     const timerId = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm)
-    }, 500)
-
-    return () => {
-      clearTimeout(timerId)
-    }
-  }, [searchTerm])
-
-  // Fetch teachings when page, items per page, or search term changes
-   // Debounce search term to avoid too many API calls
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-      console.log("Debounced search term updated:", searchTerm)
       setDebouncedSearchTerm(searchTerm)
     }, 500)
 
@@ -102,11 +94,11 @@ export const TeachingManagementPage: React.FC = () => {
   }
 
   // Handle teaching deletion using the API
-  const handleDeleteTeaching = async (id: number) => {
+  const handleDeleteTeaching = async (teaching: Teaching) => {
     if (window.confirm("Are you sure you want to delete this teaching assignment?")) {
       try {
-        console.log("Deleting teaching assignment with id:", id)
-        await api.deleteModel("ChargesEnseignement", id)
+        console.log("Deleting teaching assignment with id:", teaching.id_charge)
+        await api.deleteModel("ChargesEnseignement", teaching)
         console.log("Teaching assignment deleted successfully. Refreshing list...")
 
         const response = await api.getModelData("ChargesEnseignement", {
@@ -125,10 +117,39 @@ export const TeachingManagementPage: React.FC = () => {
     }
   }
 
-  // Handle editing a teaching assignment (navigates to the edit page)
+  // Handle editing a teaching assignment
   const handleEditTeaching = (id: number) => {
     console.log("Editing teaching assignment with id:", id)
-    window.location.href = `/teachings/edit/${id}`
+    const teachingToEdit = teachings.find(t => t.id_charge === id)
+    if (teachingToEdit) {
+      setSelectedTeaching(teachingToEdit)
+      setShowEditForm(true)
+    } else {
+      console.error("Teaching assignment not found for id:", id)
+    }
+  }
+
+  // Handle editing completion
+  const handleTeachingEdited = () => {
+    setShowEditForm(false)
+    setSelectedTeaching(null)
+    
+    // Refresh the teaching list
+    const fetchTeachings = async () => {
+      try {
+        const response = await api.getModelData("ChargesEnseignement", {
+          page: currentPage,
+          itemsPerPage,
+          search: debouncedSearchTerm,
+        })
+        setTeachings(response)
+        setTotalTeachings(response.length)
+      } catch (err) {
+        console.error("Error refreshing teaching list:", err)
+      }
+    }
+    
+    fetchTeachings()
   }
 
   // Handle adding a new teaching assignment
@@ -177,6 +198,7 @@ export const TeachingManagementPage: React.FC = () => {
               </button>
             </div>
           ) : (
+            <div className="teaching-table-container">
             <TeachingTable
               teachings={teachings}
               onEdit={handleEditTeaching}
@@ -185,9 +207,20 @@ export const TeachingManagementPage: React.FC = () => {
               totalPages={totalPages}
               onPageChange={handlePageChange}
             />
+            </div>
+          )}
+          
+          {showEditForm && selectedTeaching && (
+            <EditTeachingForm 
+              teaching={selectedTeaching} 
+              setShowPopup={setShowEditForm} 
+              onEdited={handleTeachingEdited} 
+            />
           )}
         </main>
       </div>
     </div>
   )
 }
+
+export default TeachingManagementPage

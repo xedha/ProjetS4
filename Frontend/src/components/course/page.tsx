@@ -9,7 +9,10 @@ import Search from "./search bar/seach"
 import { api } from "../../services/api"
 import type { Course } from "../../types/course"
 
-// Styles
+
+// Import the EditCourseForm you just created
+import EditCourseForm from "./addbutton/EditCourseForm"  
+
 import "./course-management.css"
 
 function CoursePage() {
@@ -22,6 +25,10 @@ function CoursePage() {
   const itemsPerPage = 10
   const [totalCourses, setTotalCourses] = useState<number>(0)
 
+  // New states to control edit popup
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+
   // Debounce search term and reset to first page on change
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,9 +39,6 @@ function CoursePage() {
   }, [searchTerm])
 
   const fetchCourses = useCallback(async () => {
-    console.log(
-      `[DEBUG] Fetching courses (page: ${currentPage}, perPage: ${itemsPerPage}, search: '${debouncedSearchTerm}')`
-    )
     try {
       setLoading(true)
       setError(null)
@@ -43,20 +47,17 @@ function CoursePage() {
         itemsPerPage,
         search: debouncedSearchTerm,
       })
-      console.log("[DEBUG] API response:", response)
 
       let data: Course[] = []
       let total: number = 0
 
       if (Array.isArray(response)) {
-        // If API returns array directly
         data = response
         total = response.length
       } else if (response.courses && Array.isArray(response.courses)) {
         data = response.courses
         total = typeof response.total === 'number' ? response.total : response.courses.length
       } else if (response.results && Array.isArray(response.results)) {
-        // DRF-style pagination
         data = response.results
         total = typeof response.count === 'number' ? response.count : response.results.length
       } else {
@@ -66,7 +67,6 @@ function CoursePage() {
       setCourses(data)
       setTotalCourses(total)
     } catch (err: any) {
-      console.error("[ERROR] fetchCourses failed:", err)
       setError(`Failed to fetch courses: ${err.message}`)
       setCourses([])
       setTotalCourses(0)
@@ -75,28 +75,39 @@ function CoursePage() {
     }
   }, [currentPage, debouncedSearchTerm])
 
-  // Fetch on mount and whenever dependencies change
   useEffect(() => {
     fetchCourses()
   }, [fetchCourses])
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (course: Course) => {
     if (!window.confirm("Are you sure you want to delete this course?")) return
     try {
       setLoading(true)
-      await api.deleteModel("Formations", id)
-      // After delete, refetch current page
+      await api.deleteModel("Formations", course)
       fetchCourses()
     } catch (err) {
-      console.error("[ERROR] delete failed:", err)
       alert("Delete failed. Please try again.")
     } finally {
       setLoading(false)
     }
   }
 
+  // When user clicks edit button in the table
   const handleEdit = (id: number) => {
-    alert(`Edit course with ID: ${id}`)
+    const courseToEdit = courses.find(c => c.id === id)
+    if (courseToEdit) {
+      setSelectedCourse(courseToEdit)
+      setShowEditForm(true)
+    } else {
+      alert("Course not found")
+    }
+  }
+
+  // When edit form finishes and signals update
+  const handleCourseEdited = () => {
+    setShowEditForm(false)
+    setSelectedCourse(null)
+    fetchCourses()
   }
 
   const totalPages = Math.ceil(totalCourses / itemsPerPage)
@@ -107,6 +118,11 @@ function CoursePage() {
       <div className="teacher-management-main">
         <Header title="Course Management" />
         <main className="course-management-content">
+          <div className="course-actions">
+            <Search value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Addbutton />
+          </div>
+
           {loading ? (
             <div className="loading-container">
               <div className="loading-spinner" />
@@ -129,11 +145,15 @@ function CoursePage() {
               onPageChange={setCurrentPage}
             />
           )}
+
+          {showEditForm && selectedCourse && (
+            <EditCourseForm
+              course={selectedCourse}
+              setShowPopup={setShowEditForm}
+              onEdited={handleCourseEdited}
+            />
+          )}
         </main>
-        <div className="course-actions">
-          <Search  />
-          <Addbutton />
-        </div>
       </div>
     </div>
   )

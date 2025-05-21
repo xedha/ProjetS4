@@ -2,7 +2,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import logging
 from django.db.models import  Count
-from link_db.models import Planning, Surveillant,Creneau,Salle,Formations
+from link_db.models import Planning, Surveillant,Creneau,Formations
 logger = logging.getLogger(__name__)
 def check_exam_date(request):
     exams = Planning.objects.select_related('formation', 'id_creneau').all()
@@ -124,64 +124,7 @@ def check_enseignant_schedule_conflict(request):
     
     return JsonResponse({'conflicts': conflicts}, safe=False)
 
-def check_salle_schedule_conflict(request):
-    conflicts = []
-    
-    # Get all salles with their related creneau data
-    salles = Salle.objects.select_related('id_creneau').all()
-    
-    # Group salles by name and collect their creneaux
-    salle_creneaux = {}
-    for salle in salles:
-        salle_name = salle.nom_salle
-        creneau = salle.id_creneau  # Get the Creneau object linked to this salle
-        
-        if salle_name not in salle_creneaux:
-            salle_creneaux[salle_name] = []
-        
-        # Store creneau details for this salle
-        salle_creneaux[salle_name].append({
-            'salle_id': salle.id_salle,
-            'creneau_id': creneau.id_creneau,
-            'date': creneau.date_creneau,
-            'time': creneau.heure_creneau
-        })
-    
-    # Check for conflicts: same salle in overlapping creneaux (same date/time)
-    for salle_name, creneaux in salle_creneaux.items():
-        # Skip if this salle has only one creneau assignment
-        if len(creneaux) <= 1:
-            continue
-        
-        # Compare each pair of creneaux for this salle
-        conflicts_for_salle = []
-        
-        for i in range(len(creneaux)):
-            for j in range(i + 1, len(creneaux)):
-                cr1 = creneaux[i]
-                cr2 = creneaux[j]
-                
-                # Check if date and time overlap (exact match indicates conflict)
-                if cr1['date'] == cr2['date'] and cr1['time'] == cr2['time']:
-                    conflict_found = {
-                        'salle_name': salle_name,
-                        'creneau1_id': cr1['creneau_id'],
-                        'salle1_id': cr1['salle_id'],
-                        'creneau2_id': cr2['creneau_id'],
-                        'salle2_id': cr2['salle_id'],
-                        'date': str(cr1['date']),
-                        'time': str(cr1['time'])
-                    }
-                    conflicts_for_salle.append(conflict_found)
-        
-        # Add conflicts for this salle to the main list
-        if conflicts_for_salle:
-            conflicts.append({
-                'salle': salle_name,
-                'conflicts': conflicts_for_salle
-            })
-    
-    return JsonResponse({'conflicts': conflicts}, safe=False)
+
 
 
 

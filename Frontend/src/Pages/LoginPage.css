@@ -1,37 +1,54 @@
 .login-page {
-  min-height: 100vh;
+  width: 100vw;
   height: 100vh;
-  width: 100%;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  position: relative;
   overflow: hidden;
 }
 
-.login-container {
-  width: 100%;
+/* Since your LeftPanel has absolute positioning, we need to ensure proper layout */
+.login-page .left-panel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  z-index: 1;
+}
+
+.login-page .right-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 41%; /* Since left panel is 59% */
   height: 100%;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
 }
 
-.login-left {
-  width: 52.875rem;
-  height: 100%;
-  flex-shrink: 0;
-}
-
-.login-right {
-  width: 60%;
-  height: 100%;
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  html {
+    font-size: 14px; /* Override the responsive font-size for smaller screens */
+  }
 }
 
 @media (max-width: 768px) {
-  .login-container {
-    flex-direction: column;
+  .login-page .left-panel {
+    display: none;
   }
-
-  .login-left,
-  .login-right {
+  
+  .login-page .right-panel {
     width: 100%;
-    height: 50%;
+    position: relative;
+  }
+  
+  .login-form-container {
+    max-width: 90%;
+    margin: 0 auto;
   }
 }
-

@@ -3,6 +3,7 @@
 import type React from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../AuthContext'; // Import useAuth hook
 import "./Sidebar.css"
 import logo from "./flags/logo.svg"
 
@@ -17,12 +18,20 @@ export const Sidebar: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation()
   const navigate = useNavigate()
+  const { logout } = useAuth(); // Get logout function from auth context
 
-  const handleSignOut = () => {
-    // Clear any auth tokens or user data
-    localStorage.removeItem("token");
-    // Force a page reload to clear all state
-    window.location.href = "/login";
+  const handleSignOut = async () => {
+    try {
+      // Call the logout function from auth context
+      await logout();
+      // The navigation to login will be handled by the auth context
+      // or you can explicitly navigate after logout
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Even if logout fails, redirect to login
+      navigate('/login');
+    }
   }
 
   const menuItems: SidebarItem[] = [

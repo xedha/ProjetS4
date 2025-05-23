@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import register, login,logout,send_email_view
+from .views import register, login,logout
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
 
@@ -15,5 +15,10 @@ urlpatterns = [
     path('check_exam_date/',views.check_exam_date),
     path('check_enseignant_schedule_conflict/',views.check_enseignant_schedule_conflict),
     path('send_email/',views.send_email_view),
+    path('delete_planning_only/',views.delete_planning_only),
+    path('get_planning_with_creneau_and_formation/',views.get_planning_with_creneau_and_formation),
+    path('create_planning_with_surveillants',views.create_planning_with_surveillants),
+    path('update_planning_with_surveillants',views.update_planning_with_surveillants),
+    path('get_surveillants_by_planning/', views.get_surveillants_by_planning, name='get_surveillants_by_planning'),
     ]
 

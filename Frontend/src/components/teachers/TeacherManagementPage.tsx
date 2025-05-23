@@ -31,7 +31,7 @@ const transformTeacherData = (item: any): Teacher => {
   nom: item.nom || "",
   nom_jeune_fille: item.nom_jeune_fille || "",
   genre: item.genre || "",
-  departement: item.departement || "",
+  departement: item.département || "",
   status: item.etat || item.status || "", // Map 'etat' from backend to 'status' in frontend
   grade: item.grade || "",
   email1: item.email1 || "",
@@ -180,13 +180,16 @@ export const TeacherManagementPage: React.FC = () => {
         <main className="teacher-management-content">
           <div className="teacher-management-actions">
             <div className="search-and-actions">
-              <Search
+              <Search 
+                
                 placeholder="Search teachers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <AddButton/>
+             
+           
             </div>
+            <AddButton/>
           </div>
 
           {loading ? (
@@ -208,6 +211,7 @@ export const TeacherManagementPage: React.FC = () => {
               </button>
             </div>
           ) : (
+         <div className="teacher-table-container">
             <TeacherTable
               teachers={teachers}
               onEdit={handleEditTeacher}
@@ -216,6 +220,7 @@ export const TeacherManagementPage: React.FC = () => {
               totalPages={totalPages}
               onPageChange={handlePageChange}
             />
+            </div>
           )}
 
           {showEditForm && selectedTeacher && (

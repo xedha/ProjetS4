@@ -29,7 +29,9 @@
 .search-and-actions {
   display: flex;
   align-items: center;
-  position: relative; /* Added for absolute positioning of children */
+  position: relative; 
+  margin-right: 3rem;
+ 
 }
 
 .search-container {
@@ -128,7 +130,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   margin-bottom: 1.5rem;
-  margin-left:10%;
+  margin-left:12%;
 
 }
 
@@ -139,6 +141,7 @@
 
 .teacher-table th,
 .teacher-table td {
+  
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
@@ -344,5 +347,14 @@
   text-align: center;
   padding: 2rem;
   color: #718096;
+}
+
+.form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000; /* Ensure it's above other content */
 }
 

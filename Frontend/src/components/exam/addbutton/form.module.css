@@ -1,11 +1,9 @@
 /* Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
 
-
-
 /* Blur overlay to cover entire screen */
 .blurOverlay {
-    font-family: 'Poppins', sans-serif;
+  font-family: 'Poppins', sans-serif;
   position: fixed;
   top: 0;
   left: 0;
@@ -18,26 +16,29 @@
 
 /* Container for the form */
 .container {
-    font-family: 'Poppins', sans-serif;
+  font-family: 'Poppins', sans-serif;
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   max-width: 700px;
-  width: 100%;
+  width: 90%; /* Changed from 100% to prevent edge touching on small screens */
+  max-height: 90vh; /* Prevent container from being taller than viewport */
   background-color: #fff;
   padding: 25px 30px;
   border-radius: 5px;
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
   z-index: 1001; /* above blur */
+  overflow-y: auto; /* Allow scrolling if content is too tall */
 }
 
 /* Title section */
 .title {
-    font-family: 'Poppins', sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-size: 25px;
   font-weight: 500;
   position: relative;
+  margin-bottom: 20px;
 }
 
 .title::before {
@@ -48,12 +49,38 @@
   height: 3px;
   width: 30px;
   border-radius: 5px;
-  background: #45D699
+  background: #45D699;
+}
+
+/* Content wrapper */
+.content {
+  max-height: calc(90vh - 150px); /* Account for title and padding */
+  overflow-y: auto;
+  padding-right: 10px; /* Space for scrollbar */
+}
+
+/* Custom scrollbar for content */
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 /* Input fields container */
 .userDetails {
-    font-family: 'Poppins', sans-serif;
+  font-family: 'Poppins', sans-serif;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -62,7 +89,7 @@
 
 /* Individual input box */
 .inputBox {
-    font-family: 'Poppins', sans-serif;
+  font-family: 'Poppins', sans-serif;
   margin-bottom: 15px;
   width: calc(50% - 20px);
 }
@@ -71,30 +98,86 @@
   display: block;
   font-weight: 500;
   margin-bottom: 5px;
+  color: #333;
 }
 
-.inputBox input {
+/* Shared styles for inputs and selects */
+.inputBox input,
+.inputBox select {
   height: 45px;
   width: 100%;
   outline: none;
   font-size: 16px;
+  font-family: 'Poppins', sans-serif;
   border-radius: 5px;
   padding-left: 15px;
+  padding-right: 15px;
   border: 1px solid #ccc;
   border-bottom-width: 2px;
   transition: all 0.3s ease;
+  background-color: #fff;
+  color: #333;
 }
 
+/* Select specific styles */
+.inputBox select {
+  cursor: pointer;
+  appearance: none; /* Remove default arrow */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 20px;
+  padding-right: 45px; /* Make room for arrow */
+}
+
+/* Handle long text in select options */
+.inputBox select option {
+  padding: 10px;
+  white-space: normal; /* Allow text wrapping in dropdown */
+  word-wrap: break-word;
+}
+
+/* Focus and valid states */
 .inputBox input:focus,
-.inputBox input:valid {
-  border-color:var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));;
+.inputBox input:valid,
+.inputBox select:focus,
+.inputBox select:valid {
+  border-color: #0B8FAC;
+}
+
+/* Disabled state */
+.inputBox input:disabled,
+.inputBox select:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Loading and error messages */
+.loading,
+.error {
+  font-family: 'Poppins', sans-serif;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.loading {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.error {
+  background-color: #ffebee;
+  color: #c62828;
 }
 
 /* Button */
 .button {
-    font-family: 'Poppins', sans-serif;
+  font-family: 'Poppins', sans-serif;
   height: 45px;
-  margin: 35px 0;
+  margin: 35px 0 10px 0;
 }
 
 .button input {
@@ -108,53 +191,105 @@
   letter-spacing: 1px;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));
+  background: linear-gradient(90deg, #0B8FAC 0%, #043A46 100%);
 }
 
-.button input:hover {
-  background: white
+.button input:hover:not(:disabled) {
+  background: linear-gradient(90deg, #043A46 0%, #0B8FAC 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(11, 143, 172, 0.3);
+}
+
+.button input:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Close button */
+.close {
+  background: transparent;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+  cursor: pointer;
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 10;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.close:hover {
+  background-color: #f5f5f5;
+}
+
+.svg {
+  width: 24px;
+  height: 24px;
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.close:hover .svg {
+  color: #333;
+}
+
+/* Responsive for tablets */
+@media (max-width: 768px) {
+  .container {
+    max-width: 90%;
+    padding: 20px;
+  }
+
+  .inputBox {
+    width: 100%;
+  }
 }
 
 /* Responsive for mobile */
 @media (max-width: 584px) {
   .container {
-    max-width: 100%;
+    max-width: 95%;
+    width: 95%;
+    padding: 20px 15px;
+    max-height: 85vh;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .userDetails {
+    margin: 15px 0 10px 0;
   }
 
   .userDetails .inputBox {
     width: 100%;
+    margin-bottom: 12px;
   }
 
-  .userDetails {
-    font-family: 'Poppins', sans-serif;
-    max-height: 300px;
-    overflow-y: scroll;
+  .inputBox input,
+  .inputBox select {
+    font-size: 14px;
+    height: 40px;
   }
 
-  .userDetails::-webkit-scrollbar {
-    width: 5px;
+  .button {
+    margin: 25px 0 10px 0;
+  }
+
+  .button input {
+    font-size: 16px;
+  }
+
+  /* Adjust select arrow for mobile */
+  .inputBox select {
+    background-size: 18px;
+    background-position: right 12px center;
+    padding-right: 40px;
   }
 }
-
-.close {
-    background: transparent; /* Make the background transparent */
-    border: none; /* Remove the border */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 16px 17px; /* Space around the SVG */
-    cursor: pointer;
-    position: absolute; /* Make the button absolute */
-    top: 1rem;
-    right: 1rem;
-    z-index: 10; /* Ensure the close button is on top of other elements */
-  }
-  
-  .svg {
-    cursor: pointer; /* Make the SVG clickable */
-    position: absolute; /* Ensure it's placed properly */
-    top: 0.3rem;
-    right: 0.2rem;
-    pointer-events: auto; /* Ensure the SVG is interactive */
-  }
-  

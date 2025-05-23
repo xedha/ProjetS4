@@ -15,7 +15,7 @@
         gap: 0.5rem;
         flex-shrink: 0;
 border-radius: 0.5rem;
-background: linear-gradient(90deg, #45D699 0.03%, #08B2AC 99.95%);
+background: var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));
 color: #FFF;
 font-family: Montserrat;
 font-size: 0.9375rem;
@@ -64,7 +64,7 @@ cursor: pointer;
     gap: 0.5rem;
     flex-shrink: 0;
     border-radius: 0.5rem;
-    background: var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));
+    
 color: #FFF;
 font-family: Montserrat;
 font-size: 0.9375rem;
@@ -73,7 +73,7 @@ font-weight: 700;
 line-height: normal;
 border: none;
 cursor: pointer;
-
+background: linear-gradient(90deg, #45D699 0.03%, #08B2AC 99.95%);
 
 }
 

@@ -201,7 +201,20 @@
     "email2": "Email 2",
     "phone1": "Téléphone 1",
     "phone2": "Téléphone 2",
-    "action": "Action"
+    "action": "Action",
+    "code": "Code",
+    "birthName": "Nom de naissance",
+    "gender": "Genre",
+    "status": "Statut",
+    "department": "Département",
+    "grade": "Grade",
+    "email1": "Email 1",
+    "email2": "Email 2",
+    "phone1": "Téléphone 1",
+    "phone2": "Téléphone 2",
+    "action": "Action",
+    "tel1": "Téléphone 1",
+    "tel2": "Téléphone 2"
   },
   "courses": {
     "title": "Cours",
@@ -285,5 +298,25 @@
     "typeCOURS": "COURS",
     "typeTD": "TD",
     "typeTP": "TP"
+  },
+  "teacher": {
+    "management": "Gestion des Enseignants",
+    "supervisor": "Superviseur",
+    "edit": "Modifier",
+    "name": "Nom",
+    "email": "Email",
+    "actions": "Actions",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "teachers": "Enseignants",
+    "viewTeachers": "Voir les Enseignants",
+    "table": {
+      "viewTeachers": "Voir les Enseignants",
+      "assignTeachers": "Assigner les Enseignants",
+      "teacherList": "Liste des Enseignants",
+      "noTeachers": "Aucun Enseignant Assigné",
+      "addTeacher": "Ajouter un Enseignant",
+      "removeTeacher": "Supprimer un Enseignant"
+    }
   }
 } 

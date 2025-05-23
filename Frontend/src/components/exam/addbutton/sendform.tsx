@@ -1,13 +1,44 @@
 import styles from './sendform.module.css';
+import { useState } from 'react';
+import { examApi } from '../../../services/ExamApi';
 
 interface FormProps {
   setShowPopup: (show: boolean) => void;
+  planningId?: number;
 }
 
-function Form2({ setShowPopup }: FormProps) {
-  const handleSend = () => {
-    console.log("Confirmed: Sending data...");
-    setShowPopup(false);
+function SendForm({ setShowPopup, planningId }: FormProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSend = async () => {
+    if (!planningId) {
+      setError("No planning ID provided");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log("Sending email notifications for planning ID:", planningId);
+      
+      // Call the sendEmail API method
+      const result = await examApi.sendEmail({
+        planning_id: planningId,
+        template: "exam_notification",
+        subject: "Exam Supervision Notification",
+        message: "You have been assigned as a supervisor for an upcoming exam. Please check your schedule."
+      });
+      
+      console.log("Email sent successfully:", result);
+      setShowPopup(false);
+    } catch (err) {
+      console.error('Error sending email:', err);
+      setError(err instanceof Error ? err.message : 'Failed to send email');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -21,11 +52,27 @@ function Form2({ setShowPopup }: FormProps) {
           </svg>
         </button>
 
-        <div className={styles.title}>Are you sure?</div>
+        <div className={styles.title}>Send Email Notifications</div>
+        <p className={styles.subtitle}>Are you sure you want to send email notifications to all supervisors for this exam?</p>
+
+        {error && <div className={styles.error}>{error}</div>}
 
         <div className={styles.content}>
-          <div className={styles.button}>
-            <input type="button" value="Yes, send" onClick={handleSend} />
+          <div className={styles.buttonGroup}>
+            <button 
+              className={styles.cancelButton} 
+              onClick={() => setShowPopup(false)}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button 
+              className={styles.confirmButton} 
+              onClick={handleSend}
+              disabled={loading}
+            >
+              {loading ? "Sending..." : "Yes, send notifications"}
+            </button>
           </div>
         </div>
       </div>
@@ -33,4 +80,4 @@ function Form2({ setShowPopup }: FormProps) {
   );
 }
 
-export default Form2;
+export default SendForm;

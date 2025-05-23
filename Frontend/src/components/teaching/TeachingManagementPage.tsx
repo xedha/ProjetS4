@@ -68,6 +68,8 @@ export const TeachingManagementPage: React.FC = () => {
         })
 
         console.log("Raw teaching data from API:", response)
+        console.log("First teaching record:", response[0])
+        console.log("Teacher code in first record:", response[0]?.code_enseignant)
 
         // Adjust for a raw array response from the API.
         setTeachings(response)

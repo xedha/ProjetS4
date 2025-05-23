@@ -200,9 +200,10 @@
     "type": "Type",
     "email1": "Email 1",
     "email2": "Email 2",
-    "phone1": "Phone 1",
-    "phone2": "Phone 2",
-    "action": "Action"
+    "tel1": "Phone 1",
+    "tel2": "Phone 2",
+    "action": "Action",
+    "code": " Teacher Code "
   },
   "courses": {
     "title": "Courses",
@@ -251,6 +252,7 @@
     "enterModule": "Enter module",
     "noCoursesFound": "No courses found",
     "action": "Actions"
+    
   },
   "teaching": {
     "assignTeacher": "Assign a Teacher",
@@ -286,5 +288,25 @@
     "typeCOURS": "LECTURE",
     "typeTD": "TUTORIAL",
     "typeTP": "PRACTICAL"
+  },
+  "teacher": {
+    "management": "Teacher Management",
+    "supervisor": "Supervisor",
+    "edit": "Edit",
+    "name": "Name",
+    "email": "Email",
+    "actions": "Actions",
+    "save": "Save",
+    "cancel": "Cancel",
+    "teachers": "Teachers",
+    "viewTeachers": "View Teachers",
+    "table": {
+      "viewTeachers": "View Teachers",
+      "assignTeachers": "Assign Teachers",
+      "teacherList": "Teacher List",
+      "noTeachers": "No Teachers Assigned",
+      "addTeacher": "Add Teacher",
+      "removeTeacher": "Remove Teacher"
+    }
   }
 } 

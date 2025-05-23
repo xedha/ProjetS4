@@ -25,7 +25,7 @@ const handleApiError = async (response: Response) => {
 
 // Helper function to handle API timeouts
 const fetchWithTimeout = async (url: string, options: RequestInit & FetchOptions = {}) => {
-  const { timeout = 8000, ...fetchOptions } = options;
+  const { timeout = 30000, ...fetchOptions } = options; // Increased timeout to 30 seconds
   
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -40,7 +40,7 @@ const fetchWithTimeout = async (url: string, options: RequestInit & FetchOptions
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - the server took too long to respond');
+      throw new Error(`Request timeout after ${timeout}ms - the server took too long to respond. Please try again.`);
     }
     throw error;
   }
@@ -48,7 +48,6 @@ const fetchWithTimeout = async (url: string, options: RequestInit & FetchOptions
 
 export const api = {
   async getModelData(model: string, params: { page: number; itemsPerPage: number; search: string }) {
-    // Build the query string; note the trailing slash at the end
     const queryParams = new URLSearchParams({
       model,
       page: String(params.page),
@@ -57,10 +56,12 @@ export const api = {
     });
 
     try {
-      // Make sure the URL matches your Django URL configuration exactly.
+      console.log(`Fetching ${model} data from: ${BASE_URL}/api/get_model_data/?${queryParams.toString()}`);
       const response = await fetchWithTimeout(`${BASE_URL}/api/get_model_data/?${queryParams.toString()}`);
       await handleApiError(response);
-      return await response.json();
+      const data = await response.json();
+      console.log(`Received ${model} data:`, data);
+      return data;
     } catch (error: any) {
       console.error(`Failed to fetch ${model} data:`, error);
       throw error;

@@ -1,13 +1,203 @@
 import styles from './form.module.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { examApi, CreatePlanningRequest, Surveillant } from '../../../services/ExamApi';
+import { api } from '../../../services/api';
 
 interface FormProps {
   setShowPopup: (show: boolean) => void;
+  onAddSuccess?: () => void; // Callback to refresh data after adding
 }
 
-function Form({ setShowPopup }: FormProps) {
+function Form({ setShowPopup, onAddSuccess }: FormProps) {
   const { t } = useTranslation();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Form state
+  const [formationId, setFormationId] = useState('');
+  const [section, setSection] = useState('');
+  const [session, setSession] = useState('');
+  const [creneauId, setCreneauId] = useState('');
+  const [numberOfSupervisors, setNumberOfSupervisors] = useState(1);
+  const [surveillants, setSurveillants] = useState<string[]>(['']); // Array of teacher codes
+  
+  // Data for dropdowns
+  const [formations, setFormations] = useState<any[]>([]);
+  const [creneaux, setCreneaux] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [sessions] = useState<string[]>(['Normale', 'Rattrapage']);
+  
+  // Load data for dropdowns
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        
+        // Fetch formations
+        const formationsData = await api.getModelData('Formations', {
+          page: 1,
+          itemsPerPage: 100,
+          search: '',
+        });
+        
+        if (formationsData) {
+          if (Array.isArray(formationsData)) {
+            setFormations(formationsData);
+          } else if (formationsData.results && Array.isArray(formationsData.results)) {
+            setFormations(formationsData.results);
+          } else if (formationsData.data && Array.isArray(formationsData.data)) {
+            setFormations(formationsData.data);
+          }
+        }
+        
+        // Fetch creneaux
+        const creneauxData = await api.getModelData('Creneau', {
+          page: 1,
+          itemsPerPage: 100,
+          search: '',
+        });
+        
+        if (creneauxData) {
+          if (Array.isArray(creneauxData)) {
+            setCreneaux(creneauxData);
+          } else if (creneauxData.results && Array.isArray(creneauxData.results)) {
+            setCreneaux(creneauxData.results);
+          } else if (creneauxData.data && Array.isArray(creneauxData.data)) {
+            setCreneaux(creneauxData.data);
+          }
+        }
+        
+        // Fetch teachers
+        const teachersData = await api.getModelData('Enseignants', {
+          page: 1,
+          itemsPerPage: 100,
+          search: '',
+        });
+        
+        if (teachersData) {
+          let teachersArray = [];
+          if (Array.isArray(teachersData)) {
+            teachersArray = teachersData;
+          } else if (teachersData.results && Array.isArray(teachersData.results)) {
+            teachersArray = teachersData.results;
+          } else if (teachersData.data && Array.isArray(teachersData.data)) {
+            teachersArray = teachersData.data;
+          }
+          
+          // Debug: Log the first few teachers to see their structure
+          console.log('Sample teachers data:', teachersArray.slice(0, 3));
+          
+          setTeachers(teachersArray);
+        }
+        
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load form options: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchData();
+  }, []);
+
+  // Update surveillants array when number changes
+  useEffect(() => {
+    const currentLength = surveillants.length;
+    if (numberOfSupervisors > currentLength) {
+      // Add empty slots
+      const newSurveillants = [...surveillants];
+      for (let i = currentLength; i < numberOfSupervisors; i++) {
+        newSurveillants.push('');
+      }
+      setSurveillants(newSurveillants);
+    } else if (numberOfSupervisors < currentLength) {
+      // Remove extra slots
+      setSurveillants(surveillants.slice(0, numberOfSupervisors));
+    }
+  }, [numberOfSupervisors, surveillants]);
+
+  // Handle surveillant selection change
+  const handleSurveillantChange = (index: number, value: string) => {
+    const newSurveillants = [...surveillants];
+    newSurveillants[index] = value;
+    setSurveillants(newSurveillants);
+    
+    // Debug: Log the selected value
+    console.log(`Surveillant ${index + 1} selected:`, value);
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Check if all required fields are filled
+      if (!formationId || !section || !creneauId) {
+        setError('Please fill all required fields');
+        return;
+      }
+      
+      // Check if all surveillants are selected
+      const allSurveillantsSelected = surveillants.every(s => s !== '');
+      if (!allSurveillantsSelected) {
+        setError('Please select all supervisors');
+        return;
+      }
+      
+      // Check for duplicate surveillants
+      const uniqueSurveillants = new Set(surveillants);
+      if (uniqueSurveillants.size !== surveillants.length) {
+        setError('Each supervisor must be different');
+        return;
+      }
+      
+      // Create the surveillants array with proper structure
+      const surveillantsData: Surveillant[] = surveillants.map((code, index) => ({
+        code_enseignant: code,
+        est_charge_cours: index === 0 ? 1 : 0 // First one is the main supervisor
+      }));
+      
+      // Create the planning data object
+      const planningData: CreatePlanningRequest = {
+        formation_id: parseInt(formationId),
+        section: section,
+        nombre_surveillant: numberOfSupervisors,
+        session: session || '', // Ensure we send empty string if no session selected
+        id_creneau: parseInt(creneauId),
+        surveillants: surveillantsData
+      };
+      
+      // Debug: Log the exact payload being sent
+      console.log('=== PLANNING CREATION PAYLOAD ===');
+      console.log('Full payload:', JSON.stringify(planningData, null, 2));
+      console.log('Surveillants detail:');
+      planningData.surveillants.forEach((s, i) => {
+        console.log(`  Surveillant ${i + 1}: code="${s.code_enseignant}", est_charge_cours=${s.est_charge_cours}`);
+      });
+      console.log('=================================');
+      
+      // Send the API request
+      const response = await examApi.createPlanningWithSurveillants(planningData);
+      console.log('Planning created successfully:', response);
+      
+      // Close the popup and refresh data
+      setShowPopup(false);
+      if (onAddSuccess) {
+        onAddSuccess();
+      }
+      
+    } catch (err) {
+      console.error('Error creating planning:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create planning');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -38,96 +228,137 @@ function Form({ setShowPopup }: FormProps) {
 
         {/* Form Content */}
         <div className={styles.content}>
-          <form action="#">
+          {loading && <div className={styles.loading}>Loading form data...</div>}
+          {error && <div className={styles.error}>{error}</div>}
+          
+          <form onSubmit={handleSubmit}>
             <div className={styles.userDetails}>
-              {/* Level */}
+              {/* Formation (Module) Selection */}
               <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.level')}</span>
-                <input type="text" placeholder={t('exam.enterLevel')} required />
-              </div>
-
-              {/* Specialty */}
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.specialty')}</span>
-                <input type="text" placeholder={t('exam.enterSpecialty')} required />
-              </div>
-
-              {/* Semester */}
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.semester')}</span>
-                <input type="text" placeholder={t('exam.enterSemester')} required />
+                <span className={styles.details}>{t('exam.formation')}</span>
+                <select 
+                  value={formationId} 
+                  onChange={(e) => setFormationId(e.target.value)} 
+                  required
+                  disabled={loading || formations.length === 0}
+                >
+                  <option value="">{t('exam.selectFormation')}</option>
+                  {formations.map((formation) => (
+                    <option key={formation.id} value={formation.id}>
+                      {formation.filière || formation.filiere || 'Unknown'} - 
+                      {formation.niveau_cycle || 'Unknown'} - 
+                      {formation.modules || 'Unknown'}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Section */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t('exam.section')}</span>
-                <input type="text" placeholder={t('exam.enterSection')} required />
+                <input
+                  type="text"
+                  value={section}
+                  onChange={(e) => setSection(e.target.value)}
+                  placeholder={t('exam.enterSection')}
+                  required
+                />
               </div>
 
-              {/* Date */}
+              {/* Session/Semester */}
               <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.date')}</span>
-                <input type="date" placeholder={t('exam.selectDate')} required />
+                <span className={styles.details}>{t('exam.session')}</span>
+                <select
+                  value={session}
+                  onChange={(e) => setSession(e.target.value)}
+                >
+                  <option value="">{t('exam.selectSession')}</option>
+                  {sessions.map((sessionOption) => (
+                    <option key={sessionOption} value={sessionOption}>
+                      {sessionOption}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Time */}
+              {/* Creneau Selection */}
               <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.time')}</span>
-                <input type="time" placeholder={t('exam.selectTime')} required />
+                <span className={styles.details}>{t('exam.creneau')}</span>
+                <select
+                  value={creneauId}
+                  onChange={(e) => setCreneauId(e.target.value)}
+                  required
+                  disabled={loading || creneaux.length === 0}
+                >
+                  <option value="">{t('exam.selectCreneau')}</option>
+                  {creneaux.map((creneau) => (
+                    <option key={creneau.id_creneau || creneau.id} value={creneau.id_creneau || creneau.id}>
+                      {creneau.date_creneau || 'Unknown'} - 
+                      {creneau.heure_creneau || 'Unknown'} - 
+                      {creneau.salle || 'Unknown'}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {/* Exam Room */}
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.examRoom')}</span>
-                <input type="text" placeholder={t('exam.enterExamRoom')} required />
-              </div>
-
-              {/* Module Name */}
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.moduleName')}</span>
-                <input type="text" placeholder={t('exam.enterModuleName')} required />
-              </div>
-
-              {/* Module Abbreviation */}
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.moduleAbbreviation')}</span>
-                <input type="text" placeholder={t('exam.enterModuleAbbreviation')} required />
-              </div>
-
-              {/* Supervisor */}
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.supervisor')}</span>
-                <input type="text" placeholder={t('exam.enterSupervisor')} required />
-              </div>
-
-              {/* Order */}
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.order')}</span>
-                <input type="text" placeholder={t('exam.enterOrder')} required />
-              </div>
-
-              {/* NbrSE */}
+              {/* Number of Supervisors */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t('exam.nbrSE')}</span>
-                <input type="number" placeholder={t('exam.enterNbrSE')} required />
+                <input 
+                  type="number" 
+                  placeholder={t('exam.enterNbrSE')} 
+                  value={numberOfSupervisors}
+                  onChange={(e) => setNumberOfSupervisors(parseInt(e.target.value) || 1)}
+                  min="1"
+                  max="10"
+                  required 
+                />
               </div>
 
-              {/* NbrSS */}
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.nbrSS')}</span>
-                <input type="number" placeholder={t('exam.enterNbrSS')} required />
-              </div>
+              {/* Empty space for layout balance */}
+              <div className={styles.inputBox}></div>
 
-              {/* Email */}
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t('exam.email')}</span>
-                <input type="email" placeholder={t('exam.enterEmail')} required />
-              </div>
+              {/* Supervisors Selection - Dynamic based on numberOfSupervisors */}
+              {surveillants.map((teacherId, index) => (
+                <div key={index} className={styles.inputBox} style={{ gridColumn: 'span 2' }}>
+                  <span className={styles.details}>
+                    {index === 0 ? t('exam.mainSupervisor') : `${t('exam.supervisor')} ${index + 1}`}
+                    {index === 0 && <span style={{ color: '#666', fontSize: '0.9em' }}> (Chargé de cours)</span>}
+                  </span>
+                  <select
+                    value={teacherId}
+                    onChange={(e) => handleSurveillantChange(index, e.target.value)}
+                    required
+                    disabled={loading || teachers.length === 0}
+                  >
+                    <option value="">{t('exam.selectSupervisor')}</option>
+                    {teachers.map((teacher) => {
+                      const teacherCode = teacher.Code_Enseignant || teacher.code_enseignant;
+                      // Disable if already selected in another dropdown
+                      const isDisabled = surveillants.some((s, i) => i !== index && s === teacherCode);
+                      return (
+                        <option 
+                          key={teacherCode} 
+                          value={teacherCode}
+                          disabled={isDisabled}
+                        >
+                          {teacherCode} - {teacher.nom || 'Unknown'} {teacher.prenom || ''}
+                          {isDisabled && ' (Already selected)'}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              ))}
             </div>
 
             {/* Submit button */}
             <div className={styles.button}>
-              <input onClick={() => setShowPopup(false)} type="submit" value={t('button.addExam')} />
+              <input 
+                type="submit" 
+                value={t('button.addExam')} 
+                disabled={loading || formations.length === 0 || creneaux.length === 0 || teachers.length === 0}
+              />
             </div>
           </form>
         </div>

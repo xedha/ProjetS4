@@ -7,15 +7,15 @@ import { useTranslation } from "react-i18next"
 // Maintain the original Teaching interface to match Django backend
 export interface Teaching {
   id_charge: number;
-  palier?: string;                     // PALIER
-  specialite?: string;                // SPECIALITE
-  semestre?: string;                  // SEMESTRE
-  section?: string;                   // SECTION
-  groupe?: string;                    // Groupe
-  type?: string;                      // Type
-  "intitulé_module"?: string;       // Intitulé MODULE
-  abv_module?: string;                // Abv MODULE
-  code_enseignant?: string;           // Code_Enseignant (foreign key)
+  palier?: string | null;                     // PALIER
+  specialite?: string | null;                // SPECIALITE
+  semestre?: string | null;                  // SEMESTRE
+  section?: string | null;                   // SECTION
+  groupe?: string | null;                    // Groupe
+  type?: string | null;                      // Type
+  "intitulé_module"?: string | null;       // Intitulé MODULE
+  abv_module?: string | null;                // Abv MODULE
+  Code_Enseignant_id_id?: string | null;     // Code_Enseignant (foreign key)
   annee_universitaire: string;        // annee_universitaire
 }
 
@@ -41,8 +41,8 @@ const TeachingTable: React.FC<TeachingTableProps> = ({
   const { t } = useTranslation();
 
   // Add function to get appropriate class based on teaching type
-  const getTypeClass = (type: string = "") => {
-    switch (type.toUpperCase()) {
+  const getTypeClass = (type: string | null | undefined = "") => {
+    switch ((type || "").toUpperCase()) {
       case "COURS":
         return styles.statusCOURS
       case "TD":
@@ -103,7 +103,9 @@ const TeachingTable: React.FC<TeachingTableProps> = ({
                   </td>
                   <td className={styles.tableCell}>{teaching['intitulé_module']}</td>
                   <td className={styles.tableCell}>{teaching.abv_module}</td>
-                  <td className={styles.tableCell}>{teaching.code_enseignant}</td>
+                  <td className={styles.tableCell}>
+                    {teaching.Code_Enseignant_id_id || '-'}
+                  </td>
                   <td className={styles.tableCell}>{teaching.annee_universitaire}</td>
                   <td className={styles.actionCell}>
                     <button

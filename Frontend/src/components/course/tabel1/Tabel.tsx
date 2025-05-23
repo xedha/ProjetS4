@@ -61,7 +61,7 @@ const Tabel: React.FC<TabelProps> = ({ data, totalPages, onEdit, onDelete, curre
               <td className={styles.colomn}>
                 <div className={styles.buttonss}>
                   <Editbutton className={styles.actionButton} onClick={() => onEdit(course.id!)}></Editbutton>
-                  <button className={styles.actionButton} onClick={() => onDelete(course)}><Button/></button>
+                  <Button className={styles.uiverse} onClick={() => onDelete(course)} />
                 </div>
               </td>
             </tr>

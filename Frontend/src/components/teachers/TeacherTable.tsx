@@ -54,6 +54,7 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
   }
 
   const tableHeaders = [
+    t('teachers.code'),
     t('teachers.firstName'),
     t('teachers.lastName'),
     t('teachers.birthName'),
@@ -87,7 +88,9 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
                 </td>
               </tr>
             ) : (
-              teachers.map((teacher) => (
+              teachers.map((teacher) => {
+                console.log('Teacher department:', teacher.departement);
+                return (
                 <tr key={teacher.Code_Enseignant} className={styles.tableRow}>
                   <td className={styles.tableCell}>{teacher.Code_Enseignant}</td>
                   <td className={styles.tableCell}>{teacher.prenom}</td>
@@ -149,7 +152,8 @@ const TeacherTable: React.FC<TeacherTableProps> = ({
                     </button>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>

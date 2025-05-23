@@ -1,362 +1,181 @@
 /* Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
 
-
-
 /* Blur overlay to cover entire screen */
 .blurOverlay {
     font-family: 'Poppins', sans-serif;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  backdrop-filter: blur(10px);
-  background-color: rgba(0, 0, 0, 0.3); /* Optional dark layer */
-  z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    backdrop-filter: blur(10px);
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 1000;
 }
 
 /* Container for the form */
 .container {
     font-family: 'Poppins', sans-serif;
-  position: absolute;
-  top: 70rem;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 700px;
-  width: 100%;
-  background-color: #fff;
-  padding: 25px 30px;
-  border-radius: 5px;
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
-  z-index: 1001; /* above blur */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 700px;
+    width: 100%;
+    background-color: #fff;
+    padding: 25px 30px;
+    border-radius: 5px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
 }
 
 /* Title section */
 .title {
     font-family: 'Poppins', sans-serif;
-  font-size: 25px;
-  font-weight: 500;
-  position: relative;
+    font-size: 25px;
+    font-weight: 500;
+    position: relative;
 }
 
 .title::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 3px;
-  width: 30px;
-  border-radius: 5px;
-  background: #45D699
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 30px;
+    border-radius: 5px;
+    background: #45D699;
 }
 
 /* Input fields container */
 .userDetails {
     font-family: 'Poppins', sans-serif;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin: 20px 0 12px 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: 20px 0 12px 0;
 }
 
 /* Individual input box */
 .inputBox {
     font-family: 'Poppins', sans-serif;
-  margin-bottom: 15px;
-  width: calc(100% - 20px);
+    margin-bottom: 15px;
+    width: calc(50% - 20px);
 }
 
 .inputBox span.details {
-  display: block;
-  font-weight: 500;
-  margin-bottom: 5px;
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
 }
 
-.inputBox input {
-  height: 45px;
-  width: 100%;
-  outline: none;
-  font-size: 16px;
-  border-radius: 5px;
-  padding-left: 15px;
-  border: 1px solid #ccc;
-  border-bottom-width: 2px;
-  transition: all 0.3s ease;
+.inputBox input,
+.inputBox select {
+    height: 45px;
+    width: 100%;
+    outline: none;
+    font-size: 16px;
+    border-radius: 5px;
+    padding-left: 15px;
+    border: 1px solid #ccc;
+    border-bottom-width: 2px;
+    transition: all 0.3s ease;
 }
 
 .inputBox input:focus,
-.inputBox input:valid {
-  border-color:var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));;
+.inputBox input:valid,
+.inputBox select:focus,
+.inputBox select:valid {
+    border-color: var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));
+}
+
+/* Style for select elements */
+.inputBox select {
+    background-color: #fff;
+    cursor: pointer;
+    padding-right: 15px;
 }
 
 /* Button */
 .button {
     font-family: 'Poppins', sans-serif;
-  height: 45px;
-  margin: 35px 0;
+    height: 45px;
+    margin: 35px 0;
 }
 
 .button input {
-  height: 100%;
-  width: 100%;
-  border-radius: 5px;
-  border: none;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 500;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));
+    height: 100%;
+    width: 100%;
+    border-radius: 5px;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));
 }
 
 .button input:hover {
-  background: white
+    background: white;
+    color: #0B8FAC;
+    border: 2px solid #0B8FAC;
+}
 
+/* Close button */
+.close {
+    background: transparent;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 17px;
+    cursor: pointer;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 10;
+}
+
+.svg {
+    cursor: pointer;
+    position: absolute;
+    top: 0.3rem;
+    right: 0.2rem;
+    pointer-events: auto;
+}
+
+/* Error message styling */
+.errorMessage {
+    background-color: #fee;
+    color: #c33;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #fcc;
+    font-size: 14px;
 }
 
 /* Responsive for mobile */
 @media (max-width: 584px) {
-  .container {
-    max-width: 100%;
-  }
+    .container {
+        max-width: 100%;
+    }
 
-  .userDetails .inputBox {
-    width: 100%;
-  }
+    .userDetails .inputBox {
+        width: 100%;
+    }
 
-  .userDetails {
-    font-family: 'Poppins', sans-serif;
-    max-height: 300px;
-    overflow-y: scroll;
-  }
+    .userDetails {
+        font-family: 'Poppins', sans-serif;
+        max-height: 300px;
+        overflow-y: scroll;
+    }
 
-  .userDetails::-webkit-scrollbar {
-    width: 5px;
-  }
+    .userDetails::-webkit-scrollbar {
+        width: 5px;
+    }
 }
-
-.close {
-    background: transparent; /* Make the background transparent */
-    border: none; /* Remove the border */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 16px 17px; /* Space around the SVG */
-    cursor: pointer;
-    position: absolute; /* Make the button absolute */
-    top: 1rem;
-    right: 1rem;
-    z-index: 10; /* Ensure the close button is on top of other elements */
-  }
-  
-  .svg {
-    cursor: pointer; /* Make the SVG clickable */
-    position: absolute; /* Ensure it's placed properly */
-    top: 0.3rem;
-    right: 0.2rem;
-    pointer-events: auto; /* Ensure the SVG is interactive */
-  }
-  
-  .inputBox {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 16px;
-  }
-  
-  .details {
-    font-weight: 500;
-    margin-bottom: 6px;
-    color: #333;
-  }
-  
-  /* Style the select element */
-  .inputBox select {
-    padding: 10px 12px;
-    font-size: 16px;
-    border: 2px solid #ccc;
-    border-radius: 8px;
-    outline: none;
-    transition: all 0.25s ease;
-    background-color: #fff;
-    cursor: pointer;
-  }
-  
-  /* Blue glow on hover */
-  .inputBox select:hover {
-    border-color: #2684ff;
-    box-shadow: 0 0 5px rgba(38, 132, 255, 0.4);
-  }
-  
-  /* Animation on focus (click) */
-  .inputBox select:focus {
-    border-color: #2684ff;
-    box-shadow: 0 0 8px rgba(38, 132, 255, 0.6);
-    transform: scale(1.01);
-  }
-  
-.emailGroup {
-  width: 100%;
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: #f8fafc;
-  border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
-}
-
-.emailGroupHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e2e8f0;
-}
-
-.professorName {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.sectionName {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #64748b;
-  background-color: #e2e8f0;
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-}
-
-.emailList {
-  display: grid;
-  gap: 1rem;
-}
-
-/* Dark mode styles */
-@media (prefers-color-scheme: dark) {
-  .emailGroup {
-    background-color: #1e293b;
-    border-color: #334155;
-  }
-
-  .emailGroupHeader {
-    border-bottom-color: #334155;
-  }
-
-  .professorName {
-    color: #f1f5f9;
-  }
-
-  .sectionName {
-    color: #94a3b8;
-    background-color: #334155;
-  }
-}
-
-.emailInputGroup {
-  display: flex;
-  gap: 1rem;
-  width: 100%;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background-color: #f8fafc;
-  border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
-}
-
-.emailInputGroup .inputBox {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-.emailInputGroup .inputBox input,
-.emailInputGroup .inputBox select {
-  width: 100%;
-  height: 45px;
-  padding: 0 15px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-}
-
-.emailInputGroup .inputBox input:focus,
-.emailInputGroup .inputBox select:focus {
-
-  
-}
-
-/* Dark mode styles */
-@media (prefers-color-scheme: dark) {
-  .emailInputGroup {
-   
-  }
-
-  .emailInputGroup .inputBox input,
-  .emailInputGroup .inputBox select {
-   
-  }
-
-  .emailInputGroup .inputBox input:focus,
-  .emailInputGroup .inputBox select:focus {
-    border-color: #0B8FAC;
-    box-shadow: 0 0 5px rgba(11, 143, 172, 0.3);
-  }
-}
-
-/* Mobile Responsive Styles */
-@media screen and (max-width: 600px) {
-  .container {
-    width: 100%;
-    padding: 15px;
-    margin: 10px 0;
-  }
-
-  .formGroup {
-    margin-bottom: 15px;
-  }
-
-  .formLabel {
-    font-size: 14px;
-    margin-bottom: 5px;
-  }
-
-  .formInput,
-  .formSelect,
-  .formTextarea {
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    margin-bottom: 10px;
-  }
-
-  .buttonGroup {
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 20px;
-  }
-
-  .submitButton,
-  .cancelButton {
-    width: 100%;
-    padding: 12px;
-    font-size: 16px;
-  }
-
-  .errorMessage {
-    font-size: 14px;
-    margin: 5px 0;
-  }
-
-  .checkboxGroup {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .checkboxLabel {
-    font-size: 14px;
-  }
-}
-  

@@ -1,0 +1,65 @@
+.deleteButton {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: #ef4444;
+  transition: all 0.2s;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteButton:hover {
+  background-color: #fee2e2;
+  color: #dc2663;
+}
+
+.deleteButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .deleteButton {
+    color: #f87171;
+  }
+
+  .deleteButton:hover {
+    background-color: #7f1d1d;
+    color: #fca5a5;
+  }
+}
+
+/* Mobile Responsive Styles */
+@media screen and (max-width: 600px) {
+  .deleteButton {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    margin: 5px 0;
+  }
+
+  .deleteButton:hover {
+    transform: scale(1.02);
+  }
+
+  .modalContent {
+    width: 90%;
+    padding: 20px;
+    margin: 20px auto;
+  }
+
+  .modalActions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modalActions button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+  }
+} 

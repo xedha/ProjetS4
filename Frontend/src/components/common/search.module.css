@@ -2,7 +2,7 @@
 /* From Uiverse.io by alexruix */
 .group {
   display: flex;
-  width: 60rem; /* Reduced from 72.5rem to make it less wide */
+  width: 57%; /* Reduced from 72.5rem to make it less wide */
   height: 3.75rem;
   overflow: hidden;
 
@@ -16,6 +16,7 @@
 
   position: relative; /* Changed from absolute to relative for better layout control */
   margin: 0 auto; /* Center the search bar */
+  margin-right: 25%;
 }
 
 .input {
@@ -38,7 +39,7 @@
   line-height: normal;
 
   display: flex;
-  width: 60rem; /* Reduced from 72.5rem to match the container */
+  width: 100%;  /* Reduced from 72.5rem to match the container */
   height: 3.75rem;
   overflow: hidden;
   padding-left: 3rem;

@@ -1,24 +1,17 @@
-import React from 'react';
-import styled from 'styled-components';
 import styles from './Tabel.module.css'
-import modify from './src/assets/edit.svg'
- function Button(){
 
-return(
+interface ButtonProps {
+  className?: string;
+  onClick?: () => void;
+}
 
-
-  
-  <div className={styles.uiverse}>
+function Button({ className, onClick }: ButtonProps) {
+  return (
+    <div className={`${styles.uiverse} ${className || ''}`} onClick={onClick}>
       <span className={styles.tooltip}>are you sure !</span>
-      <span>
-          
-      </span>
-  </div>
+      <span></span>
+    </div>
+  )
+}
 
-
-)
-
-
-
- }
- export default Button
+export default Button

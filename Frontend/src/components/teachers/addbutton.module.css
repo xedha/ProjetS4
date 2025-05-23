@@ -3,11 +3,11 @@
     .addbuttongreen {
         position: absolute; /* This is required */
   
-        top: 10.62rem;
-       right: 0.62rem;
+        top: 0.6rem;
+       right: calc(5rem + 5vw); /* Responsive right position */
 
         display: flex;
-        width: 10.625rem;
+        width: min(10.625rem, 90vw); /* Responsive width */
         height: 2.9375rem;
         padding: 0.5rem 0.75rem;
         justify-content: center;
@@ -18,12 +18,13 @@ border-radius: 0.5rem;
 background: linear-gradient(90deg, #45D699 0.03%, #08B2AC 99.95%);
 color: #FFF;
 font-family: Montserrat;
-font-size: 0.9375rem;
+font-size: clamp(0.875rem, 2vw, 0.9375rem); /* Responsive font size */
 font-style: normal;
 font-weight: 700;
 line-height: normal;
 border: none;
 cursor: pointer;
+transition: all 0.3s ease;
 
 
   }
@@ -41,10 +42,9 @@ cursor: pointer;
   }
   .add{
 
-    width: 1.25rem;
-    height: 1.0625rem;
+    width: clamp(1rem, 2vw, 1.25rem); /* Responsive icon size */
+    height: clamp(0.875rem, 2vw, 1.0625rem);
     flex-shrink: 0;
-    
   }
 
 
@@ -52,11 +52,12 @@ cursor: pointer;
 
   .addbuttonblue{
     position: absolute; /* This is required */
-  
-        top: 10.62rem;
-       right: 0.62rem;
+
+    top: 0.6rem;
+   right: min(-1rem, 5vw); /* Responsive right position */
+
     display: flex;
-    width: 10.625rem;
+    width: min(10.625rem, 90vw); /* Responsive width */
     height: 2.9375rem;
     padding: 0.5rem 0.75rem;
     justify-content: center;
@@ -67,15 +68,14 @@ cursor: pointer;
     background: var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));
 color: #FFF;
 font-family: Montserrat;
-font-size: 0.9375rem;
+font-size: clamp(0.875rem, 2vw, 0.9375rem); /* Responsive font size */
 font-style: normal;
 font-weight: 700;
 line-height: normal;
 border: none;
 cursor: pointer;
-position: absolute; /* This is required */
-  top: 0.5rem; /* Adjusted to lower the button */
-  right: 0;
+transition: all 0.3s ease;
+
 
 }
 
@@ -89,4 +89,29 @@ transform: translateY(-7px);
 
 .addbuttonblue:active {
 transform: translateY(-1px);
+}
+
+/* Media queries for different screen sizes */
+@media screen and (max-width: 768px) {
+  .addbuttongreen {
+    right: calc(8rem + 3vw);
+    width: min(8rem, 85vw);
+  }
+  
+  .addbuttonblue {
+    right: min(0.5rem, 3vw);
+    width: min(8rem, 85vw);
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .addbuttongreen {
+    right: calc(6rem + 2vw);
+    width: min(6rem, 80vw);
+  }
+  
+  .addbuttonblue {
+    right: min(0.25rem, 2vw);
+    width: min(6rem, 80vw);
+  }
 }

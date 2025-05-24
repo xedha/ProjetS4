@@ -148,6 +148,7 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
     t('nbrSE'),
     t('actions')
   ];
+  
 
   return (
     <>

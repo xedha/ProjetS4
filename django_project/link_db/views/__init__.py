@@ -2,5 +2,5 @@ from .auth import register, login, logout
 from .CRUD import get_model_data,delete_model,add_model_row,Edit_Model
 from .Check_Conflict import check_exam_date,check_enseignant_schedule_conflict
 from .send_email_view import send_email_view
-from .Joint_CRUD import create_planning_with_surveillants, delete_planning_only,get_planning_with_creneau_and_formation,update_planning_with_surveillants,get_surveillants_by_planning
+from .Joint_CRUD import get_monitoring_planning,create_planning_with_surveillants, delete_planning_only,get_planning_with_creneau_and_formation,update_planning_with_surveillants,get_surveillants_by_planning
 

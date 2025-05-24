@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modalContainer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  z-index: 1001;
+  animation: slideIn 0.3s ease-out;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-family: Montserrat, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.closeButton:hover {
+  color: #333;
+}
+
+.modalContent {
+  padding: 2rem;
+}
+
+.optionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  font-family: Montserrat, sans-serif;
+  font-size: 1rem;
+  color: #333;
+  cursor: pointer;
+  padding: 0.75rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.radioLabel:hover {
+  background-color: #f5f5f5;
+  border-color: #2980b9;
+}
+
+.radioLabel input[type="radio"] {
+  margin-right: 0.75rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+}
+
+.radioLabel input[type="radio"]:checked + span {
+  font-weight: 600;
+  color: #2980b9;
+}
+
+.levelSelectContainer {
+  margin-top: 1.5rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.selectLabel {
+  display: block;
+  font-family: Montserrat, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.levelSelect {
+  width: 100%;
+  padding: 0.75rem;
+  font-family: Montserrat, sans-serif;
+  font-size: 1rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 0.5rem;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.levelSelect:hover {
+  border-color: #2980b9;
+}
+
+.levelSelect:focus {
+  outline: none;
+  border-color: #2980b9;
+  box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.1);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e5e5;
+}
+
+.cancelButton {
+  padding: 0.75rem 1.5rem;
+  font-family: Montserrat, sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #666;
+  background-color: #f5f5f5;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelButton:hover {
+  background-color: #e5e5e5;
+  color: #333;
+}
+
+.generateButton {
+  padding: 0.75rem 1.5rem;
+  font-family: Montserrat, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  background-color: #2980b9;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.generateButton:hover {
+  background-color: #2471a3;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(41, 128, 185, 0.3);
+}
+
+.generateButton:active {
+  transform: translateY(0);
+}
+
+.generateButton:disabled {
+  background-color: #b0b0b0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Mobile responsiveness */
+@media screen and (max-width: 600px) {
+  .modalContainer {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .modalHeader {
+    padding: 1rem;
+  }
+  
+  .modalHeader h2 {
+    font-size: 1.25rem;
+  }
+  
+  .modalContent {
+    padding: 1.5rem;
+  }
+  
+  .modalActions {
+    padding: 1rem;
+    flex-direction: column-reverse;
+  }
+  
+  .cancelButton,
+  .generateButton {
+    width: 100%;
+  }
+}

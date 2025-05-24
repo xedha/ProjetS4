@@ -892,7 +892,21 @@ svg:hover .tooltip {
   font-weight: 600;
   color: #333;
 }
+.pdfButton {
+  background-color: #41b685;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
 
+.pdfButton:hover {
+  background-color: #359a5f;
+}
 
 
 

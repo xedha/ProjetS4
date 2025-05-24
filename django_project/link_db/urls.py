@@ -20,5 +20,6 @@ urlpatterns = [
     path('create_planning_with_surveillants',views.create_planning_with_surveillants),
     path('update_planning_with_surveillants',views.update_planning_with_surveillants),
     path('get_surveillants_by_planning/', views.get_surveillants_by_planning, name='get_surveillants_by_planning'),
+    path('get_monitoring_planning',views.get_monitoring_planning)
     ]
 

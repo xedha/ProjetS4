@@ -6,12 +6,12 @@ import { useTranslation } from 'react-i18next';
 import Tabel from "./tabel1/Tabel"
 import Addbutton from "./addbutton/Addbutton";
 import Search from "./search bar/seach";
-import { generateTestPDF } from './test-pdf';
 import styles from './page1.module.css';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useState, useEffect, useCallback } from 'react';
 import { examApi, PlanningWithDetails } from '../../services/ExamApi'; // Adjust path as needed
+import PDFOptionsModal from './tabel1/PDFOptionsModal';
 
 // Add type declaration for autoTable
 declare module 'jspdf' {
@@ -28,12 +28,15 @@ interface AutoTableData {
   };
 }
 
+// Remove the SpecialtyPDFSelector component as we're using a modal now
+
 function Page1() {
   const { t } = useTranslation();
   const [plannings, setPlannings] = useState<PlanningWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showPDFModal, setShowPDFModal] = useState(false);
 
   // Fetch plannings function as a callback so it can be passed to child components
   const fetchPlannings = useCallback(async () => {
@@ -81,20 +84,7 @@ function Page1() {
   };
 
   const handlePrint = () => {
-    try {
-      const success = generateTestPDF();
-      if (!success) {
-        alert('Error generating PDF. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error details:', error);
-      if (error instanceof Error) {
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-      }
-      alert('Error generating PDF. Please try again.');
-    }
+    setShowPDFModal(true);
   };
 
   // Filter and get table data
@@ -159,14 +149,23 @@ function Page1() {
         <button onClick={handlePrint} className={styles.printButton}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="6 9 6 2 18 2 18 9"></polyline>
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
             <rect x="6" y="14" width="12" height="8"></rect>
           </svg>
-          Print Schedule
+          Print PDF
         </button>
+        
         <Addbutton onAddSuccess={handleAddPlanning} />
         <Search onSearch={handleSearchChange} />
       </div>
+      
+      {/* PDF Options Modal */}
+      <PDFOptionsModal 
+        isOpen={showPDFModal}
+        onClose={() => setShowPDFModal(false)}
+        data={getTableData()}
+        planningsRaw={plannings}
+      />
     </>
   );
 }

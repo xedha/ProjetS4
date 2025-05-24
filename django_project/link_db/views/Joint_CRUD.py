@@ -314,3 +314,35 @@ def get_surveillants_by_planning(request):
     
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)  
+@csrf_exempt
+def get_monitoring_planning(request):
+    monitoring_data = []
+    
+    try:
+        # Get all plannings with related data
+        plannings = Planning.objects.select_related('id_creneau', 'formation').prefetch_related('surveillant_set__code_enseignant')
+        
+        for planning in plannings:
+            # Get all surveillants for this planning
+            for surveillant in planning.surveillant_set.all():
+                enseignant = surveillant.code_enseignant
+                
+                monitoring_data.append({
+                    'teacher_name': f"{enseignant.prenom} {enseignant.nom}".strip() if enseignant.prenom and enseignant.nom else enseignant.Code_Enseignant,
+                    'teacher_code': enseignant.Code_Enseignant,
+                    'module': planning.formation.modules,
+                    'room': planning.id_creneau.salle,
+                    'date': str(planning.id_creneau.date_creneau),
+                    'time': str(planning.id_creneau.heure_creneau),
+                    'level': planning.formation.niveau_cycle,
+                    'specialty': planning.formation.filière,
+                    'role': 'Main' if surveillant.est_charge_cours == 1 else 'Assistant'
+                })
+        
+        # Sort by teacher name, then by date and time
+        monitoring_data.sort(key=lambda x: (x['teacher_name'], x['date'], x['time']))
+        
+        return JsonResponse(monitoring_data, safe=False)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

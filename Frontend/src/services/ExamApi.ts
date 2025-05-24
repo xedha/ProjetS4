@@ -55,6 +55,17 @@ export interface Creneau {
   heure_creneau: string;
   salle: string;
 }
+export interface MonitoringPlanningItem {
+  teacher_name: string;
+  teacher_code: string;
+  module: string;
+  room: string;
+  date: string;
+  time: string;
+  level: string;
+  specialty: string;
+  role: 'Main' | 'Assistant';
+}
 
 export interface Formation {
   id: number;
@@ -184,6 +195,16 @@ export const examApi = {
       return await response.json();
     } catch (error: any) {
       console.error(`Error deleting planning ${planningId}:`, error);
+      throw error;
+    }
+  },
+  async getMonitoringPlanning() {
+    try {
+      const response = await fetchWithTimeout(`${BASE_URL}/api/get_monitoring_planning`);
+      await handleApiError(response);
+      return await response.json() as MonitoringPlanningItem[];
+    } catch (error: any) {
+      console.error('Failed to fetch monitoring planning:', error);
       throw error;
     }
   },
@@ -407,6 +428,7 @@ export const {
   checkExamDate,
   checkEnseignantScheduleConflict,
   sendEmail,
+  getMonitoringPlanning, // Add this line
 } = examApi;
 
 // Default export

@@ -378,20 +378,6 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
         <div className={styles.teachersSection}>
           <div className={styles.teacherHeader}>
             <h3>{t('teacher.teachers')}</h3>
-            <div className={styles.addTeacherForm}>
-              <select
-                id="addTeacherSelect"
-                className={styles.editInput}
-                defaultValue=""
-              >
-                
-                {availableTeachers.map(teacher => (
-                  <option key={teacher.Code_Enseignant} value={teacher.Code_Enseignant}>
-                    {teacher.nom} {teacher.prenom}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
           
           <table className={styles.teacherTable}>

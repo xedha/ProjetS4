@@ -8,15 +8,65 @@ interface FetchOptions {
   timeout?: number;
 }
 
+// Helper function to get headers with authentication
+const getAuthHeaders = (): HeadersInit => {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Get the auth token from localStorage (adjust the key based on your implementation)
+  const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
+
+// Helper function to get headers for FormData (without Content-Type)
+const getAuthHeadersForFormData = (): HeadersInit => {
+  const headers: HeadersInit = {};
+  
+  const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
+
 // Helper function to handle API errors consistently
 const handleApiError = async (response: Response) => {
   if (!response.ok) {
     let errorMessage;
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.error || errorData.message || `API error: ${response.status}`;
-    } catch (e) {
-      errorMessage = `API error: ${response.status} ${response.statusText}`;
+    const contentType = response.headers.get("content-type");
+    
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorData.detail || `API error: ${response.status}`;
+      } catch (e) {
+        errorMessage = `API error: ${response.status} ${response.statusText}`;
+      }
+    } else {
+      // Handle non-JSON responses (like HTML error pages)
+      try {
+        const text = await response.text();
+        console.error('Non-JSON error response:', text);
+        if (response.status === 401) {
+          errorMessage = 'Authentication required. Please log in.';
+        } else if (response.status === 404) {
+          errorMessage = 'API endpoint not found. Please check the server configuration.';
+        } else if (response.status === 500) {
+          errorMessage = 'Server error. Please check the server logs.';
+        } else {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+      } catch (e) {
+        errorMessage = `API error: ${response.status} ${response.statusText}`;
+      }
     }
     throw new Error(errorMessage);
   }
@@ -57,7 +107,9 @@ export const api = {
 
     try {
       console.log(`Fetching ${model} data from: ${BASE_URL}/api/get_model_data/?${queryParams.toString()}`);
-      const response = await fetchWithTimeout(`${BASE_URL}/api/get_model_data/?${queryParams.toString()}`);
+      const response = await fetchWithTimeout(`${BASE_URL}/api/get_model_data/?${queryParams.toString()}`, {
+        headers: getAuthHeaders(),
+      });
       await handleApiError(response);
       const data = await response.json();
       console.log(`Received ${model} data:`, data);
@@ -86,7 +138,7 @@ export const api = {
 
       const response = await fetchWithTimeout(`${BASE_URL}/api/delete_model/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload),
       });
       
@@ -114,7 +166,7 @@ export const api = {
       
       const response = await fetchWithTimeout(`${BASE_URL}/api/edit_model/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload),
       });
       
@@ -130,7 +182,7 @@ export const api = {
     try {
       const response = await fetchWithTimeout(`${BASE_URL}/api/add_model_row/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ model, fields }),
       });
       
@@ -138,6 +190,83 @@ export const api = {
       return await response.json();
     } catch (error: any) {
       console.error(`Error adding new ${model} row:`, error);
+      throw error;
+    }
+  },
+
+  async uploadExcel(model: string, file: File) {
+    try {
+      // Validate file type
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/csv',
+        '.xlsx',
+        '.xls',
+        '.csv'
+      ];
+      
+      if (!validTypes.some(type => file.type.includes(type) || file.name.endsWith(type))) {
+        throw new Error('Please upload a valid Excel file (.xlsx, .xls) or CSV file (.csv)');
+      }
+
+      // Create FormData and append the file
+      const formData = new FormData();
+      formData.append('excel_file', file);
+
+      // Determine the endpoint based on the model
+      let endpoint = '';
+      switch (model.toLowerCase()) {
+        case 'chargesenseignement':
+        case 'charges':
+          endpoint = '/api/upload_charges_xlsx/';
+          break;
+        case 'enseignants':
+        case 'teachers':
+          endpoint = '/api/upload_enseignants_xlsx/';
+          break;
+        case 'formations':
+        case 'courses':
+          endpoint = '/api/upload_formations_xlsx/';
+          break;
+        case 'creneau':
+        case 'creneaux':
+        case 'timeslots':
+          endpoint = '/api/upload_creneau_xlsx/';
+          break;
+        default:
+          throw new Error(`Excel upload not supported for model: ${model}`);
+      }
+
+      const fullUrl = `${BASE_URL}${endpoint}`;
+      console.log(`Uploading Excel file for ${model} to: ${fullUrl}`);
+
+      // Send the request with extended timeout for file uploads
+      const response = await fetchWithTimeout(fullUrl, {
+        method: 'POST',
+        headers: getAuthHeadersForFormData(),
+        body: formData,
+        // Note: Don't set Content-Type header - let browser set it with boundary for multipart/form-data
+        timeout: 60000, // 60 seconds for file uploads
+      });
+
+      // Log response details for debugging
+      console.log('Upload response status:', response.status);
+      console.log('Upload response headers:', response.headers);
+
+      await handleApiError(response);
+      const result = await response.json();
+      
+      console.log(`Excel upload result for ${model}:`, result);
+      return result;
+    } catch (error: any) {
+      console.error(`Error uploading Excel file for ${model}:`, error);
+      
+      // Add more context to the error
+      if (error.message === 'Failed to fetch') {
+        throw new Error('Network error: Unable to connect to the server. Please check if the server is running.');
+      }
+      
       throw error;
     }
   },

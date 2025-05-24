@@ -9,7 +9,6 @@ import Search from "./search bar/seach"
 import { api } from "../../services/api"
 import type { Course } from "../../types/course"
 
-
 // Import the EditCourseForm you just created
 import EditCourseForm from "./addbutton/EditCourseForm"  
 
@@ -73,7 +72,7 @@ function CoursePage() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, debouncedSearchTerm])
+  }, [currentPage, debouncedSearchTerm, itemsPerPage])
 
   useEffect(() => {
     fetchCourses()
@@ -110,6 +109,13 @@ function CoursePage() {
     fetchCourses()
   }
 
+  // Handle successful upload
+  const handleUploadSuccess = () => {
+    // Reset to first page and refresh the data after successful upload
+    setCurrentPage(1)
+    fetchCourses()
+  }
+
   const totalPages = Math.ceil(totalCourses / itemsPerPage)
 
   return (
@@ -120,7 +126,7 @@ function CoursePage() {
         <main className="course-management-content">
           <div className="course-actions">
             <Search value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            <Addbutton />
+            <Addbutton onUploadSuccess={handleUploadSuccess} />
           </div>
 
           {loading ? (

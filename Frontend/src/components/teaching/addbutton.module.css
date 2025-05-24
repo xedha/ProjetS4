@@ -115,3 +115,46 @@ transform: translateY(-1px);
     width: min(6rem, 80vw);
   }
 }
+/* Add these styles to your addbutton.module.css file */
+
+/* Column list styling for teaching assignments */
+.columnList {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.8;
+}
+
+.columnList strong {
+  color: #374151;
+  font-weight: 600;
+}
+
+/* Teaching-specific import icon adjustments */
+.importOption svg path {
+  stroke-width: 1.5;
+}
+
+/* Make the modal footer more readable for teaching columns */
+.modalFooter .columnInfo {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.modalFooter .columnInfo::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modalFooter .columnInfo::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.modalFooter .columnInfo::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.modalFooter .columnInfo::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

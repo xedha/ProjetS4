@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Header } from "../common/Header"
 import { Sidebar } from "../common/Sidebar"
 import { api } from "../../services/api"
@@ -22,6 +22,7 @@ import "./TeachingManagementPage.css"
  * - Pagination
  * - Deleting teaching assignments
  * - Displaying teaching assignment details in a table
+ * - Uploading teaching assignments via Excel file
  */
 
 export const TeachingManagementPage: React.FC = () => {
@@ -50,44 +51,45 @@ export const TeachingManagementPage: React.FC = () => {
     }
   }, [searchTerm])
 
+  // Fetch teachings function
+  const fetchTeachings = useCallback(async () => {
+    try {
+      setLoading(true)
+      console.log("Fetching teachings with parameters:", {
+        currentPage,
+        itemsPerPage,
+        search: debouncedSearchTerm,
+      })
+
+      const response = await api.getModelData("ChargesEnseignement", {
+        page: currentPage,
+        itemsPerPage: itemsPerPage,
+        search: debouncedSearchTerm,
+      })
+
+      console.log("Raw teaching data from API:", response)
+      console.log("First teaching record:", response[0])
+      console.log("Teacher code in first record:", response[0]?.code_enseignant)
+
+      // Adjust for a raw array response from the API.
+      setTeachings(response)
+      setTotalTeachings(response.length)
+      setError(null)
+      console.log("Teachings state updated. Total teachings:", response.length)
+    } catch (err) {
+      console.error("Error fetching teachings:", err)
+      setError("Failed to fetch teaching assignments. Please try again later.")
+      setTeachings([])
+    } finally {
+      setLoading(false)
+      console.log("Fetch teachings loading state set to false")
+    }
+  }, [currentPage, itemsPerPage, debouncedSearchTerm])
+
   // Fetch teachings when page, items per page, or search term changes
   useEffect(() => {
-    const fetchTeachings = async () => {
-      try {
-        setLoading(true)
-        console.log("Fetching teachings with parameters:", {
-          currentPage,
-          itemsPerPage,
-          search: debouncedSearchTerm,
-        })
-
-        const response = await api.getModelData("ChargesEnseignement", {
-          page: currentPage,
-          itemsPerPage: itemsPerPage,
-          search: debouncedSearchTerm,
-        })
-
-        console.log("Raw teaching data from API:", response)
-        console.log("First teaching record:", response[0])
-        console.log("Teacher code in first record:", response[0]?.code_enseignant)
-
-        // Adjust for a raw array response from the API.
-        setTeachings(response)
-        setTotalTeachings(response.length)
-        setError(null)
-        console.log("Teachings state updated. Total teachings:", response.length)
-      } catch (err) {
-        console.error("Error fetching teachings:", err)
-        setError("Failed to fetch teaching assignments. Please try again later.")
-        setTeachings([])
-      } finally {
-        setLoading(false)
-        console.log("Fetch teachings loading state set to false")
-      }
-    }
-
     fetchTeachings()
-  }, [currentPage, itemsPerPage, debouncedSearchTerm])
+  }, [fetchTeachings])
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -137,20 +139,13 @@ export const TeachingManagementPage: React.FC = () => {
     setSelectedTeaching(null)
     
     // Refresh the teaching list
-    const fetchTeachings = async () => {
-      try {
-        const response = await api.getModelData("ChargesEnseignement", {
-          page: currentPage,
-          itemsPerPage,
-          search: debouncedSearchTerm,
-        })
-        setTeachings(response)
-        setTotalTeachings(response.length)
-      } catch (err) {
-        console.error("Error refreshing teaching list:", err)
-      }
-    }
-    
+    fetchTeachings()
+  }
+
+  // Handle successful upload
+  const handleUploadSuccess = () => {
+    // Reset to first page and refresh the data after successful upload
+    setCurrentPage(1)
     fetchTeachings()
   }
 
@@ -177,7 +172,7 @@ export const TeachingManagementPage: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <AddButton  />
+              <AddButton onUploadSuccess={handleUploadSuccess} />
             </div>
           </div>
 

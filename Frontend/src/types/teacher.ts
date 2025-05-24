@@ -1,8 +1,5 @@
 export interface Teacher {
-  gender: string;
-  birthName: string;
-  firstName: string;
-  lastName: string;       
+   
   Code_Enseignant?: string;       // Original backend field name (needed for API operations)
   nom: string;
   prenom: string;

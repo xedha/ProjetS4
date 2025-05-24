@@ -22,6 +22,7 @@ import "./TeacherManagementPage.css"
  * - Pagination
  * - Deleting teachers
  * - Displaying teacher details in a table
+ * - Uploading teachers via Excel file
  */
 const transformTeacherData = (item: any): Teacher => {
   return {
@@ -38,10 +39,6 @@ const transformTeacherData = (item: any): Teacher => {
   email2: item.email2 || "",
   tel1: item.tel1 || "",
   tel2: item.tel2 || "",
-  gender: "",
-  birthName: "",
-  firstName: "",
-  lastName: "",
 }
 }
 
@@ -170,6 +167,12 @@ export const TeacherManagementPage: React.FC = () => {
     fetchTeachers() // Refresh the teacher list after adding
   }
 
+  const handleUploadSuccess = () => {
+    // Reset to first page and refresh the data after successful upload
+    setCurrentPage(1)
+    fetchTeachers()
+  }
+
   const totalPages = Math.ceil(totalTeachers / itemsPerPage)
 
   return (
@@ -189,7 +192,7 @@ export const TeacherManagementPage: React.FC = () => {
              
            
             </div>
-            <AddButton/>
+            <AddButton onUploadSuccess={handleUploadSuccess} />
           </div>
 
           {loading ? (

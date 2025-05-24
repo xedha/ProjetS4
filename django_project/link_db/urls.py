@@ -2,6 +2,7 @@ from django.urls import path
 from .views import register, login,logout
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
+from .views.Xcel_Api import UploadExcel_creneau, ChargesEnseignement_xlsx, UploadEnseignants_xlsx,UploadFormations_xlsx
 
 urlpatterns = [
     path('register/', register, name='register'),
@@ -20,6 +21,11 @@ urlpatterns = [
     path('create_planning_with_surveillants',views.create_planning_with_surveillants),
     path('update_planning_with_surveillants',views.update_planning_with_surveillants),
     path('get_surveillants_by_planning/', views.get_surveillants_by_planning, name='get_surveillants_by_planning'),
-    path('get_monitoring_planning',views.get_monitoring_planning)
-    ]
-
+    path('get_monitoring_planning',views.get_monitoring_planning),
+    
+    # Excel upload endpoints
+    path('upload_creneau_xlsx/', UploadExcel_creneau.as_view(), name='upload_creneau_xlsx'),
+    path('upload_charges_xlsx/', ChargesEnseignement_xlsx.as_view(), name='upload_charges_xlsx'),
+    path('upload_enseignants_xlsx/', UploadEnseignants_xlsx.as_view(), name='upload_enseignants_xlsx'),
+    path('upload_formations_xlsx/', UploadFormations_xlsx.as_view(), name='upload_formations_xlsx'),
+]

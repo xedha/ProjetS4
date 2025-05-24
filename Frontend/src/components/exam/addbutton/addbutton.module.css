@@ -1,44 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
   
-    .addbuttongreen {
-        position: absolute; /* This is required */
-  
-        top: 10.62rem;
-       right: 0.62rem;
-
-        display: flex;
-        width: 10.625rem;
-        height: 2.9375rem;
-        padding: 0.5rem 0.75rem;
-        justify-content: center;
-        align-items: center;
-        gap: 0.5rem;
-        flex-shrink: 0;
-border-radius: 0.5rem;
-background: linear-gradient(90deg, #45D699 0.03%, #08B2AC 99.95%);
-color: #FFF;
-font-family: Montserrat;
-font-size: 0.9375rem;
-font-style: normal;
-font-weight: 700;
-line-height: normal;
-border: none;
-cursor: pointer;
-
-
-  }
-  
-  .addbuttongreen:hover {
-    background-color: #23c483;
-    box-shadow: 0px 15px 20px rgba(46, 229, 157, 0.4);
-    color: #fff;
-    transform: translateY(-7px);
-    
-  }
-  
-  .addbuttongreen:active {
-    transform: translateY(-1px);
-  }
   .add{
 
     width: 1.25rem;
@@ -64,7 +25,7 @@ cursor: pointer;
     gap: 0.5rem;
     flex-shrink: 0;
     border-radius: 0.5rem;
-    background: var(--2nd, linear-gradient(90deg, #0B8FAC 0%, #043A46 100%));
+    background: linear-gradient(90deg, #0B8FAC 0%, #043A46 100%);
 color: #FFF;
 font-family: Montserrat;
 font-size: 0.9375rem;
@@ -192,4 +153,101 @@ transform: translateY(-1px);
     padding: 12px;
     font-size: 16px;
   }
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContainer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+  min-width: 400px;
+}
+
+.modalTitle {
+  font-family: Montserrat, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.modalOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.optionButton {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background-color: white;
+  color: #333;
+  font-family: Montserrat, sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.optionButton:hover {
+  background-color: #f8fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.optionButton svg {
+  color: #0B8FAC;
+}
+
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.closeButton:hover {
+  color: #333;
+}
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

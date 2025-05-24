@@ -34,62 +34,79 @@ export const TeachingManagementPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [totalTeachings, setTotalTeachings] = useState<number>(0)
   const [itemsPerPage] = useState<number>(10)
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("")
   
   // Edit form state
   const [showEditForm, setShowEditForm] = useState<boolean>(false)
   const [selectedTeaching, setSelectedTeaching] = useState<Teaching | null>(null)
 
-  // Debounce search term to avoid too many API calls
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm)
-    }, 500)
-
-    return () => {
-      clearTimeout(timerId)
-    }
-  }, [searchTerm])
-
   // Fetch teachings function
-  const fetchTeachings = useCallback(async () => {
+  const fetchTeachings = useCallback(async (search: string = "") => {
     try {
       setLoading(true)
       console.log("Fetching teachings with parameters:", {
         currentPage,
         itemsPerPage,
-        search: debouncedSearchTerm,
+        search: search,
       })
 
       const response = await api.getModelData("ChargesEnseignement", {
         page: currentPage,
         itemsPerPage: itemsPerPage,
-        search: debouncedSearchTerm,
+        search: search,
       })
 
       console.log("Raw teaching data from API:", response)
-      console.log("First teaching record:", response[0])
-      console.log("Teacher code in first record:", response[0]?.code_enseignant)
+      
+      // Handle different response formats
+      const rawData = Array.isArray(response)
+        ? response
+        : response.data && Array.isArray(response.data)
+          ? response.data
+          : []
 
-      // Adjust for a raw array response from the API.
-      setTeachings(response)
-      setTotalTeachings(response.length)
+      setTeachings(rawData)
+      
+      // Set total count from response or use array length if not available
+      const total = response.total_count || rawData.length
+      setTotalTeachings(total)
+      
       setError(null)
-      console.log("Teachings state updated. Total teachings:", response.length)
-    } catch (err) {
+      console.log("Teachings state updated. Total teachings:", rawData.length)
+    } catch (err: any) {
       console.error("Error fetching teachings:", err)
-      setError("Failed to fetch teaching assignments. Please try again later.")
+      setError("Failed to fetch teaching assignments. Please try again later. Error: " + (err.message || "Unknown error"))
       setTeachings([])
     } finally {
       setLoading(false)
-      console.log("Fetch teachings loading state set to false")
     }
-  }, [currentPage, itemsPerPage, debouncedSearchTerm])
+  }, [currentPage, itemsPerPage])
 
-  // Fetch teachings when page, items per page, or search term changes
+  // Initial fetch
   useEffect(() => {
-    fetchTeachings()
-  }, [fetchTeachings])
+    fetchTeachings(searchTerm)
+  }, [currentPage]) // Only re-fetch when page changes
+
+  // Handle search results from Search component
+  const handleSearchResults = useCallback((results: any[]) => {
+    console.log("Search results received:", results)
+    
+    setTeachings(results)
+    setTotalTeachings(results.length)
+    setCurrentPage(1) // Reset to first page on new search
+    setLoading(false)
+    setError(null)
+  }, [])
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchTerm(value)
+    
+    // If search is cleared, fetch all teachings
+    if (!value.trim()) {
+      fetchTeachings("")
+    }
+  }
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -99,24 +116,21 @@ export const TeachingManagementPage: React.FC = () => {
 
   // Handle teaching deletion using the API
   const handleDeleteTeaching = async (teaching: Teaching) => {
+    if (!teaching || !teaching.id_charge) {
+      console.error("Cannot delete teaching: missing teaching id")
+      return
+    }
+
     if (window.confirm("Are you sure you want to delete this teaching assignment?")) {
       try {
         console.log("Deleting teaching assignment with id:", teaching.id_charge)
         await api.deleteModel("ChargesEnseignement", teaching)
-        console.log("Teaching assignment deleted successfully. Refreshing list...")
-
-        const response = await api.getModelData("ChargesEnseignement", {
-          page: currentPage,
-          itemsPerPage: itemsPerPage,
-          search: debouncedSearchTerm,
-        })
-        console.log("New teaching data after deletion:", response)
-
-        setTeachings(response)
-        setTotalTeachings(response.length)
-      } catch (err) {
+        
+        setTeachings((prev) => prev.filter((t) => t.id_charge !== teaching.id_charge))
+        setTotalTeachings((prev) => prev - 1)
+      } catch (err: any) {
         console.error("Error deleting teaching assignment:", err)
-        alert("Failed to delete teaching assignment. Please try again later.")
+        alert("Failed to delete teaching assignment. Please try again later. Error: " + (err.message || "Unknown error"))
       }
     }
   }
@@ -137,27 +151,19 @@ export const TeachingManagementPage: React.FC = () => {
   const handleTeachingEdited = () => {
     setShowEditForm(false)
     setSelectedTeaching(null)
-    
-    // Refresh the teaching list
-    fetchTeachings()
+    fetchTeachings(searchTerm) // Refresh the teaching list
   }
 
   // Handle successful upload
   const handleUploadSuccess = () => {
     // Reset to first page and refresh the data after successful upload
     setCurrentPage(1)
-    fetchTeachings()
-  }
-
-  // Handle adding a new teaching assignment
-  const handleAddTeaching = () => {
-    console.log("Add teaching action triggered")
-    alert("Add teaching functionality would open a form here")
+    setSearchTerm("")
+    fetchTeachings("")
   }
 
   // Calculate total pages for pagination
   const totalPages = Math.ceil(totalTeachings / itemsPerPage)
-  console.log("Calculated total pages:", totalPages)
 
   return (
     <div className="teaching-management-layout">
@@ -168,9 +174,11 @@ export const TeachingManagementPage: React.FC = () => {
           <div className="teaching-management-actions">
             <div className="search-and-actions">
               <Search
+                modelName="ChargesEnseignement"
                 placeholder="Search teaching assignments..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
+                onSearchResults={handleSearchResults}
               />
               <AddButton onUploadSuccess={handleUploadSuccess} />
             </div>
@@ -188,7 +196,8 @@ export const TeachingManagementPage: React.FC = () => {
                 className="retry-button"
                 onClick={() => {
                   setCurrentPage(1)
-                  setDebouncedSearchTerm(searchTerm)
+                  setSearchTerm("")
+                  fetchTeachings("")
                 }}
               >
                 Retry
@@ -196,14 +205,14 @@ export const TeachingManagementPage: React.FC = () => {
             </div>
           ) : (
             <div className="teaching-table-container">
-            <TeachingTable
-              teachings={teachings}
-              onEdit={handleEditTeaching}
-              onDelete={handleDeleteTeaching}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
+              <TeachingTable
+                teachings={teachings}
+                onEdit={handleEditTeaching}
+                onDelete={handleDeleteTeaching}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
             </div>
           )}
           

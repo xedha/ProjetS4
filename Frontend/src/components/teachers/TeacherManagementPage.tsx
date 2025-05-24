@@ -26,20 +26,20 @@ import "./TeacherManagementPage.css"
  */
 const transformTeacherData = (item: any): Teacher => {
   return {
-  // Correctly map the backend fields to frontend interface
-  Code_Enseignant: item.Code_Enseignant || "",
-  prenom: item.prenom || "",
-  nom: item.nom || "",
-  nom_jeune_fille: item.nom_jeune_fille || "",
-  genre: item.genre || "",
-  departement: item.département || "",
-  status: item.etat || item.status || "", // Map 'etat' from backend to 'status' in frontend
-  grade: item.grade || "",
-  email1: item.email1 || "",
-  email2: item.email2 || "",
-  tel1: item.tel1 || "",
-  tel2: item.tel2 || "",
-}
+    // Correctly map the backend fields to frontend interface
+    Code_Enseignant: item.Code_Enseignant || "",
+    prenom: item.prenom || "",
+    nom: item.nom || "",
+    nom_jeune_fille: item.nom_jeune_fille || "",
+    genre: item.genre || "",
+    departement: item.département || "",
+    status: item.etat || item.status || "", // Map 'etat' from backend to 'status' in frontend
+    grade: item.grade || "",
+    email1: item.email1 || "",
+    email2: item.email2 || "",
+    tel1: item.tel1 || "",
+    tel2: item.tel2 || "",
+  }
 }
 
 export const TeacherManagementPage: React.FC = () => {
@@ -49,7 +49,6 @@ export const TeacherManagementPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
 
   const [searchTerm, setSearchTerm] = useState<string>("")
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("")
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [totalTeachers, setTotalTeachers] = useState<number>(0)
   const [itemsPerPage] = useState<number>(10)
@@ -58,29 +57,21 @@ export const TeacherManagementPage: React.FC = () => {
   const [showEditForm, setShowEditForm] = useState<boolean>(false)
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
 
-  // Debounce search input
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm)
-    }, 500)
-    return () => clearTimeout(timerId)
-  }, [searchTerm])
-
   // Fetch function for re-use
-  const fetchTeachers = useCallback(async () => {
+  const fetchTeachers = useCallback(async (search: string = "") => {
     try {
       setLoading(true)
       console.log("Fetching teacher data with:", {
         page: currentPage,
         itemsPerPage,
-        search: debouncedSearchTerm,
+        search: search,
       })
 
       // Use the API from the provided file
       const response = await api.getModelData("Enseignants", {
         page: currentPage,
         itemsPerPage,
-        search: debouncedSearchTerm,
+        search: search,
       })
 
       if (!response) {
@@ -112,12 +103,36 @@ export const TeacherManagementPage: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, itemsPerPage, debouncedSearchTerm])
+  }, [currentPage, itemsPerPage])
 
-  // Initial + dependency-based fetch
+  // Initial fetch
   useEffect(() => {
-    fetchTeachers()
-  }, [fetchTeachers])
+    fetchTeachers(searchTerm)
+  }, [currentPage]) // Only re-fetch when page changes
+
+  // Handle search results from Search component
+  const handleSearchResults = useCallback((results: any[]) => {
+    console.log("Search results received:", results)
+    
+    // Transform the search results
+    const teachersData = results.map(transformTeacherData)
+    setTeachers(teachersData)
+    setTotalTeachers(results.length)
+    setCurrentPage(1) // Reset to first page on new search
+    setLoading(false)
+    setError(null)
+  }, [])
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchTerm(value)
+    
+    // If search is cleared, fetch all teachers
+    if (!value.trim()) {
+      fetchTeachers("")
+    }
+  }
 
   // Pagination handler
   const handlePageChange = (page: number) => {
@@ -160,17 +175,18 @@ export const TeacherManagementPage: React.FC = () => {
   const handleTeacherEdited = () => {
     setShowEditForm(false)
     setSelectedTeacher(null)
-    fetchTeachers() // Refresh the teacher list
+    fetchTeachers(searchTerm) // Refresh the teacher list
   }
 
   const handleTeacherAdded = () => {
-    fetchTeachers() // Refresh the teacher list after adding
+    fetchTeachers(searchTerm) // Refresh the teacher list after adding
   }
 
   const handleUploadSuccess = () => {
     // Reset to first page and refresh the data after successful upload
     setCurrentPage(1)
-    fetchTeachers()
+    setSearchTerm("")
+    fetchTeachers("")
   }
 
   const totalPages = Math.ceil(totalTeachers / itemsPerPage)
@@ -184,13 +200,12 @@ export const TeacherManagementPage: React.FC = () => {
           <div className="teacher-management-actions">
             <div className="search-and-actions">
               <Search 
-                
+                modelName="Enseignants"
                 placeholder="Search teachers..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
+                onSearchResults={handleSearchResults}
               />
-             
-           
             </div>
             <AddButton onUploadSuccess={handleUploadSuccess} />
           </div>
@@ -207,22 +222,23 @@ export const TeacherManagementPage: React.FC = () => {
                 className="retry-button"
                 onClick={() => {
                   setCurrentPage(1)
-                  fetchTeachers()
+                  setSearchTerm("")
+                  fetchTeachers("")
                 }}
               >
                 Retry
               </button>
             </div>
           ) : (
-         <div className="teacher-table-container">
-            <TeacherTable
-              teachers={teachers}
-              onEdit={handleEditTeacher}
-              onDelete={handleDeleteTeacher}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
+            <div className="teacher-table-container">
+              <TeacherTable
+                teachers={teachers}
+                onEdit={handleEditTeacher}
+                onDelete={handleDeleteTeacher}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
             </div>
           )}
 

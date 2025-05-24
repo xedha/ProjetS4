@@ -19,7 +19,7 @@ function CoursePage() {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState<string>("")
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("")
+  const [isSearching, setIsSearching] = useState<boolean>(false)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const itemsPerPage = 10
   const [totalCourses, setTotalCourses] = useState<number>(0)
@@ -28,23 +28,18 @@ function CoursePage() {
   const [showEditForm, setShowEditForm] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
 
-  // Debounce search term and reset to first page on change
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm)
-      setCurrentPage(1)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [searchTerm])
-
-  const fetchCourses = useCallback(async () => {
+  // Fetch all courses (when search is empty)
+  const fetchAllCourses = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
+      setIsSearching(false)
+      
+      console.log('Fetching all courses...')
       const response = await api.getModelData("Formations", {
         page: currentPage,
         itemsPerPage,
-        search: debouncedSearchTerm,
+        search: "",
       })
 
       let data: Course[] = []
@@ -72,18 +67,53 @@ function CoursePage() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, debouncedSearchTerm, itemsPerPage])
+  }, [currentPage, itemsPerPage])
 
+  // Handle search results from the Search component
+  const handleSearchResults = useCallback((results: any[]) => {
+    console.log('Received search results:', results)
+    setIsSearching(true)
+    setCourses(results)
+    setTotalCourses(results.length)
+    setCurrentPage(1)
+    setLoading(false)
+  }, [])
+
+  // Handle search input change
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchTerm(value)
+    
+    // If search is cleared, fetch all courses
+    if (!value.trim()) {
+      console.log('Search cleared, fetching all courses')
+      fetchAllCourses()
+    }
+  }, [fetchAllCourses])
+
+  // Initial load and when page changes (only if not searching)
   useEffect(() => {
-    fetchCourses()
-  }, [fetchCourses])
+    if (!isSearching && !searchTerm.trim()) {
+      fetchAllCourses()
+    }
+  }, [fetchAllCourses, isSearching, searchTerm])
 
   const handleDelete = async (course: Course) => {
     if (!window.confirm("Are you sure you want to delete this course?")) return
     try {
       setLoading(true)
       await api.deleteModel("Formations", course)
-      fetchCourses()
+      
+      // Refresh appropriate data
+      if (isSearching && searchTerm) {
+        // If searching, clear search and show all
+        setSearchTerm("")
+        setIsSearching(false)
+        fetchAllCourses()
+      } else {
+        // Otherwise just refresh
+        fetchAllCourses()
+      }
     } catch (err) {
       alert("Delete failed. Please try again.")
     } finally {
@@ -91,7 +121,6 @@ function CoursePage() {
     }
   }
 
-  // When user clicks edit button in the table
   const handleEdit = (id: number) => {
     const courseToEdit = courses.find(c => c.id === id)
     if (courseToEdit) {
@@ -102,19 +131,31 @@ function CoursePage() {
     }
   }
 
-  // When edit form finishes and signals update
   const handleCourseEdited = () => {
     setShowEditForm(false)
     setSelectedCourse(null)
-    fetchCourses()
+    
+    // Clear search and refresh
+    if (isSearching) {
+      setSearchTerm("")
+      setIsSearching(false)
+    }
+    fetchAllCourses()
   }
 
-  // Handle successful upload
   const handleUploadSuccess = () => {
-    // Reset to first page and refresh the data after successful upload
     setCurrentPage(1)
-    fetchCourses()
+    setSearchTerm("")
+    setIsSearching(false)
+    fetchAllCourses()
   }
+
+  // Calculate pagination
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedCourses = isSearching 
+    ? courses.slice(startIndex, endIndex) // Client-side pagination for search
+    : courses // Server already paginated
 
   const totalPages = Math.ceil(totalCourses / itemsPerPage)
 
@@ -125,8 +166,29 @@ function CoursePage() {
         <Header title="Course Management" />
         <main className="course-management-content">
           <div className="course-actions">
-            <Search value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Search 
+              value={searchTerm} 
+              onChange={handleSearchChange}
+              onSearchResults={handleSearchResults}
+              modelName="Formations"
+              placeholder="Search courses..."
+            />
             <Addbutton onUploadSuccess={handleUploadSuccess} />
+            {/* Debug button - remove after testing */}
+            <button 
+              onClick={async () => {
+                console.log('Testing search API directly...');
+                try {
+                  const result = await api.searchModel('Formations', 'test');
+                  console.log('Direct API test result:', result);
+                } catch (err) {
+                  console.error('Direct API test error:', err);
+                }
+              }}
+              style={{ marginLeft: '10px', padding: '5px 10px' }}
+            >
+              Test Search API
+            </button>
           </div>
 
           {loading ? (
@@ -137,19 +199,49 @@ function CoursePage() {
           ) : error ? (
             <div className="error-container">
               <p>{error}</p>
-              <button onClick={fetchCourses} className="retry-button">
+              <button onClick={fetchAllCourses} className="retry-button">
                 Retry
               </button>
             </div>
           ) : (
-            <Tabel
-              data={courses}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
+            <>
+              {isSearching && searchTerm && (
+                <div className="search-info">
+                  <p>
+                    Showing {totalCourses} result{totalCourses !== 1 ? 's' : ''} for "{searchTerm}"
+                    <button 
+                      className="clear-search"
+                      onClick={() => {
+                        setSearchTerm("")
+                        setIsSearching(false)
+                        fetchAllCourses()
+                      }}
+                    >
+                      Clear search
+                    </button>
+                  </p>
+                </div>
+              )}
+              
+              {courses.length === 0 ? (
+                <div className="empty-state">
+                  <p>
+                    {isSearching 
+                      ? `No courses found for "${searchTerm}"` 
+                      : "No courses available"}
+                  </p>
+                </div>
+              ) : (
+                <Tabel
+                  data={paginatedCourses}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              )}
+            </>
           )}
 
           {showEditForm && selectedCourse && (

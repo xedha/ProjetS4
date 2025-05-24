@@ -7,6 +7,28 @@ interface FetchOptions {
   timeout?: number;
 }
 
+// Helper function to get auth token from localStorage
+const getAuthToken = () => {
+  return localStorage.getItem('authToken');
+};
+
+// Helper function to get CSRF token from cookies
+const getCSRFToken = () => {
+  const name = 'csrftoken';
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+};
+
 // Helper function to handle API errors consistently
 const handleApiError = async (response: Response) => {
   console.log("API response status:", response.status);
@@ -48,12 +70,80 @@ const fetchWithTimeout = async (url: string, options: RequestInit & FetchOptions
   }
 };
 
+// Special fetch function for long-running email operations
+// This has a much longer timeout (5 minutes) to accommodate bulk email sending
+const fetchForEmailOperations = async (url: string, options: RequestInit = {}) => {
+  const LONG_TIMEOUT = 300000; // 5 minutes in milliseconds
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), LONG_TIMEOUT);
+  
+  try {
+    console.log(`📧 Starting long-running email operation with ${LONG_TIMEOUT/1000}s timeout`);
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Email operation timeout - the operation took longer than 5 minutes');
+    }
+    throw error;
+  }
+};
+
 // Types for the API responses and requests
 export interface Creneau {
   id_creneau: number;
   date_creneau: string;
   heure_creneau: string;
   salle: string;
+}
+
+export interface WorkloadTeacherInfo {
+  code: string;
+  name: string;
+  email: string;
+  department: string;
+}
+
+export interface WorkloadStatistics {
+  surveillance_count: number;
+  courses_count: number;
+  average_surveillances: number;
+  deviation_percentage: number;
+  status: 'NO_SURVEILLANCE' | 'OVERLOADED' | 'UNDERUTILIZED' | 'NORMAL';
+  severity: 'high' | 'medium' | 'low' | 'none';
+}
+
+export interface WorkloadTeacherAnalysis {
+  teacher_info: WorkloadTeacherInfo;
+  statistics: WorkloadStatistics;
+  recommendation: string;
+}
+
+export interface WorkloadResponse {
+  global_metrics: {
+    total_charges_enseignement: number;
+    total_plannings: number;
+    global_nbrss: number | 'N/A';
+    status: 'NEED_MORE_SURVEILLANCES' | 'TOO_MANY_SURVEILLANCES' | 'BALANCED';
+    recommendation: string;
+  };
+  teacher_distribution: {
+    total_teachers: number;
+    total_surveillances: number;
+    average_per_teacher: number;
+    no_surveillance: number;
+    overloaded: number;
+    underutilized: number;
+    normal: number;
+  };
+  teacher_analysis: WorkloadTeacherAnalysis[];
+  message: string;
 }
 export interface MonitoringPlanningItem {
   teacher_name: string;
@@ -168,6 +258,55 @@ export const examApi = {
       return await response.json() as SurveillantWithDetails[];
     } catch (error: any) {
       console.error(`Failed to fetch surveillants for planning ${planningId}:`, error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Send PV emails in bulk
+   * POST /api/send_bulk_pv/
+   * Uses extended timeout for long-running email operations
+   */
+  async sendBulkPV() {
+    try {
+      console.log("✉️ sendBulkPV - Using extended timeout for email operation");
+      const response = await fetchForEmailOperations(
+        `${BASE_URL}/api/send_bulk_pv/`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      await handleApiError(response);
+      return await response.json();
+    } catch (error: any) {
+      console.error("Error sending bulk PV emails:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Send convocations in bulk
+   * POST /api/send_bulk_convocations/
+   * Uses extended timeout for long-running email operations
+   * @param data Optional payload { convocations: [...] } or omit to let backend fetch all
+   */
+  async sendBulkConvocations(data?: { convocations?: any[] }) {
+    try {
+      console.log("✉️ sendBulkConvocations payload:", JSON.stringify(data, null, 2));
+      console.log("Using extended timeout for email operation");
+      const response = await fetchForEmailOperations(
+        `${BASE_URL}/api/send_bulk_convocations/`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data || {}),
+        }
+      );
+      await handleApiError(response);
+      return await response.json();
+    } catch (error: any) {
+      console.error("Error sending bulk convocations:", error);
       throw error;
     }
   },
@@ -324,9 +463,26 @@ export const examApi = {
     try {
       console.log("✉️ checkExamDate payload:", JSON.stringify(data, null, 2));
 
+      const authToken = getAuthToken();
+      const headers: any = {
+        "Content-Type": "application/json",
+      };
+
+      // Add auth token if available
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
+
+      // Try to get CSRF token
+      const csrfToken = getCSRFToken();
+      if (csrfToken) {
+        headers["X-CSRFToken"] = csrfToken;
+      }
+
       const response = await fetchWithTimeout(`${BASE_URL}/api/check_exam_date/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(data),
       });
       
@@ -346,9 +502,26 @@ export const examApi = {
     try {
       console.log("✉️ checkEnseignantScheduleConflict payload:", JSON.stringify(data, null, 2));
 
+      const authToken = getAuthToken();
+      const headers: any = {
+        "Content-Type": "application/json",
+      };
+
+      // Add auth token if available
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
+
+      // Try to get CSRF token
+      const csrfToken = getCSRFToken();
+      if (csrfToken) {
+        headers["X-CSRFToken"] = csrfToken;
+      }
+
       const response = await fetchWithTimeout(`${BASE_URL}/api/check_enseignant_schedule_conflict/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(data),
       });
       
@@ -361,27 +534,43 @@ export const examApi = {
   },
 
   /**
-   * Send email
-   * POST /api/send_email/
+   * Check surveillance workload balance
+   * POST /api/check_surveillance_workload/
    */
-  async sendEmail(data: Record<string, any>) {
+  async checkSurveillanceWorkload() {
     try {
-      console.log("✉️ sendEmail payload:", JSON.stringify(data, null, 2));
+      console.log("✉️ checkSurveillanceWorkload - checking workload balance");
 
-      const response = await fetchWithTimeout(`${BASE_URL}/api/send_email/`, {
+      const authToken = getAuthToken();
+      const headers: any = {
+        "Content-Type": "application/json",
+      };
+
+      // Add auth token if available
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
+
+      // Try to get CSRF token
+      const csrfToken = getCSRFToken();
+      if (csrfToken) {
+        headers["X-CSRFToken"] = csrfToken;
+      }
+
+      const response = await fetchWithTimeout(`${BASE_URL}/api/check_surveillance_workload/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({}),
       });
       
       await handleApiError(response);
       return await response.json();
     } catch (error: any) {
-      console.error('Error sending email:', error);
+      console.error('Error checking surveillance workload:', error);
       throw error;
     }
   },
-
  
 };
 
@@ -427,8 +616,10 @@ export const {
   updatePlanningWithSurveillants,
   checkExamDate,
   checkEnseignantScheduleConflict,
-  sendEmail,
-  getMonitoringPlanning, // Add this line
+  checkSurveillanceWorkload,
+  sendBulkPV,
+  sendBulkConvocations,
+  getMonitoringPlanning,
 } = examApi;
 
 // Default export

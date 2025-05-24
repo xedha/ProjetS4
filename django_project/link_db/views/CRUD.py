@@ -1,6 +1,7 @@
 from django.apps import apps
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.db.models import Q
 import json
 import logging
 logger = logging.getLogger(__name__)
@@ -132,4 +133,89 @@ def get_model_data(request):
 
     except Exception as e:
         logger.exception("Error fetching model data")
+        return JsonResponse({'error': str(e)}, status=500)
+    
+    
+logger = logging.getLogger(__name__)
+
+@csrf_exempt
+def search_model(request):
+    """
+    Search across all fields of a model for a given query string.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST requests are allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        
+        model_name = data.get("model")
+        search_query = data.get("query", "").strip()
+        limit = data.get("limit", 100)
+        
+        # Debug logging
+        logger.debug(f"=== SEARCH REQUEST ===")
+        logger.debug(f"Model: {model_name}")
+        logger.debug(f"Query: '{search_query}'")
+        logger.debug(f"Limit: {limit}")
+        
+        if not model_name:
+            return JsonResponse({'error': 'Model name is required'}, status=400)
+        
+        if not search_query:
+            return JsonResponse({'error': 'Search query is required'}, status=400)
+        
+        # Get the model
+        Model = apps.get_model('link_db', model_name)
+        if not Model:
+            return JsonResponse({'error': f'Model "{model_name}" not found'}, status=404)
+        
+        # Build Q objects for all fields
+        q_objects = Q()
+        searchable_fields = []
+        
+        # Get all fields from the model
+        for field in Model._meta.get_fields():
+            # Only search in fields that can contain text
+            if field.get_internal_type() in ['CharField', 'TextField', 'EmailField', 'URLField']:
+                field_name = field.name
+                searchable_fields.append(field_name)
+                q_objects |= Q(**{f"{field_name}__icontains": search_query})
+            
+            # For numeric fields, only search if the query is numeric
+            elif field.get_internal_type() in ['IntegerField', 'FloatField', 'DecimalField'] and search_query.isdigit():
+                field_name = field.name
+                searchable_fields.append(field_name)
+                q_objects |= Q(**{f"{field_name}": search_query})
+        
+        logger.debug(f"Searchable fields: {searchable_fields}")
+        
+        # Perform the search
+        if q_objects:
+            results = Model.objects.filter(q_objects)[:limit]
+            data = list(results.values())
+            
+            logger.debug(f"Found {len(data)} results")
+            if data:
+                logger.debug(f"First result: {data[0]}")
+            
+            response_data = {
+                'results': data,
+                'count': len(data),
+                'query': search_query,
+                'model': model_name
+            }
+            
+            return JsonResponse(response_data, safe=False, json_dumps_params={'ensure_ascii': False})
+        else:
+            return JsonResponse({
+                'results': [],
+                'count': 0,
+                'query': search_query,
+                'model': model_name,
+                'message': 'No searchable fields found in this model'
+            })
+    
+    except Exception as e:
+        logger.exception("Error searching model")
         return JsonResponse({'error': str(e)}, status=500)

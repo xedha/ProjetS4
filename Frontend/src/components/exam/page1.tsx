@@ -26,11 +26,10 @@ interface AutoTableData {
   };
 }
 
-// Remove the SpecialtyPDFSelector component as we're using a modal now
-
 function Page1() {
   const { t } = useTranslation();
   const [plannings, setPlannings] = useState<PlanningWithDetails[]>([]);
+  const [filteredPlannings, setFilteredPlannings] = useState<PlanningWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,6 +42,7 @@ function Page1() {
       setError(null);
       const response = await examApi.getPlanningsWithDetails();
       setPlannings(response);
+      setFilteredPlannings(response); // Initialize filtered plannings
     } catch (err) {
       console.error('Error fetching plannings:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch plannings');
@@ -56,14 +56,64 @@ function Page1() {
     fetchPlannings();
   }, [fetchPlannings]);
 
-  // Handle search input
-  const handleSearchChange = (searchValue: string) => {
-    setSearchTerm(searchValue.toLowerCase());
-  };
+  // Handle search results from the Search component
+  const handleSearchResults = useCallback((results: any[]) => {
+    console.log('Search results received:', results);
+    
+    // Since we're doing local filtering, we can ignore the API results
+    // The handleSearchChange function will handle the filtering
+  }, []);
+
+  // Handle search input change
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    // If search is cleared, show all plannings
+    if (!value.trim()) {
+      setFilteredPlannings(plannings);
+      return;
+    }
+    
+    // Perform local filtering
+    const lowerSearchTerm = value.toLowerCase();
+    const filtered = plannings.filter(planning => {
+      // Search in formation fields
+      const formationMatch = 
+        planning.formation.modules?.toLowerCase().includes(lowerSearchTerm) ||
+        planning.formation.filière?.toLowerCase().includes(lowerSearchTerm) ||
+        planning.formation.niveau_cycle?.toLowerCase().includes(lowerSearchTerm) ||
+        planning.formation.specialités?.toLowerCase().includes(lowerSearchTerm) ||
+        planning.formation.domaine?.toLowerCase().includes(lowerSearchTerm) ||
+        planning.formation.semestre?.toLowerCase().includes(lowerSearchTerm);
+      
+      // Search in planning fields
+      const planningMatch = 
+        planning.section?.toLowerCase().includes(lowerSearchTerm) ||
+        planning.session?.toLowerCase().includes(lowerSearchTerm) ||
+        planning.nombre_surveillant?.toString().includes(lowerSearchTerm);
+      
+      // Search in creneau fields
+      const creneauMatch = 
+        planning.creneau.date_creneau?.toLowerCase().includes(lowerSearchTerm) ||
+        planning.creneau.heure_creneau?.toLowerCase().includes(lowerSearchTerm) ||
+        planning.creneau.salle?.toLowerCase().includes(lowerSearchTerm);
+      
+      // Search in ID
+      const idMatch = planning.id_planning?.toString().includes(lowerSearchTerm);
+      
+      return formationMatch || planningMatch || creneauMatch || idMatch;
+    });
+    
+    setFilteredPlannings(filtered);
+  }, [plannings]);
+
+  // Remove the duplicate useEffect for local filtering since we handle it in handleSearchChange
+  // The search is now handled entirely in the handleSearchChange function
 
   // Convert API data to the format expected by the table
-  const convertPlanningsToTableData = (plannings: PlanningWithDetails[]) => {
-    return plannings.map((planning) => ({
+  const convertPlanningsToTableData = (planningsToConvert: PlanningWithDetails[]) => {
+    return planningsToConvert.map((planning) => ({
       level: planning.formation.niveau_cycle,
       specialty: planning.formation.filière,
       semester: planning.formation.semestre,
@@ -85,22 +135,8 @@ function Page1() {
     setShowPDFModal(true);
   };
 
-  // Filter and get table data
+  // Get table data from filtered plannings
   const getTableData = () => {
-    let filteredPlannings = plannings;
-    
-    // Apply search filter if searchTerm is not empty
-    if (searchTerm) {
-      filteredPlannings = plannings.filter(planning => 
-        planning.formation.modules.toLowerCase().includes(searchTerm) ||
-        planning.formation.filière.toLowerCase().includes(searchTerm) ||
-        planning.formation.niveau_cycle.toLowerCase().includes(searchTerm) ||
-        planning.section.toLowerCase().includes(searchTerm) ||
-        planning.creneau.date_creneau.toLowerCase().includes(searchTerm) ||
-        planning.creneau.salle.toLowerCase().includes(searchTerm)
-      );
-    }
-    
     return convertPlanningsToTableData(filteredPlannings);
   };
 
@@ -139,7 +175,7 @@ function Page1() {
 
       <Tabel 
         data={getTableData()} 
-        planningsRaw={plannings} // Pass the raw data to Tabel
+        planningsRaw={filteredPlannings} // Pass the filtered data
         onDataRefresh={fetchPlannings} 
       />
       
@@ -174,15 +210,47 @@ function Page1() {
         </button>
         
         <Addbutton onAddSuccess={handleAddPlanning} />
-        <Search onSearch={handleSearchChange} />
+        
+        {/* Search Component - using local filtering */}
+        <Search 
+          value={searchTerm}
+          onChange={handleSearchChange}
+          onSearchResults={handleSearchResults}
+          placeholder="Search by module, level, room, date..."
+          modelName="Planning"
+          debounceDelay={300}
+        />
       </div>
+      
+      {/* Show search info */}
+      {searchTerm && (
+        <div className={styles.searchInfo}>
+          <p>
+            {filteredPlannings.length === 0 
+              ? `No results found for "${searchTerm}"`
+              : `Showing ${filteredPlannings.length} result${filteredPlannings.length !== 1 ? 's' : ''} for "${searchTerm}"`
+            }
+          </p>
+          {filteredPlannings.length === 0 && (
+            <button 
+              onClick={() => {
+                setSearchTerm('');
+                setFilteredPlannings(plannings);
+              }}
+              className={styles.clearSearchButton}
+            >
+              Clear search
+            </button>
+          )}
+        </div>
+      )}
       
       {/* PDF Options Modal */}
       <PDFOptionsModal 
         isOpen={showPDFModal}
         onClose={() => setShowPDFModal(false)}
         data={getTableData()}
-        planningsRaw={plannings}
+        planningsRaw={filteredPlannings}
       />
     </>
   );

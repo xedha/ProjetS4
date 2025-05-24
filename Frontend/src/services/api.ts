@@ -194,6 +194,44 @@ export const api = {
     }
   },
 
+  async searchModel(model: string, query: string, limit: number = 50) {
+    try {
+      if (!query.trim()) {
+        return { results: [], count: 0, query: '', model };
+      }
+
+      const payload = {
+        model,
+        query: query.trim(),
+        limit
+      };
+
+      console.log(`🔍 Search Request:`);
+      console.log(`  - Model: ${model}`);
+      console.log(`  - Query: "${query.trim()}"`);
+      console.log(`  - Limit: ${limit}`);
+      console.log(`  - Full payload:`, JSON.stringify(payload, null, 2));
+
+      const response = await fetchWithTimeout(`${BASE_URL}/api/search_model/`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+
+      await handleApiError(response);
+      const data = await response.json();
+      
+      console.log(`✅ Search Response:`, data);
+      console.log(`  - Results count: ${data.results ? data.results.length : 0}`);
+      console.log(`  - First result:`, data.results?.[0]);
+      
+      return data;
+    } catch (error: any) {
+      console.error(`❌ Search Error:`, error);
+      throw error;
+    }
+  },
+
   async uploadExcel(model: string, file: File) {
     try {
       // Validate file type

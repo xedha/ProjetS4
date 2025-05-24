@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './Tabel.module.css';
+import buttonStyles from './TeacherPopup.module.css';
 import { examApi, SurveillantWithDetails, Enseignant } from '../../../services/ExamApi';
 import { api } from '../../../services/api';
 
@@ -9,6 +10,18 @@ interface TeacherPopupProps {
   onClose: () => void;
   planningId: number;
   onTeachersUpdated: () => void; // Callback to refresh parent component data
+}
+
+interface TeacherConflict {
+  code_enseignant: string;
+  conflicts: {
+    surveillance1_id: number;
+    planning1_id: number;
+    surveillance2_id: number;
+    planning2_id: number;
+    date: string;
+    time: string;
+  }[];
 }
 
 const TeacherPopup: React.FC<TeacherPopupProps> = ({
@@ -26,6 +39,11 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
   const [editingTeacher, setEditingTeacher] = useState<SurveillantWithDetails | null>(null);
   const [editingSupervisor, setEditingSupervisor] = useState(false);
   
+  // Conflict checking states
+  const [showConflicts, setShowConflicts] = useState(false);
+  const [checkingConflicts, setCheckingConflicts] = useState(false);
+  const [teacherConflicts, setTeacherConflicts] = useState<TeacherConflict[]>([]);
+  
   // Form state
   const [editForm, setEditForm] = useState({ 
     Code_Enseignant: '', 
@@ -40,6 +58,37 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
     prenom: '', 
     email1: '' 
   });
+
+  // Check for teacher conflicts
+  const checkTeacherConflicts = async () => {
+    try {
+      setCheckingConflicts(true);
+      const response = await examApi.checkEnseignantScheduleConflict({});
+      
+      if (response.conflicts) {
+        // Filter conflicts to only show those related to teachers in this planning
+        const allPlanningTeachers = [
+          ...(supervisor ? [supervisor.code_enseignant] : []),
+          ...teachers.map(t => t.code_enseignant)
+        ];
+        
+        const relevantConflicts = response.conflicts.filter((conflict: TeacherConflict) =>
+          allPlanningTeachers.includes(conflict.code_enseignant)
+        );
+        
+        setTeacherConflicts(relevantConflicts);
+        setShowConflicts(true);
+      } else {
+        setTeacherConflicts([]);
+        setShowConflicts(true);
+      }
+    } catch (error) {
+      console.error('Error checking teacher conflicts:', error);
+      alert('Failed to check teacher conflicts');
+    } finally {
+      setCheckingConflicts(false);
+    }
+  };
 
   // Fetch planning data, teachers, and supervisor using the new examApi
   useEffect(() => {
@@ -306,17 +355,110 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
           <h2>{t('teacher.management')}</h2>
-          <button onClick={onClose} className={styles.closeButton}>×</button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button 
+              onClick={checkTeacherConflicts} 
+              className={buttonStyles.conflictButton}
+              disabled={checkingConflicts}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 16px',
+                background: 'linear-gradient(90deg, #F59E0B 0%, #D97706 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: checkingConflicts ? 'not-allowed' : 'pointer',
+                opacity: checkingConflicts ? 0.6 : 1,
+                transition: 'all 0.2s'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7V12C2 16.5 4.23 20.68 7.62 23.15L12 24L16.38 23.15C19.77 20.68 22 16.5 22 12V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 8V12M12 16H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {checkingConflicts ? 'Checking...' : 'Check Conflicts'}
+            </button>
+            <button onClick={onClose} className={styles.closeButton}>×</button>
+          </div>
         </div>
 
         {loading && <div className={styles.loadingMessage}>Loading teacher data...</div>}
         {error && <div className={styles.errorMessage}>{error}</div>}
 
+        {/* Conflicts Section */}
+        {showConflicts && (
+          <div style={{
+            margin: '16px 0',
+            padding: '16px',
+            backgroundColor: teacherConflicts.length > 0 ? '#FEF3C7' : '#D1FAE5',
+            border: `1px solid ${teacherConflicts.length > 0 ? '#F59E0B' : '#10B981'}`,
+            borderRadius: '8px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ margin: 0, color: teacherConflicts.length > 0 ? '#92400E' : '#065F46' }}>
+                Teacher Scheduling Conflicts
+              </h3>
+              <button 
+                onClick={() => setShowConflicts(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  color: '#6B7280'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            {teacherConflicts.length === 0 ? (
+              <p style={{ margin: 0, color: '#065F46' }}>
+                ✓ No scheduling conflicts found for teachers in this exam.
+              </p>
+            ) : (
+              <div>
+                {teacherConflicts.map((conflict, idx) => {
+                  // Find teacher name
+                  const teacherName = (() => {
+                    if (supervisor && supervisor.code_enseignant === conflict.code_enseignant) {
+                      return `${supervisor.enseignant.prenom} ${supervisor.enseignant.nom} (Supervisor)`;
+                    }
+                    const teacher = teachers.find(t => t.code_enseignant === conflict.code_enseignant);
+                    if (teacher) {
+                      return `${teacher.enseignant.prenom} ${teacher.enseignant.nom}`;
+                    }
+                    return conflict.code_enseignant;
+                  })();
+
+                  return (
+                    <div key={idx} style={{ marginBottom: '12px' }}>
+                      <strong style={{ color: '#92400E' }}>{teacherName}</strong>
+                      <ul style={{ margin: '4px 0 0 20px', padding: 0 }}>
+                        {conflict.conflicts.map((c, cIdx) => (
+                          <li key={cIdx} style={{ fontSize: '14px', color: '#B45309' }}>
+                            Conflict on {c.date} at {c.time} 
+                            (Planning #{c.planning1_id} vs #{c.planning2_id})
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className={styles.supervisorSection}>
           <div className={styles.supervisorHeader}>
             <h3>{t('teacher.supervisor')}</h3>
             {!editingSupervisor && (
-              <button onClick={handleEditSupervisorClick} className={styles.editButton}>
+              <button onClick={handleEditSupervisorClick} className={buttonStyles.editButton}>
                 {t('teacher.edit')}
               </button>
             )}
@@ -356,12 +498,12 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
               <div className={styles.buttonGroup}>
                 <button 
                   onClick={handleSaveSupervisor} 
-                  className={styles.saveButton}
+                  className={buttonStyles.saveButton}
                   disabled={!supervisorForm.Code_Enseignant}
                 >
                   {t('teacher.save')}
                 </button>
-                <button onClick={() => setEditingSupervisor(false)} className={styles.cancelButton}>
+                <button onClick={() => setEditingSupervisor(false)} className={buttonStyles.cancelButton}>
                   {t('teacher.cancel')}
                 </button>
               </div>
@@ -426,10 +568,10 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
                           />
                         </td>
                         <td>
-                          <button onClick={handleSaveEdit} className={styles.saveButton}>
+                          <button onClick={handleSaveEdit} className={buttonStyles.saveButton}>
                             {t('teacher.save')}
                           </button>
-                          <button onClick={() => setEditingTeacher(null)} className={styles.cancelButton}>
+                          <button onClick={() => setEditingTeacher(null)} className={buttonStyles.cancelButton}>
                             {t('teacher.cancel')}
                           </button>
                         </td>
@@ -439,12 +581,12 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
                         <td>{teacher.enseignant.nom} {teacher.enseignant.prenom}</td>
                         <td>{teacher.enseignant.email1 || 'No email'}</td>
                         <td>
-                          <button onClick={() => handleEditClick(teacher)} className={styles.editButton}>
+                          <button onClick={() => handleEditClick(teacher)} className={buttonStyles.editButton}>
                             {t('teacher.edit')}
                           </button>
                           <button 
                             onClick={() => handleRemoveTeacher(teacher.code_enseignant)} 
-                            className={styles.cancelButton}
+                            className={buttonStyles.cancelButton}
                           >
                             {t('teacher.remove')}
                           </button>

@@ -97,16 +97,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-]
+    ]
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True
-# For production, specify exact origins:
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:5173",
-#     "http://127.0.0.1:5173",
-# ]
+CORS_ALLOW_ALL_ORIGINS = [
+'http://localhost:5173',
+    'http://127.0.0.1:5173',
+ ]
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'back_end.urls'

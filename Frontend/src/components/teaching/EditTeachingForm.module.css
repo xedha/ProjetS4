@@ -30,11 +30,6 @@
   z-index: 1001;
 }
 
-/* Content wrapper */
-.content {
-  /* Content area without scroll */
-}
-
 /* Title section */
 .title {
   font-family: 'Poppins', sans-serif;
@@ -56,8 +51,7 @@
 }
 
 /* Error and loading messages */
-.errorMessage,
-.error {
+.error, .errorMessage {
   color: #e74c3c;
   font-size: 14px;
   margin-bottom: 15px;
@@ -95,12 +89,6 @@
   min-width: 250px;
 }
 
-/* Special width for wide input boxes */
-.inputBox[style*="grid-column: span 2"] {
-  width: 100%;
-}
-
-/* Input label */
 .inputBox span.details {
   display: block;
   font-weight: 500;
@@ -123,12 +111,12 @@
   border-bottom-width: 2px;
   transition: all 0.3s ease;
   background-color: #fff;
+  cursor: pointer;
 }
 
-/* Select/Combo box specific styles */
+/* Select specific styles */
 .inputBox select,
 .selectbox {
-  cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -139,15 +127,6 @@
   padding-right: 45px;
 }
 
-/* Focus states */
-.inputBox input:focus,
-.inputBox input:valid:not([value=""]),
-.inputBox select:focus,
-.selectbox:focus {
-  border-color: #0B8FAC;
-  box-shadow: 0 0 0 2px rgba(11, 143, 172, 0.1);
-}
-
 /* Disabled state */
 .inputBox input:disabled,
 .inputBox select:disabled,
@@ -155,21 +134,22 @@
   background-color: #f5f5f5;
   cursor: not-allowed;
   color: #999;
-  opacity: 0.7;
 }
 
-/* Select option styles */
+/* Focus states */
+.inputBox input:focus,
+.inputBox input:valid,
+.inputBox select:focus,
+.selectbox:focus {
+  border-color: #0B8FAC;
+  box-shadow: 0 0 0 2px rgba(11, 143, 172, 0.1);
+}
+
+/* Option styles */
 .inputBox select option,
 .selectbox option {
   padding: 10px;
   font-size: 16px;
-  background-color: #fff;
-  color: #333;
-}
-
-.inputBox select option:disabled {
-  color: #999;
-  font-style: italic;
 }
 
 /* Button container */
@@ -203,7 +183,6 @@
   background: #ccc;
   cursor: not-allowed;
   transform: none;
-  opacity: 0.7;
 }
 
 /* Close button */
@@ -213,9 +192,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
+  padding: 8px;
   cursor: pointer;
   position: absolute;
   top: 15px;
@@ -234,9 +211,6 @@
   height: 24px;
   color: #666;
   transition: color 0.3s ease;
-  position: relative;
-  top: auto;
-  right: auto;
 }
 
 .close:hover .svg {
@@ -252,11 +226,6 @@
 
   .inputBox {
     width: 100%;
-    min-width: auto;
-  }
-
-  .userDetails {
-    gap: 10px;
   }
 }
 
@@ -268,21 +237,15 @@
     max-height: 100vh;
     border-radius: 0;
     padding: 20px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    transform: none;
-    overflow-y: auto;
+    transform: translate(-50%, -50%);
   }
 
   .title {
     font-size: 20px;
-    margin-top: 30px;
   }
 
   .userDetails {
-    gap: 5px;
-    margin: 15px 0;
+    gap: 10px;
   }
 
   .inputBox {
@@ -299,7 +262,6 @@
 
   .button {
     margin: 20px 0 10px 0;
-    height: 40px;
   }
 
   .button input {
@@ -309,12 +271,10 @@
   .close {
     top: 10px;
     right: 10px;
-    width: 36px;
-    height: 36px;
   }
+}
 
-  .svg {
-    width: 20px;
-    height: 20px;
-  }
+/* Special styling for wide input boxes */
+.inputBox[style*="grid-column: span 2"] {
+  width: 100%;
 }

@@ -1,11 +1,11 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { api } from "../../services/api"
 import type { Teaching } from "../../types/teaching"
-import styles from "./Form2.module.css"
+import styles from "./EditTeachingForm.module.css"
 
 interface EditFormProps {
   teaching: Teaching
@@ -17,9 +17,14 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
   const { t } = useTranslation()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   // Use the received teaching id directly as the original id
   const originalId = teaching.id_charge
+
+  // Data for dropdowns
+  const [teachers, setTeachers] = useState<any[]>([])
+  const [formations, setFormations] = useState<any[]>([])
 
   // Controlled inputs initialized from teaching prop
   const [teachingId, setTeachingId] = useState<number>(teaching.id_charge)
@@ -33,6 +38,100 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
   const [moduleAbbreviation, setModuleAbbreviation] = useState<string>(teaching.abv_module || "")
   const [teacherCode, setTeacherCode] = useState<string>(teaching.teacher || "")
   const [academicYear, setAcademicYear] = useState<string>(teaching.annee_universitaire || "")
+
+  // Selected formation state to track combo box selection
+  const [selectedFormation, setSelectedFormation] = useState<string>("")
+
+  // Load teachers and formations data
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true)
+        
+        // Fetch teachers
+        const teachersData = await api.getModelData('Enseignants', {
+          page: 1,
+          itemsPerPage: 1000, // Get more teachers to ensure we have all
+          search: '',
+        })
+        
+        if (teachersData) {
+          let teachersArray = []
+          if (Array.isArray(teachersData)) {
+            teachersArray = teachersData
+          } else if (teachersData.results && Array.isArray(teachersData.results)) {
+            teachersArray = teachersData.results
+          } else if (teachersData.data && Array.isArray(teachersData.data)) {
+            teachersArray = teachersData.data
+          }
+          
+          console.log('Teachers loaded:', teachersArray.length)
+          setTeachers(teachersArray)
+        }
+        
+        // Fetch formations
+        const formationsData = await api.getModelData('Formations', {
+          page: 1,
+          itemsPerPage: 1000, // Get more formations to ensure we have all
+          search: '',
+        })
+        
+        if (formationsData) {
+          let formationsArray = []
+          if (Array.isArray(formationsData)) {
+            formationsArray = formationsData
+          } else if (formationsData.results && Array.isArray(formationsData.results)) {
+            formationsArray = formationsData.results
+          } else if (formationsData.data && Array.isArray(formationsData.data)) {
+            formationsArray = formationsData.data
+          }
+          
+          console.log('Formations loaded:', formationsArray.length)
+          setFormations(formationsArray)
+          
+          // Try to find and select the current formation based on module name
+          const currentFormation = formationsArray.find((f: { modules: string | (string | null | undefined)[] | null | undefined }) => 
+            f.modules === teaching.intitule_module || 
+            f.modules === teaching.abv_module ||
+            (f.modules &&
+              (
+                (typeof f.modules === "string" &&
+                  (f.modules.includes(teaching.intitule_module ?? "") || f.modules.includes(teaching.abv_module ?? "")))
+                ||
+                (Array.isArray(f.modules) &&
+                  (f.modules.includes(teaching.intitule_module ?? "") || f.modules.includes(teaching.abv_module ?? "")))
+              )
+            )
+          )
+          if (currentFormation) {
+            setSelectedFormation(currentFormation.id || '')
+          }
+        }
+        
+      } catch (err) {
+        console.error('Error fetching data:', err)
+        setError('Failed to load form options: ' + (err instanceof Error ? err.message : 'Unknown error'))
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchData()
+  }, [teaching.intitule_module, teaching.abv_module])
+
+  // Handle formation selection change
+  const handleFormationChange = (formationId: string) => {
+    setSelectedFormation(formationId)
+    const formation = formations.find(f => f.id?.toString() === formationId)
+    if (formation && formation.modules) {
+      setModuleName(formation.modules)
+      // You might want to extract abbreviation from the formation if available
+      // For now, keeping the existing abbreviation or clearing it
+      if (!moduleAbbreviation && formation.abv_module) {
+        setModuleAbbreviation(formation.abv_module)
+      }
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -112,6 +211,7 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
         <div className={styles.title}>{t("teaching.editTeaching") || "Edit Teaching Assignment"}</div>
 
         {error && <div className={styles.errorMessage}>{error}</div>}
+        {loading && <div className={styles.loading}>Loading form data...</div>}
 
         <div className={styles.content}>
           <form onSubmit={handleSubmit}>
@@ -186,33 +286,62 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
                   <option value="TP">{t("teaching.typeTP") || "TP"}</option>
                 </select>
               </div>
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t("teaching.moduleName") || "Module Name"}</span>
-                <input
-                  value={moduleName}
-                  onChange={(e) => setModuleName(e.target.value)}
-                  required
-                  disabled={isSubmitting}
-                />
+              
+              {/* Formation Selection - Now as a combo box */}
+              <div className={styles.inputBox} style={{ gridColumn: 'span 2' }}>
+                <span className={styles.details}>{t("teaching.formation") || "Formation (Module)"}</span>
+                <select
+                  className={styles.selectbox}
+                  value={selectedFormation}
+                  onChange={(e) => handleFormationChange(e.target.value)}
+                  disabled={isSubmitting || loading || formations.length === 0}
+                >
+                  <option value="">
+                    {moduleName 
+                      ? moduleName
+                      : t("teaching.selectFormation") || "Select Formation"
+                    }
+                  </option>
+                  {formations.map((formation) => {
+                    const formationId = formation.id || ''
+                    const filiere = formation.filière || formation.filiere || 'Unknown'
+                    const niveau = formation.niveau_cycle || 'Unknown'
+                    const modules = formation.modules || 'Unknown'
+                    return (
+                      <option key={formationId} value={formationId}>
+                        {filiere} - {niveau} - {modules}
+                      </option>
+                    )
+                  })}
+                </select>
               </div>
+
+              {/* Teacher Selection - Now as a combo box */}
               <div className={styles.inputBox}>
-                <span className={styles.details}>{t("teaching.moduleAbbreviation") || "Module Abbreviation"}</span>
-                <input 
-                  value={moduleAbbreviation} 
-                  onChange={(e) => setModuleAbbreviation(e.target.value)} 
-                  required
-                  disabled={isSubmitting} 
-                />
-              </div>
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t("teaching.teacher") || "Teacher Code"}</span>
-                <input
+                <span className={styles.details}>{t("teaching.teacher") || "Teacher"}</span>
+                <select
+                  className={styles.selectbox}
                   value={teacherCode}
                   onChange={(e) => setTeacherCode(e.target.value)}
                   required
-                  disabled={isSubmitting}
-                />
+                  disabled={isSubmitting || loading || teachers.length === 0}
+                >
+                  <option value="">
+                    {teacherCode || t("teaching.selectTeacher") || "Select Teacher"}
+                  </option>
+                  {teachers.map((teacher) => {
+                    const code = teacher.Code_Enseignant || teacher.code_enseignant || ''
+                    const name = teacher.nom || 'Unknown'
+                    const firstName = teacher.prenom || ''
+                    return (
+                      <option key={code} value={code}>
+                        {code} - {name} {firstName}
+                      </option>
+                    )
+                  })}
+                </select>
               </div>
+
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teaching.academicYear") || "Academic Year"}</span>
                 <input 
@@ -227,7 +356,7 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
               <input
                 type="submit"
                 value={isSubmitting ? t("teaching.saving") || "Saving..." : t("teaching.saveChanges") || "Save Changes"}
-                disabled={isSubmitting || !originalId}
+                disabled={isSubmitting || !originalId || loading}
               />
             </div>
           </form>

@@ -35,6 +35,7 @@ function ConflictChecker() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'date' | 'teacher' | 'workload'>('date');
   const [showModal, setShowModal] = useState(false);
+  const [targetSurveillances, setTargetSurveillances] = useState<number | undefined>(undefined);
 
   const checkDateConflicts = async () => {
     try {
@@ -72,6 +73,20 @@ function ConflictChecker() {
     }
   };
 
+  const checkWorkloadBalance = async () => {
+    try {
+      setLoading(true);
+      const response = await examApi.checkSurveillanceWorkload(targetSurveillances);
+      setWorkloadData(response);
+      setActiveTab('workload');
+    } catch (error) {
+      console.error('Error checking workload balance:', error);
+      alert('Failed to check workload balance');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const checkAllConflicts = async () => {
     setShowModal(true);
     await Promise.all([
@@ -81,17 +96,20 @@ function ConflictChecker() {
     ]);
   };
 
-  const checkWorkloadBalance = async () => {
-    try {
-      setLoading(true);
-      const response = await examApi.checkSurveillanceWorkload();
-      setWorkloadData(response);
-      setActiveTab('workload');
-    } catch (error) {
-      console.error('Error checking workload balance:', error);
-      alert('Failed to check workload balance');
-    } finally {
-      setLoading(false);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'BELOW_TARGET':
+      case 'NO_SURVEILLANCE':
+      case 'UNDERUTILIZED':
+        return styles.belowTarget;
+      case 'ABOVE_TARGET':
+      case 'OVERLOADED':
+        return styles.aboveTarget;
+      case 'ON_TARGET':
+      case 'NORMAL':
+        return styles.onTarget;
+      default:
+        return '';
     }
   };
 
@@ -115,7 +133,7 @@ function ConflictChecker() {
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2>Scheduling Conflicts</h2>
+              <h2>Scheduling Conflicts & Workload Analysis</h2>
               <button 
                 className={styles.closeButton}
                 onClick={() => setShowModal(false)}
@@ -257,93 +275,153 @@ function ConflictChecker() {
                   )}
 
                   {/* Workload Balance Tab */}
-                  {activeTab === 'workload' && workloadData && (
+                  {activeTab === 'workload' && (
                     <div className={styles.workloadContent}>
-                      {/* Global Metrics Card */}
-                      <div className={styles.globalMetricsCard}>
-                        <h3>Global Workload Analysis</h3>
-                        <div className={styles.metricsGrid}>
-                          <div className={styles.metricItem}>
-                            <span className={styles.metricLabel}>Total Courses</span>
-                            <span className={styles.metricValue}>{workloadData.global_metrics.total_charges_enseignement}</span>
-                          </div>
-                          <div className={styles.metricItem}>
-                            <span className={styles.metricLabel}>Total Plannings</span>
-                            <span className={styles.metricValue}>{workloadData.global_metrics.total_plannings}</span>
-                          </div>
-                          <div className={styles.metricItem}>
-                            <span className={styles.metricLabel}>NbrSS Ratio</span>
-                            <span className={styles.metricValue}>{workloadData.global_metrics.global_nbrss}</span>
-                          </div>
+                      {/* Target Surveillances Input */}
+                      <div className={styles.targetInputCard}>
+                        <h3>Set Target Surveillances</h3>
+                        <div className={styles.targetInputGroup}>
+                          <label>Target surveillances per teacher:</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={targetSurveillances || ''}
+                            onChange={(e) => setTargetSurveillances(e.target.value ? parseInt(e.target.value) : undefined)}
+                            placeholder="e.g., 3"
+                            className={styles.targetInput}
+                          />
+                          <button
+                            onClick={checkWorkloadBalance}
+                            className={styles.applyButton}
+                            disabled={loading}
+                          >
+                            Apply Target
+                          </button>
                         </div>
-                        <div className={`${styles.statusBadge} ${styles[workloadData.global_metrics.status.toLowerCase()]}`}>
-                          {workloadData.global_metrics.status.replace(/_/g, ' ')}
-                        </div>
-                        <p className={styles.recommendation}>{workloadData.global_metrics.recommendation}</p>
+                        <p className={styles.targetHint}>
+                          Leave empty to use the calculated average as baseline
+                        </p>
                       </div>
 
-                      {/* Teacher Distribution */}
-                      <div className={styles.distributionCard}>
-                        <h3>Teacher Distribution</h3>
-                        <div className={styles.distributionGrid}>
-                          <div className={styles.distItem}>
-                            <span className={styles.distNumber}>{workloadData.teacher_distribution.total_teachers}</span>
-                            <span className={styles.distLabel}>Total Teachers</span>
-                          </div>
-                          <div className={styles.distItem}>
-                            <span className={styles.distNumber}>{workloadData.teacher_distribution.average_per_teacher}</span>
-                            <span className={styles.distLabel}>Avg. Surveillances</span>
-                          </div>
-                          <div className={styles.distItem}>
-                            <span className={styles.distNumber}>{workloadData.teacher_distribution.no_surveillance}</span>
-                            <span className={styles.distLabel}>No Surveillance</span>
-                          </div>
-                          <div className={styles.distItem}>
-                            <span className={styles.distNumber}>{workloadData.teacher_distribution.overloaded}</span>
-                            <span className={styles.distLabel}>Overloaded</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Teacher Analysis List */}
-                      <div className={styles.teacherAnalysisList}>
-                        <h3>Individual Teacher Analysis</h3>
-                        {workloadData.teacher_analysis.length > 0 ? (
-                          workloadData.teacher_analysis.map((teacher, idx) => (
-                            <div key={idx} className={`${styles.teacherAnalysisCard} ${styles[teacher.statistics.severity]}`}>
-                              <div className={styles.teacherHeader}>
-                                <div className={styles.teacherInfo}>
-                                  <h4>{teacher.teacher_info.name}</h4>
-                                  <span className={styles.teacherCode}>{teacher.teacher_info.code}</span>
-                                  <span className={styles.teacherDept}>{teacher.teacher_info.department}</span>
-                                </div>
-                                <div className={`${styles.statusIndicator} ${styles[teacher.statistics.status.toLowerCase()]}`}>
-                                  {teacher.statistics.status.replace(/_/g, ' ')}
-                                </div>
+                      {workloadData && (
+                        <>
+                          {/* Global Metrics Card */}
+                          <div className={styles.globalMetricsCard}>
+                            <h3>Global Workload Analysis</h3>
+                            <div className={styles.metricsGrid}>
+                              <div className={styles.metricItem}>
+                                <span className={styles.metricLabel}>Total Courses</span>
+                                <span className={styles.metricValue}>{workloadData.global_metrics.total_charges_enseignement}</span>
                               </div>
-                              <div className={styles.teacherStats}>
-                                <div className={styles.statItem}>
-                                  <span className={styles.statLabel}>Surveillances</span>
-                                  <span className={styles.statValue}>{teacher.statistics.surveillance_count}</span>
-                                </div>
-                                <div className={styles.statItem}>
-                                  <span className={styles.statLabel}>Courses</span>
-                                  <span className={styles.statValue}>{teacher.statistics.courses_count}</span>
-                                </div>
-                                <div className={styles.statItem}>
-                                  <span className={styles.statLabel}>Deviation</span>
-                                  <span className={styles.statValue}>
-                                    {teacher.statistics.deviation_percentage > 0 ? '+' : ''}{teacher.statistics.deviation_percentage}%
-                                  </span>
-                                </div>
+                              <div className={styles.metricItem}>
+                                <span className={styles.metricLabel}>Total Plannings</span>
+                                <span className={styles.metricValue}>{workloadData.global_metrics.total_plannings}</span>
                               </div>
-                              <p className={styles.teacherRecommendation}>{teacher.recommendation}</p>
+                              <div className={styles.metricItem}>
+                                <span className={styles.metricLabel}>Total Surveillances</span>
+                                <span className={styles.metricValue}>{workloadData.global_metrics.global_nbrss}</span>
+                              </div>
+                              {'target_surveillances' in workloadData.global_metrics && workloadData.global_metrics.target_surveillances !== null && (
+                                <div className={styles.metricItem}>
+                                  <span className={styles.metricLabel}>Target/Teacher</span>
+                                  <span className={styles.metricValue}>{(workloadData.global_metrics as any).target_surveillances}</span>
+                                </div>
+                              )}
                             </div>
-                          ))
-                        ) : (
-                          <p className={styles.noData}>No teacher analysis data available.</p>
-                        )}
-                      </div>
+                            <div className={`${styles.statusBadge} ${styles[workloadData.global_metrics.status.toLowerCase().replace(/_/g, '-')]}`}>
+                              {workloadData.global_metrics.status.replace(/_/g, ' ')}
+                            </div>
+                            <p className={styles.recommendation}>{workloadData.global_metrics.recommendation}</p>
+                          </div>
+
+                          {/* Teacher Distribution */}
+                          <div className={styles.distributionCard}>
+                            <h3>Teacher Distribution</h3>
+                            <div className={styles.distributionGrid}>
+                              <div className={styles.distItem}>
+                                <span className={styles.distNumber}>{workloadData.teacher_distribution.total_teachers}</span>
+                                <span className={styles.distLabel}>Total Teachers</span>
+                              </div>
+                              <div className={styles.distItem}>
+                                <span className={styles.distNumber}>{workloadData.teacher_distribution.average_per_teacher}</span>
+                                <span className={styles.distLabel}>Avg. Surveillances</span>
+                              </div>
+                              {'target_surveillances' in workloadData.global_metrics && workloadData.global_metrics.target_surveillances !== null ? (
+                                <>
+                                  <div className={styles.distItem}>
+                                    <span className={styles.distNumber}>{workloadData.teacher_distribution.underutilized || 0}</span>
+                                    <span className={styles.distLabel}>Underutilized</span>
+                                  </div>
+                                  <div className={styles.distItem}>
+                                    <span className={styles.distNumber}>{workloadData.teacher_distribution.normal || 0}</span>
+                                    <span className={styles.distLabel}>Normal</span>
+                                  </div>
+                                  <div className={styles.distItem}>
+                                    <span className={styles.distNumber}>{workloadData.teacher_distribution.overloaded || 0}</span>
+                                    <span className={styles.distLabel}>Overloaded</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className={styles.distItem}>
+                                    <span className={styles.distNumber}>{workloadData.teacher_distribution.no_surveillance}</span>
+                                    <span className={styles.distLabel}>No Surveillance</span>
+                                  </div>
+                                  <div className={styles.distItem}>
+                                    <span className={styles.distNumber}>{workloadData.teacher_distribution.overloaded}</span>
+                                    <span className={styles.distLabel}>Overloaded</span>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Teacher Analysis List */}
+                          <div className={styles.teacherAnalysisList}>
+                            <h3>Individual Teacher Analysis</h3>
+                            {workloadData.teacher_analysis.length > 0 ? (
+                              workloadData.teacher_analysis.map((teacher, idx) => (
+                                <div key={idx} className={`${styles.teacherAnalysisCard} ${styles[teacher.statistics.severity]}`}>
+                                  <div className={styles.teacherHeader}>
+                                    <div className={styles.teacherInfo}>
+                                      <h4>{teacher.teacher_info.name}</h4>
+                                      <span className={styles.teacherCode}>{teacher.teacher_info.code}</span>
+                                      <span className={styles.teacherDept}>{teacher.teacher_info.department}</span>
+                                    </div>
+                                    <div className={`${styles.statusIndicator} ${getStatusColor(teacher.statistics.status)}`}>
+                                      {teacher.statistics.status.replace(/_/g, ' ')}
+                                    </div>
+                                  </div>
+                                  <div className={styles.teacherStats}>
+                                    <div className={styles.statItem}>
+                                      <span className={styles.statLabel}>Surveillances</span>
+                                      <span className={styles.statValue}>{teacher.statistics.surveillance_count}</span>
+                                    </div>
+                                    <div className={styles.statItem}>
+                                      <span className={styles.statLabel}>Courses</span>
+                                      <span className={styles.statValue}>{teacher.statistics.courses_count}</span>
+                                    </div>
+                                    <div className={styles.statItem}>
+                                      <span className={styles.statLabel}>
+                                        {'target_surveillances' in workloadData.global_metrics && (workloadData.global_metrics as any).target_surveillances !== null ? 'Difference' : 'Deviation'}
+                                      </span>
+                                      <span className={styles.statValue}>
+                                        {'deviation' in teacher.statistics
+                                          ? ((teacher.statistics as any).deviation > 0 ? '+' : '') + ((teacher.statistics as any).deviation.toFixed(0))
+                                          : ''}
+                                        {('target_surveillances' in workloadData.global_metrics && (workloadData.global_metrics as any).target_surveillances === null) && ` (${teacher.statistics.deviation_percentage}%)`}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <p className={styles.teacherRecommendation}>{teacher.recommendation}</p>
+                                </div>
+                              ))
+                            ) : (
+                              <p className={styles.noData}>No teacher analysis data available.</p>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </>
@@ -364,7 +442,12 @@ function ConflictChecker() {
                   <>
                     <span className={styles.separator}>•</span>
                     <span className={styles.summaryItem}>
-                      <strong>{workloadData.teacher_distribution.no_surveillance + workloadData.teacher_distribution.overloaded}</strong> workload issues
+                      <strong>
+                        {'target_surveillances' in workloadData.global_metrics && (workloadData.global_metrics as any).target_surveillances !== null
+                          ? (workloadData.teacher_distribution.underutilized || 0) + (workloadData.teacher_distribution.overloaded || 0)
+                          : (workloadData.teacher_distribution.no_surveillance || 0) + (workloadData.teacher_distribution.overloaded || 0)
+                        }
+                      </strong> workload issues
                     </span>
                   </>
                 )}

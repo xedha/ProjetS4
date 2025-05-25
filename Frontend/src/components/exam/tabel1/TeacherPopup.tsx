@@ -1,607 +1,98 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from "react";
+import styles from "./table2.module.css"
 import { useTranslation } from 'react-i18next';
-import styles from './Tabel.module.css';
-import buttonStyles from './TeacherPopup.module.css';
-import { examApi, SurveillantWithDetails, Enseignant } from '../../../services/ExamApi';
-import { api } from '../../../services/api';
 
-interface TeacherPopupProps {
-  isOpen: boolean;
-  onClose: () => void;
-  planningId: number;
-  onTeachersUpdated: () => void; // Callback to refresh parent component data
-}
-
-interface TeacherConflict {
-  code_enseignant: string;
-  conflicts: {
-    surveillance1_id: number;
-    planning1_id: number;
-    surveillance2_id: number;
-    planning2_id: number;
-    date: string;
-    time: string;
-  }[];
-}
-
-const TeacherPopup: React.FC<TeacherPopupProps> = ({
-  isOpen,
-  onClose,
-  planningId,
-  onTeachersUpdated,
-}) => {
+const Mangetable = () => {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [supervisor, setSupervisor] = useState<SurveillantWithDetails | null>(null);
-  const [teachers, setTeachers] = useState<SurveillantWithDetails[]>([]);
-  const [allTeachers, setAllTeachers] = useState<Enseignant[]>([]);
-  const [editingTeacher, setEditingTeacher] = useState<SurveillantWithDetails | null>(null);
-  const [editingSupervisor, setEditingSupervisor] = useState(false);
-  
-  // Conflict checking states
-  const [showConflicts, setShowConflicts] = useState(false);
-  const [checkingConflicts, setCheckingConflicts] = useState(false);
-  const [teacherConflicts, setTeacherConflicts] = useState<TeacherConflict[]>([]);
-  
-  // Form state
-  const [editForm, setEditForm] = useState({ 
-    Code_Enseignant: '', 
-    nom: '', 
-    prenom: '', 
-    email1: '' 
-  });
-  
-  const [supervisorForm, setSupervisorForm] = useState({ 
-    Code_Enseignant: '', 
-    nom: '', 
-    prenom: '', 
-    email1: '' 
+  const [maxSupervisors, setMaxSupervisors] = useState(3);
+  const [autoAssign, setAutoAssign] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(false);
+  const [examDuration, setExamDuration] = useState("2 hours");
+
+  const toggleStyle = (enabled: boolean) => ({
+    padding: "6px 12px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: enabled ? "#c6f6d5" : "#fed7d7",
+    color: enabled ? "#22543d" : "#742a2a",
+    cursor: "pointer",
+    fontWeight: "bold",
   });
 
-  // Check for teacher conflicts
-  const checkTeacherConflicts = async () => {
-    try {
-      setCheckingConflicts(true);
-      const response = await examApi.checkEnseignantScheduleConflict({});
-      
-      if (response.conflicts) {
-        // Filter conflicts to only show those related to teachers in this planning
-        const allPlanningTeachers = [
-          ...(supervisor ? [supervisor.code_enseignant] : []),
-          ...teachers.map(t => t.code_enseignant)
-        ];
-        
-        const relevantConflicts = response.conflicts.filter((conflict: TeacherConflict) =>
-          allPlanningTeachers.includes(conflict.code_enseignant)
-        );
-        
-        setTeacherConflicts(relevantConflicts);
-        setShowConflicts(true);
-      } else {
-        setTeacherConflicts([]);
-        setShowConflicts(true);
-      }
-    } catch (error) {
-      console.error('Error checking teacher conflicts:', error);
-      alert('Failed to check teacher conflicts');
-    } finally {
-      setCheckingConflicts(false);
-    }
+  const cellStyle: React.CSSProperties = {
+    border: "1px solid #ddd",
+    padding: "12px",
+    textAlign: "left",
   };
-
-  // Fetch planning data, teachers, and supervisor using the new examApi
-  useEffect(() => {
-    if (!isOpen || !planningId) return;
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Get all teachers using the original api
-        const teachersResponse = await api.getModelData('Enseignants', {
-          page: 1,
-          itemsPerPage: 100,
-          search: ''
-        });
-        
-        if (teachersResponse?.results) {
-          setAllTeachers(teachersResponse.results);
-        }
-        
-        // Get the surveillants for this planning using the new examApi method
-        const surveillants = await examApi.getSurveillantsByPlanning(planningId);
-        
-        if (surveillants && surveillants.length > 0) {
-          // Separate supervisor (est_charge_cours = 1) from regular teachers
-          const supervisorData = surveillants.find(s => s.est_charge_cours === 1) || null;
-          const teachersData = surveillants.filter(s => s.est_charge_cours !== 1);
-          
-          setSupervisor(supervisorData);
-          if (supervisorData) {
-            setSupervisorForm({
-              Code_Enseignant: supervisorData.code_enseignant,
-              nom: supervisorData.enseignant.nom,
-              prenom: supervisorData.enseignant.prenom,
-              email1: supervisorData.enseignant.email1 || ''
-            });
-          }
-          
-          setTeachers(teachersData);
-        }
-      } catch (err) {
-        console.error('Error fetching teacher data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch teacher data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [isOpen, planningId]);
-
-  if (!isOpen) return null;
-
-  const handleEditClick = (teacher: SurveillantWithDetails) => {
-    setEditingTeacher(teacher);
-    setEditForm({
-      Code_Enseignant: teacher.code_enseignant,
-      nom: teacher.enseignant.nom,
-      prenom: teacher.enseignant.prenom,
-      email1: teacher.enseignant.email1 || ''
-    });
-  };
-
-  const handleSaveEdit = async () => {
-    if (editingTeacher) {
-      try {
-        setLoading(true);
-        
-        // Update the teacher in the Enseignants table if needed
-        if (editForm.nom !== editingTeacher.enseignant.nom || 
-            editForm.prenom !== editingTeacher.enseignant.prenom || 
-            editForm.email1 !== editingTeacher.enseignant.email1) {
-          
-          await api.editModel(
-            'Enseignants',
-            'Code_Enseignant',
-            editingTeacher.code_enseignant,
-            {
-              nom: editForm.nom,
-              prenom: editForm.prenom,
-              email1: editForm.email1
-            }
-          );
-        }
-        
-        // Reset state and refresh data
-        setEditingTeacher(null);
-        onTeachersUpdated();
-        
-        // Update local state to reflect changes
-        setTeachers(teachers.map(t => 
-          t.code_enseignant === editingTeacher.code_enseignant 
-            ? {
-                ...t,
-                enseignant: {
-                  ...t.enseignant,
-                  nom: editForm.nom,
-                  prenom: editForm.prenom,
-                  email1: editForm.email1
-                }
-              } 
-            : t
-        ));
-      } catch (error) {
-        console.error("Error updating teacher:", error);
-        setError("Failed to update teacher information");
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
-  const handleEditSupervisorClick = () => {
-    setEditingSupervisor(true);
-  };
-
-  const handleSaveSupervisor = async () => {
-    try {
-      setLoading(true);
-      
-      if (!supervisor) {
-        // If there's no supervisor yet, we need to add one
-        if (supervisorForm.Code_Enseignant) {
-          await api.addModelRow('Surveillant', {
-            id_planning: planningId,
-            code_enseignant: supervisorForm.Code_Enseignant,
-            est_charge_cours: 1
-          });
-          
-          // Find the teacher details from allTeachers
-          const selectedTeacher = allTeachers.find(t => 
-            t.Code_Enseignant === supervisorForm.Code_Enseignant);
-          
-          if (selectedTeacher) {
-            const newSupervisor: SurveillantWithDetails = {
-              id_surveillance: 0, // This will be updated when data is refreshed
-              est_charge_cours: 1,
-              code_enseignant: selectedTeacher.Code_Enseignant,
-              enseignant: selectedTeacher
-            };
-            setSupervisor(newSupervisor);
-          }
-        }
-      } else if (supervisorForm.Code_Enseignant !== supervisor.code_enseignant) {
-        // If changing the supervisor, update the Surveillant table
-        // First, find the existing supervisor record
-        const surveillantsResponse = await api.getModelData('Surveillant', {
-          page: 1,
-          itemsPerPage: 100,
-          search: `id_planning=${planningId} AND est_charge_cours=1`
-        });
-        
-        if (surveillantsResponse?.results && surveillantsResponse.results.length > 0) {
-          const supervisorRecord = surveillantsResponse.results[0];
-          
-          // Update the supervisor
-          await api.editModel(
-            'Surveillant',
-            'id_surveillance',
-            supervisorRecord.id_surveillance,
-            {
-              code_enseignant: supervisorForm.Code_Enseignant,
-              est_charge_cours: 1
-            }
-          );
-          
-          // Find the teacher details from allTeachers
-          const selectedTeacher = allTeachers.find(t => 
-            t.Code_Enseignant === supervisorForm.Code_Enseignant);
-          
-          if (selectedTeacher) {
-            const updatedSupervisor: SurveillantWithDetails = {
-              ...supervisor,
-              code_enseignant: selectedTeacher.Code_Enseignant,
-              enseignant: selectedTeacher
-            };
-            setSupervisor(updatedSupervisor);
-          }
-        }
-      }
-      
-      setEditingSupervisor(false);
-      onTeachersUpdated();
-    } catch (error) {
-      console.error("Error updating supervisor:", error);
-      setError("Failed to update supervisor information");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddTeacher = async (teacherCode: string) => {
-    try {
-      setLoading(true);
-      
-      // Add a new teacher to the Surveillant table
-      await api.addModelRow('Surveillant', {
-        id_planning: planningId,
-        code_enseignant: teacherCode,
-        est_charge_cours: 0
-      });
-      
-      // Find the teacher details from allTeachers
-      const selectedTeacher = allTeachers.find(t => t.Code_Enseignant === teacherCode);
-      
-      if (selectedTeacher) {
-        const newTeacher: SurveillantWithDetails = {
-          id_surveillance: 0, // This will be updated when data is refreshed
-          est_charge_cours: 0,
-          code_enseignant: teacherCode,
-          enseignant: selectedTeacher
-        };
-        setTeachers([...teachers, newTeacher]);
-      }
-      
-      onTeachersUpdated();
-    } catch (error) {
-      console.error("Error adding teacher:", error);
-      setError("Failed to add teacher");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRemoveTeacher = async (teacherCode: string) => {
-    try {
-      setLoading(true);
-      
-      // Find the surveillant record for this teacher
-      const surveillantsResponse = await api.getModelData('Surveillant', {
-        page: 1,
-        itemsPerPage: 100,
-        search: `id_planning=${planningId} AND code_enseignant=${teacherCode} AND est_charge_cours=0`
-      });
-      
-      if (surveillantsResponse?.results && surveillantsResponse.results.length > 0) {
-        const surveillantRecord = surveillantsResponse.results[0];
-        
-        // Delete the surveillant record
-        await api.deleteModel('Surveillant', surveillantRecord);
-        
-        // Update the local state
-        setTeachers(teachers.filter(t => t.code_enseignant !== teacherCode));
-      }
-      
-      onTeachersUpdated();
-    } catch (error) {
-      console.error("Error removing teacher:", error);
-      setError("Failed to remove teacher");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Get teachers not already assigned to this planning
-  const availableTeachers = allTeachers.filter(teacher => 
-    !teachers.some(t => t.code_enseignant === teacher.Code_Enseignant) && 
-    (!supervisor || supervisor.code_enseignant !== teacher.Code_Enseignant)
-  );
 
   return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
-        <div className={styles.modalHeader}>
-          <h2>{t('teacher.management')}</h2>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button 
-              onClick={checkTeacherConflicts} 
-              className={buttonStyles.conflictButton}
-              disabled={checkingConflicts}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 16px',
-                background: 'linear-gradient(90deg, #F59E0B 0%, #D97706 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: checkingConflicts ? 'not-allowed' : 'pointer',
-                opacity: checkingConflicts ? 0.6 : 1,
-                transition: 'all 0.2s'
-              }}
+    <table className={styles.table}>
+      <thead>
+        <tr className={styles.head}>
+          <th style={cellStyle}>{t('settings.settingName')}</th>
+          <th style={cellStyle}>{t('settings.value')}</th>
+          <th style={cellStyle}>{t('settings.description')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style={cellStyle}>{t('settings.maxSupervisorsPerMonitoring')}</td>
+          <td style={cellStyle}>
+            <select className={styles.selectBox}
+              value={maxSupervisors}
+              onChange={(e) => setMaxSupervisors(parseInt(e.target.value))}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7V12C2 16.5 4.23 20.68 7.62 23.15L12 24L16.38 23.15C19.77 20.68 22 16.5 22 12V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M12 8V12M12 16H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              {checkingConflicts ? 'Checking...' : 'Check Conflicts'}
+              {[...Array(8)].map((_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  {i + 1}
+                </option>
+              ))}
+            </select>
+          </td>
+          <td style={cellStyle}>{t('settings.maxSupervisorsPerMonitoringDesc')}</td>
+        </tr>
+
+        <tr>
+          <td style={cellStyle}>{t('settings.autoAssign')}</td>
+          <td style={cellStyle}>
+            <button className={styles.semster}
+              onClick={() => setAutoAssign(!autoAssign)}
+              style={toggleStyle(autoAssign)}
+            >
+              {autoAssign ? t('settings.enabled') : t('settings.disabled')}
             </button>
-            <button onClick={onClose} className={styles.closeButton}>×</button>
-          </div>
-        </div>
+          </td>
+          <td style={cellStyle}>{t('settings.autoAssignDesc')}</td>
+        </tr>
 
-        {loading && <div className={styles.loadingMessage}>Loading teacher data...</div>}
-        {error && <div className={styles.errorMessage}>{error}</div>}
+        <tr>
+          <td style={cellStyle}>{t('settings.emailNotifications')}</td>
+          <td style={cellStyle}>
+            <button className={styles.semster}
+              onClick={() => setEmailNotifications(!emailNotifications)}
+              style={toggleStyle(emailNotifications)}
+            >
+              {emailNotifications ? t('settings.enabled') : t('settings.disabled')}
+            </button>
+          </td>
+          <td style={cellStyle}>{t('settings.emailNotificationsDesc')}</td>
+        </tr>
 
-        {/* Conflicts Section */}
-        {showConflicts && (
-          <div style={{
-            margin: '16px 0',
-            padding: '16px',
-            backgroundColor: teacherConflicts.length > 0 ? '#FEF3C7' : '#D1FAE5',
-            border: `1px solid ${teacherConflicts.length > 0 ? '#F59E0B' : '#10B981'}`,
-            borderRadius: '8px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h3 style={{ margin: 0, color: teacherConflicts.length > 0 ? '#92400E' : '#065F46' }}>
-                Teacher Scheduling Conflicts
-              </h3>
-              <button 
-                onClick={() => setShowConflicts(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '20px',
-                  cursor: 'pointer',
-                  color: '#6B7280'
-                }}
-              >
-                ×
-              </button>
-            </div>
-            
-            {teacherConflicts.length === 0 ? (
-              <p style={{ margin: 0, color: '#065F46' }}>
-                ✓ No scheduling conflicts found for teachers in this exam.
-              </p>
-            ) : (
-              <div>
-                {teacherConflicts.map((conflict, idx) => {
-                  // Find teacher name
-                  const teacherName = (() => {
-                    if (supervisor && supervisor.code_enseignant === conflict.code_enseignant) {
-                      return `${supervisor.enseignant.prenom} ${supervisor.enseignant.nom} (Supervisor)`;
-                    }
-                    const teacher = teachers.find(t => t.code_enseignant === conflict.code_enseignant);
-                    if (teacher) {
-                      return `${teacher.enseignant.prenom} ${teacher.enseignant.nom}`;
-                    }
-                    return conflict.code_enseignant;
-                  })();
-
-                  return (
-                    <div key={idx} style={{ marginBottom: '12px' }}>
-                      <strong style={{ color: '#92400E' }}>{teacherName}</strong>
-                      <ul style={{ margin: '4px 0 0 20px', padding: 0 }}>
-                        {conflict.conflicts.map((c, cIdx) => (
-                          <li key={cIdx} style={{ fontSize: '14px', color: '#B45309' }}>
-                            Conflict on {c.date} at {c.time} 
-                            (Planning #{c.planning1_id} vs #{c.planning2_id})
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className={styles.supervisorSection}>
-          <div className={styles.supervisorHeader}>
-            <h3>{t('teacher.supervisor')}</h3>
-            {!editingSupervisor && (
-              <button onClick={handleEditSupervisorClick} className={buttonStyles.editButton}>
-                {t('teacher.edit')}
-              </button>
-            )}
-          </div>
-          {editingSupervisor ? (
-            <div className={styles.editSupervisorForm}>
-              <div className={styles.formGroup}>
-                <label>{t('teacher.select')}</label>
-                <select
-                  value={supervisorForm.Code_Enseignant}
-                  onChange={(e) => {
-                    const selectedTeacher = allTeachers.find(t => t.Code_Enseignant === e.target.value);
-                    if (selectedTeacher) {
-                      setSupervisorForm({
-                        Code_Enseignant: selectedTeacher.Code_Enseignant,
-                        nom: selectedTeacher.nom,
-                        prenom: selectedTeacher.prenom,
-                        email1: selectedTeacher.email1 || ''
-                      });
-                    }
-                  }}
-                  className={styles.editInput}
-                >
-                  <option value="">-- Select Supervisor --</option>
-                  {availableTeachers.map(teacher => (
-                    <option key={teacher.Code_Enseignant} value={teacher.Code_Enseignant}>
-                      {teacher.nom} {teacher.prenom}
-                    </option>
-                  ))}
-                  {supervisor && (
-                    <option value={supervisor.code_enseignant}>
-                      {supervisor.enseignant.nom} {supervisor.enseignant.prenom} (Current)
-                    </option>
-                  )}
-                </select>
-              </div>
-              <div className={styles.buttonGroup}>
-                <button 
-                  onClick={handleSaveSupervisor} 
-                  className={buttonStyles.saveButton}
-                  disabled={!supervisorForm.Code_Enseignant}
-                >
-                  {t('teacher.save')}
-                </button>
-                <button onClick={() => setEditingSupervisor(false)} className={buttonStyles.cancelButton}>
-                  {t('teacher.cancel')}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p>
-              {supervisor 
-                ? `${supervisor.enseignant.nom} ${supervisor.enseignant.prenom} - ${supervisor.enseignant.email1 || 'No email'}` 
-                : "No supervisor assigned yet"}
-            </p>
-          )}
-        </div>
-
-        <div className={styles.teachersSection}>
-          <div className={styles.teacherHeader}>
-            <h3>{t('teacher.teachers')}</h3>
-          </div>
-          
-          <table className={styles.teacherTable}>
-            <thead>
-              <tr>
-                <th>{t('teacher.name')}</th>
-                <th>{t('teacher.email')}</th>
-                <th>{t('teacher.actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {teachers.length === 0 ? (
-                <tr>
-                  <td colSpan={3} style={{ textAlign: 'center' }}>
-                    No additional teachers assigned
-                  </td>
-                </tr>
-              ) : (
-                teachers.map((teacher) => (
-                  <tr key={teacher.code_enseignant}>
-                    {editingTeacher?.code_enseignant === teacher.code_enseignant ? (
-                      <>
-                        <td>
-                          <input
-                            type="text"
-                            value={editForm.nom}
-                            onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })}
-                            className={styles.editInput}
-                            placeholder="Last Name"
-                          />
-                          <input
-                            type="text"
-                            value={editForm.prenom}
-                            onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })}
-                            className={styles.editInput}
-                            placeholder="First Name"
-                            style={{ marginTop: '5px' }}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="email"
-                            value={editForm.email1}
-                            onChange={(e) => setEditForm({ ...editForm, email1: e.target.value })}
-                            className={styles.editInput}
-                          />
-                        </td>
-                        <td>
-                          <button onClick={handleSaveEdit} className={buttonStyles.saveButton}>
-                            {t('teacher.save')}
-                          </button>
-                          <button onClick={() => setEditingTeacher(null)} className={buttonStyles.cancelButton}>
-                            {t('teacher.cancel')}
-                          </button>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td>{teacher.enseignant.nom} {teacher.enseignant.prenom}</td>
-                        <td>{teacher.enseignant.email1 || 'No email'}</td>
-                        <td>
-                          <button onClick={() => handleEditClick(teacher)} className={buttonStyles.editButton}>
-                            {t('teacher.edit')}
-                          </button>
-                          <button 
-                            onClick={() => handleRemoveTeacher(teacher.code_enseignant)} 
-                            className={buttonStyles.cancelButton}
-                          >
-                            {t('teacher.remove')}
-                          </button>
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+        <tr>
+          <td style={cellStyle}>{t('settings.defaultExamDuration')}</td>
+          <td style={cellStyle}>
+            <input className={styles.semster}
+              type="text"
+              value={examDuration}
+              onChange={(e) => setExamDuration(e.target.value)}
+              placeholder={t('settings.examDurationPlaceholder')}
+            />
+          </td>
+          <td style={cellStyle}>{t('settings.defaultExamDurationDesc')}</td>
+        </tr>
+      </tbody>
+    </table>
   );
 };
 
-export default TeacherPopup;
+export default Mangetable;

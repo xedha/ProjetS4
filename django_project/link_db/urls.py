@@ -32,5 +32,5 @@ urlpatterns = [
     # Email endpoints
     path('send_bulk_pv/', send_bulk_pv, name='send_bulk_pv'),
     path('send_bulk_convocations/', send_bulk_convocations, name='send_bulk_convocations'),
-     path('check_surveillance_workload/',views.check_surveillance_workload_balance),
+     path('check_surveillance_workload_balance/',views.check_surveillance_workload_balance),
 ]

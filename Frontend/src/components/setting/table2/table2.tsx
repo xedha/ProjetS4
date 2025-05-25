@@ -7,7 +7,6 @@ const Mangetable = () => {
   const [maxSupervisors, setMaxSupervisors] = useState(3);
   const [autoAssign, setAutoAssign] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
-  const [semesterStartDate, setSemesterStartDate] = useState("2025-08-01");
   const [examDuration, setExamDuration] = useState("2 hours");
 
   const toggleStyle = (enabled: boolean) => ({
@@ -37,7 +36,7 @@ const Mangetable = () => {
       </thead>
       <tbody>
         <tr>
-          <td style={cellStyle}>{t('settings.maxSupervisors')}</td>
+          <td style={cellStyle}>{t('settings.maxSupervisorsPerMonitoring')}</td>
           <td style={cellStyle}>
             <select className={styles.selectBox}
               value={maxSupervisors}
@@ -50,7 +49,7 @@ const Mangetable = () => {
               ))}
             </select>
           </td>
-          <td style={cellStyle}>{t('settings.maxSupervisorsDesc')}</td>
+          <td style={cellStyle}>{t('settings.maxSupervisorsPerMonitoringDesc')}</td>
         </tr>
 
         <tr>
@@ -77,18 +76,6 @@ const Mangetable = () => {
             </button>
           </td>
           <td style={cellStyle}>{t('settings.emailNotificationsDesc')}</td>
-        </tr>
-
-        <tr>
-          <td style={cellStyle}>{t('settings.semesterStartDate')}</td>
-          <td style={cellStyle}>
-            <input className={styles.selectBox}
-              type="date"
-              value={semesterStartDate}
-              onChange={(e) => setSemesterStartDate(e.target.value)}
-            />
-          </td>
-          <td style={cellStyle}>{t('settings.semesterStartDateDesc')}</td>
         </tr>
 
         <tr>

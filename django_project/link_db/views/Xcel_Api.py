@@ -811,9 +811,13 @@ class UploadFormations_xlsx(APIView):
                     # Check for duplicates
                     exists = Formations.objects.filter(
                         domaine=domaine,
-                        filière=filiere,
-                        niveau_cycle=niveau_cycle,
-                        specialités=specialites
+                            filière=filiere,
+                            niveau_cycle=niveau_cycle,
+                            specialités=specialites,
+                            nbr_sections=nbr_sections_int,
+                            nbr_groupes=nbr_groupes_int,
+                            semestre=semestre,
+                            modules=modules
                     ).exists()
                     
                     if exists:

@@ -537,9 +537,12 @@ export const examApi = {
    * Check surveillance workload balance
    * POST /api/check_surveillance_workload/
    */
-  async checkSurveillanceWorkload() {
+  async checkSurveillanceWorkload(targetSurveillances?: number) {
     try {
       console.log("✉️ checkSurveillanceWorkload - checking workload balance");
+      if (targetSurveillances !== undefined) {
+        console.log(`Using target surveillances: ${targetSurveillances} per teacher`);
+      }
 
       const authToken = getAuthToken();
       const headers: any = {
@@ -557,11 +560,15 @@ export const examApi = {
         headers["X-CSRFToken"] = csrfToken;
       }
 
-      const response = await fetchWithTimeout(`${BASE_URL}/api/check_surveillance_workload/`, {
+      const body = targetSurveillances !== undefined 
+        ? { target_surveillances: targetSurveillances }
+        : {};
+
+      const response = await fetchWithTimeout(`${BASE_URL}/api/check_surveillance_workload_balance/`, {
         method: "POST",
         headers,
         credentials: 'include',
-        body: JSON.stringify({}),
+        body: JSON.stringify(body),
       });
       
       await handleApiError(response);

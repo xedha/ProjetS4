@@ -19,14 +19,13 @@ interface RightPanelProps {
 
 export const RightPanel: React.FC<RightPanelProps> = ({ onLogin, onLoginSuccess }) => {
   // const { t } = useTranslation(); // Uncomment if using i18n
-  const { login, register } = useAuth(); // Use auth context
+  const { login } = useAuth(); // Use auth context
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showRegister, setShowRegister] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -41,24 +40,14 @@ export const RightPanel: React.FC<RightPanelProps> = ({ onLogin, onLoginSuccess 
     setError(null);
 
     try {
-      if (showRegister) {
-        // Handle registration using auth context
-        console.log('Registering user:', formData.email);
-        await register(formData.email, formData.password);
-        console.log('Registration completed');
-      } else {
-        // Handle login using auth context
-        console.log('Logging in user:', formData.email);
-        await login(formData.email, formData.password);
-        console.log('Login completed');
-        
-        // Call the original onLogin callback if provided
-        if (onLogin) {
-          onLogin(formData);
-        }
+      console.log('Logging in user:', formData.email);
+      await login(formData.email, formData.password);
+      console.log('Login completed');
+      
+      if (onLogin) {
+        onLogin(formData);
       }
       
-      // Call success callback - navigation will be handled by LoginPage
       if (onLoginSuccess) {
         console.log('Calling onLoginSuccess');
         onLoginSuccess();
@@ -73,9 +62,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ onLogin, onLoginSuccess 
         if (err.message.includes('Invalid credentials') || err.message.includes('401')) {
           errorMessage = 'Invalid email or password. Please try again.';
         } else if (err.message.includes('User not found') || err.message.includes('404')) {
-          errorMessage = 'No account found with this email. Please register first.';
-        } else if (err.message.includes('already exists') || err.message.includes('400')) {
-          errorMessage = 'An account with this email already exists. Please login instead.';
+          errorMessage = 'No account found with this email.';
         } else if (err.message.includes('Network') || err.message.includes('fetch')) {
           errorMessage = 'Connection error. Please check your internet and try again.';
         } else {
@@ -89,20 +76,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ onLogin, onLoginSuccess 
     }
   };
 
-  const toggleMode = () => {
-    setShowRegister(!showRegister);
-    setError(null);
-    setFormData({ email: "", password: "" });
-  };
-
   return (
     <div className="right-panel">
       <div className="login-form-container">
         <div className="login-header">
           <img className="logo" src={logo} alt="Logo" />
-          <span className="login-title">
-            {showRegister ? 'Register' : 'Login'}
-          </span>
+          <span className="login-title">Login</span>
         </div>
 
         {error && (
@@ -168,36 +147,9 @@ export const RightPanel: React.FC<RightPanelProps> = ({ onLogin, onLoginSuccess 
             disabled={loading}
             style={{ opacity: loading ? 0.7 : 1 }}
           >
-            {loading ? 'Loading...' : (showRegister ? 'Register' : 'Login')}
+            {loading ? 'Loading...' : 'Login'}
           </button>
         </form>
-
-        <div style={{ 
-          position: 'absolute',
-          bottom: '10rem',
-          right: '4%',
-          width: '33.625rem',
-          textAlign: 'center'
-        }}>
-          <button
-            type="button"
-            onClick={toggleMode}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#1976d2',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              fontSize: '1rem',
-              padding: '0.5rem'
-            }}
-            disabled={loading}
-          >
-            {showRegister 
-              ? 'Already have an account? Login' 
-              : "Don't have an account? Register"}
-          </button>
-        </div>
       </div>
     </div>
   );

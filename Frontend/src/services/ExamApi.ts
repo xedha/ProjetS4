@@ -94,6 +94,63 @@ const fetchForEmailOperations = async (url: string, options: RequestInit = {}) =
     throw error;
   }
 };
+// Fixed TypeScript interfaces to match the Django backend response
+
+export interface WorkloadTeacherInfo {
+  code: string;
+  name: string;
+  email: string;
+  department: string;
+}
+
+export interface WorkloadStatistics {
+  surveillance_count: number;
+  courses_count: number;
+  average_surveillances: number;
+  target_surveillances?: number;
+  deviation: number;
+  deviation_percentage: number;
+  status: 'NO_SURVEILLANCE' | 'OVERLOADED' | 'UNDERUTILIZED' | 'NORMAL' | 'BELOW_TARGET' | 'ABOVE_TARGET' | 'ON_TARGET';
+  severity: 'high' | 'medium' | 'low' | 'none';
+}
+
+export interface WorkloadTeacherAnalysis {
+  teacher_info: WorkloadTeacherInfo;
+  statistics: WorkloadStatistics;
+  recommendation: string;
+}
+
+// Fixed interface to match Django backend response exactly
+export interface WorkloadResponse {
+  global_metrics: {
+    total_charges_enseignement: number;
+    total_plannings: number;
+    total_surveillances: number;
+    global_nbrss: number | 'N/A';
+    status: 'NEED_MORE_SURVEILLANCES' | 'TOO_MANY_SURVEILLANCES' | 'BALANCED' | 'PERFECTLY_BALANCED';
+    recommendation: string;
+    target_surveillances?: number | null;
+    surveillance_gap?: number | null;
+  };
+  teacher_distribution: {
+    total_teachers: number;
+    total_surveillances: number;
+    average_per_teacher: number;
+    // When using target (from settings)
+    below_target?: number;
+    on_target?: number;
+    above_target?: number;
+    // When not using target (original logic)
+    no_surveillance?: number;
+    overloaded?: number;
+    underutilized?: number;
+    normal?: number;
+  };
+  teacher_analysis: WorkloadTeacherAnalysis[];
+  message: string;
+  error?: boolean;
+  errorMessage?: string;
+}
 
 // Types for the API responses and requests
 export interface Creneau {
@@ -537,47 +594,135 @@ export const examApi = {
    * Check surveillance workload balance
    * POST /api/check_surveillance_workload/
    */
-  async checkSurveillanceWorkload(targetSurveillances?: number) {
-    try {
-      console.log("✉️ checkSurveillanceWorkload - checking workload balance");
-      if (targetSurveillances !== undefined) {
-        console.log(`Using target surveillances: ${targetSurveillances} per teacher`);
-      }
+  /**
+   * Check surveillance workload balance
+   * POST /api/check_surveillance_workload/
+   * @param targetSurveillances Optional target number of surveillances per teacher
+   */
+ async checkSurveillanceWorkload(targetSurveillances?: number): Promise<WorkloadResponse> {
+  try {
+    console.log("🎯 checkSurveillanceWorkload - STARTING WORKLOAD ANALYSIS");
+    console.log("🌐 BASE_URL:", BASE_URL);
+    console.log("📊 Target surveillances:", targetSurveillances);
+    console.log("📊 Target type:", typeof targetSurveillances);
 
-      const authToken = getAuthToken();
-      const headers: any = {
-        "Content-Type": "application/json",
-      };
+    // Prepare headers
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
 
-      // Add auth token if available
-      if (authToken) {
-        headers["Authorization"] = `Bearer ${authToken}`;
-      }
-
-      // Try to get CSRF token
-      const csrfToken = getCSRFToken();
-      if (csrfToken) {
-        headers["X-CSRFToken"] = csrfToken;
-      }
-
-      const body = targetSurveillances !== undefined 
-        ? { target_surveillances: targetSurveillances }
-        : {};
-
-      const response = await fetchWithTimeout(`${BASE_URL}/api/check_surveillance_workload_balance/`, {
-        method: "POST",
-        headers,
-        credentials: 'include',
-        body: JSON.stringify(body),
-      });
-      
-      await handleApiError(response);
-      return await response.json();
-    } catch (error: any) {
-      console.error('Error checking surveillance workload:', error);
-      throw error;
+    // Add auth token if available
+    const authToken = getAuthToken();
+    if (authToken) {
+      headers["Authorization"] = `Bearer ${authToken}`;
+      console.log("🔐 Auth token added");
     }
-  },
+
+    // Add CSRF token if available
+    const csrfToken = getCSRFToken();
+    if (csrfToken) {
+      headers["X-CSRFToken"] = csrfToken;
+      console.log("🛡️ CSRF token added");
+    }
+
+    // Prepare request body
+    const requestBody = targetSurveillances !== undefined 
+      ? { target_surveillances: targetSurveillances }
+      : {};
+
+    console.log("📤 Request details:");
+    console.log("  URL:", `${BASE_URL}/api/check_surveillance_workload/`);
+    console.log("  Method: POST");
+    console.log("  Headers:", headers);
+    console.log("  Body:", JSON.stringify(requestBody, null, 2));
+
+    // Make the API call with detailed logging
+    console.log("🚀 Making API call...");
+    
+    const response = await fetchWithTimeout(`${BASE_URL}/api/check_surveillance_workload/`, {
+      method: "POST",
+      headers,
+      credentials: 'include',
+      body: JSON.stringify(requestBody),
+    });
+    
+    console.log("📥 Response received:");
+    console.log("  Status:", response.status);
+    console.log("  Status Text:", response.statusText);
+    console.log("  OK:", response.ok);
+    console.log("  Headers:", Object.fromEntries(response.headers.entries()));
+
+    // Check if response is successful
+    if (!response.ok) {
+      console.error("❌ Response not OK, attempting to read error");
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      
+      try {
+        const errorText = await response.text();
+        console.error("❌ Error response body:", errorText);
+        
+        // Try to parse as JSON for more details
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorJson.message || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+      } catch (e) {
+        console.error("❌ Could not read error response body");
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    // Parse response
+    console.log("📊 Parsing response...");
+    const responseText = await response.text();
+    console.log("📄 Raw response body:", responseText);
+    
+    let result: WorkloadResponse;
+    try {
+      result = JSON.parse(responseText);
+      console.log("✅ Parsed response successfully");
+    } catch (parseError) {
+      console.error("❌ Failed to parse JSON response:", parseError);
+      throw new Error(`Invalid JSON response: ${responseText.substring(0, 200)}...`);
+    }
+
+    // Validate response structure
+    if (!result.global_metrics) {
+      console.warn("⚠️ Response missing global_metrics");
+      throw new Error("Invalid response format: missing global_metrics");
+    }
+
+    if (!result.teacher_distribution) {
+      console.warn("⚠️ Response missing teacher_distribution");
+      throw new Error("Invalid response format: missing teacher_distribution");
+    }
+
+    if (!Array.isArray(result.teacher_analysis)) {
+      console.warn("⚠️ Response missing or invalid teacher_analysis");
+      result.teacher_analysis = [];
+    }
+
+    console.log("✅ WORKLOAD ANALYSIS COMPLETED SUCCESSFULLY");
+    console.log("📊 Summary:");
+    console.log("  Total teachers:", result.teacher_distribution.total_teachers);
+    console.log("  Total surveillances:", result.teacher_distribution.total_surveillances);
+    console.log("  Average per teacher:", result.teacher_distribution.average_per_teacher);
+    console.log("  Global status:", result.global_metrics.status);
+    console.log("  Teacher analyses:", result.teacher_analysis.length);
+    
+    return result;
+    
+  } catch (error: any) {
+    console.error('❌ checkSurveillanceWorkload FAILED:', error);
+    console.error('❌ Error name:', error.name);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error stack:', error.stack);
+    throw error;
+  }
+},
  
 };
 

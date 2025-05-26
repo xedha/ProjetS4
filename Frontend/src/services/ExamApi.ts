@@ -172,7 +172,7 @@ export interface WorkloadStatistics {
   courses_count: number;
   average_surveillances: number;
   deviation_percentage: number;
-  status: 'NO_SURVEILLANCE' | 'OVERLOADED' | 'UNDERUTILIZED' | 'NORMAL';
+  status: 'NO_SURVEILLANCE' | 'OVERLOADED' | 'UNDERUTILIZED' | 'NORMAL' | 'BELOW_TARGET' | 'ABOVE_TARGET' | 'ON_TARGET';
   severity: 'high' | 'medium' | 'low' | 'none';
 }
 
@@ -181,26 +181,37 @@ export interface WorkloadTeacherAnalysis {
   statistics: WorkloadStatistics;
   recommendation: string;
 }
+export interface PVData {
+  email: string;
+  teacher_name: string;
+  date_document?: string;
+  semestre?: string;
+  session?: string;
+  annee_universitaire?: string;
+  module?: string;
+  module_nom?: string;
+  niveau?: string;
+  section?: string;
+  date_exam?: string;
+  locaux?: string;
+  surveillants_rows?: string;
+}
 
-export interface WorkloadResponse {
-  global_metrics: {
-    total_charges_enseignement: number;
-    total_plannings: number;
-    global_nbrss: number | 'N/A';
-    status: 'NEED_MORE_SURVEILLANCES' | 'TOO_MANY_SURVEILLANCES' | 'BALANCED';
-    recommendation: string;
-  };
-  teacher_distribution: {
-    total_teachers: number;
-    total_surveillances: number;
-    average_per_teacher: number;
-    no_surveillance: number;
-    overloaded: number;
-    underutilized: number;
-    normal: number;
-  };
-  teacher_analysis: WorkloadTeacherAnalysis[];
-  message: string;
+export interface ConvocationExam {
+  date: string;
+  horaire: string;
+  module: string;
+  local: string;
+}
+
+export interface ConvocationData {
+  email: string;
+  teacher_name: string;
+  date_document?: string;
+  semestre?: string;
+  session?: string;
+  annee_universitaire?: string;
+  examens: ConvocationExam[];
 }
 export interface MonitoringPlanningItem {
   teacher_name: string;
@@ -283,6 +294,49 @@ export interface UpdatePlanningRequest {
   id_creneau?: number;
   surveillants: Surveillant[];
 }
+export interface PVData {
+  email: string;
+  teacher_name: string;
+  date_document?: string;
+  semestre?: string;
+  session?: string;
+  annee_universitaire?: string;
+  module?: string;
+  module_nom?: string;
+  niveau?: string;
+  section?: string;
+  date_exam?: string;
+  locaux?: string;
+  surveillants_rows?: string;
+}
+
+export interface ConvocationExam {
+  date: string;
+  horaire: string;
+  module: string;
+  local: string;
+}
+
+export interface ConvocationData {
+  email: string;
+  teacher_name: string;
+  date_document?: string;
+  semestre?: string;
+  session?: string;
+  annee_universitaire?: string;
+  examens: ConvocationExam[];
+}
+
+// Add these response interfaces
+export interface SendPVResponse {
+  success: string;
+  error?: string;
+}
+
+export interface SendConvocationResponse {
+  success: string;
+  error?: string;
+}
 
 export const examApi = {
   /**
@@ -299,6 +353,62 @@ export const examApi = {
       throw error;
     }
   },
+  
+
+// Add these functions to the examApi object
+/**
+ * Send a PV (Procès-verbal) email to a single recipient
+ * POST /api/send_pv/
+ */
+async sendPV(pvData: PVData): Promise<SendPVResponse> {
+  try {
+    console.log("✉️ sendPV payload:", JSON.stringify(pvData, null, 2));
+    
+    // Validate required fields
+    if (!pvData.email || !pvData.teacher_name) {
+      throw new Error("Missing required fields: email and teacher_name are required");
+    }
+
+    const response = await fetchWithTimeout(`${BASE_URL}/api/send_pv/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(pvData),
+    });
+    
+    await handleApiError(response);
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error sending PV email:', error);
+    throw error;
+  }
+},
+
+/**
+ * Send a convocation email to a single recipient
+ * POST /api/send_convo/
+ */
+async sendConvocation(convocationData: ConvocationData): Promise<SendConvocationResponse> {
+  try {
+    console.log("✉️ sendConvocation payload:", JSON.stringify(convocationData, null, 2));
+    
+    // Validate required fields
+    if (!convocationData.email || !convocationData.teacher_name || !convocationData.examens?.length) {
+      throw new Error("Missing required fields: email, teacher_name, and at least one exam are required");
+    }
+
+    const response = await fetchWithTimeout(`${BASE_URL}/api/send_convo/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(convocationData),
+    });
+    
+    await handleApiError(response);
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error sending convocation email:', error);
+    throw error;
+  }
+},
 
   /**
    * Get all surveillants for a specific planning ID
@@ -589,6 +699,13 @@ export const examApi = {
       throw error;
     }
   },
+  
+
+/**
+ * Send a convocation email to a single recipient
+ * POST /api/send_convo/
+ */
+
 
   /**
    * Check surveillance workload balance
@@ -772,6 +889,9 @@ export const {
   sendBulkPV,
   sendBulkConvocations,
   getMonitoringPlanning,
+  sendPV,
+  sendConvocation,
+  
 } = examApi;
 
 // Default export

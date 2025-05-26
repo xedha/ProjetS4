@@ -7,7 +7,7 @@ import SendButton from "../send table button/send";
 import SuccessModal from '../send table button/success';
 import DeleteModal from '../send table button/deletepopup';
 import TeacherPopup from './TeacherPopup';
-import SendForm from '../addbutton/sendform';
+import SendFormPopup from '../addbutton/SendformPopup';
 import { examApi } from '../../../services/ExamApi';
 
 interface TabelProps {
@@ -35,11 +35,12 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [isSendFormOpen, setSendFormOpen] = useState(false);
+  const [isSendFormPopupOpen, setSendFormPopupOpen] = useState(false);
   const [isTeacherPopupOpen, setTeacherPopupOpen] = useState(false);
   const [selectedPlanningId, setSelectedPlanningId] = useState<number | null>(null);
   const [selectedPlanningIdForDelete, setSelectedPlanningIdForDelete] = useState<string | null>(null);
   const [selectedPlanningData, setSelectedPlanningData] = useState<any>(null);
+  const [selectedRowDataForSend, setSelectedRowDataForSend] = useState<any>(null);
 
   // Modal controls
   const openEditModal = (planningId: string) => {
@@ -121,10 +122,103 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
     }
   };
 
-  // Send email functionality
+  // Updated send email functionality for individual row
   const handleSendEmail = (planningId: string) => {
-    setSelectedPlanningId(parseInt(planningId));
-    setSendFormOpen(true);
+    const planningIdNumber = parseInt(planningId);
+    
+    // Find the raw planning data
+    const rawPlanning = planningsRaw.find(p => p.id_planning === planningIdNumber);
+    
+    // Find the corresponding table data
+    const tableData = data.find(d => parseInt(d.order) === planningIdNumber);
+    
+    console.log('Planning ID:', planningIdNumber);
+    console.log('Raw Planning:', rawPlanning);
+    console.log('Table Data:', tableData);
+    
+    if (rawPlanning && tableData) {
+      // Get all surveillants from raw planning data
+      const surveillants = rawPlanning.surveillants || [];
+      
+      console.log('Surveillants found:', surveillants);
+      
+      // If no surveillants in the array, but we have teacher info in table data
+      // This handles the case where teacher info might be stored differently
+      if (surveillants.length === 0 && tableData.email) {
+        // Create a temporary teacher object from table data
+        setSelectedRowDataForSend({
+          teacher: {
+            code: '', // We might not have the code
+            nom: tableData.supervisor?.split(' ')[1] || '', // Assuming supervisor format is "FirstName LastName"
+            prenom: tableData.supervisor?.split(' ')[0] || '',
+            email: tableData.email,
+            email1: tableData.email,
+            department: '' // We might not have department info
+          },
+          planning: {
+            id_planning: planningIdNumber,
+            section: tableData.section,
+            session: rawPlanning.session || 'Normale',
+            creneau: {
+              date_creneau: tableData.date,
+              heure_creneau: tableData.time,
+              salle: tableData.examRoom
+            },
+            formation: {
+              niveau_cycle: tableData.level,
+              specialités: tableData.specialty,
+              modules: tableData.moduleName,
+              semestre: tableData.semester
+            }
+          },
+          role: 'Main' // Default role when we don't have the info
+        });
+        
+        setSendFormPopupOpen(true);
+      } else if (surveillants.length > 0) {
+        // Original logic for when surveillants exist
+        const firstSurveillant = surveillants[0];
+        
+        console.log('First Surveillant:', firstSurveillant);
+        
+        setSelectedRowDataForSend({
+          teacher: {
+            code: firstSurveillant.code_enseignant || firstSurveillant.Code_Enseignant || '',
+            nom: firstSurveillant.enseignant?.nom || firstSurveillant.nom || '',
+            prenom: firstSurveillant.enseignant?.prenom || firstSurveillant.prenom || '',
+            email: firstSurveillant.enseignant?.email1 || firstSurveillant.email1 || firstSurveillant.enseignant?.email || firstSurveillant.email || tableData.email,
+            email1: firstSurveillant.enseignant?.email1 || firstSurveillant.email1,
+            email2: firstSurveillant.enseignant?.email2 || firstSurveillant.email2,
+            department: firstSurveillant.enseignant?.département || firstSurveillant.département || ''
+          },
+          planning: {
+            id_planning: planningIdNumber,
+            section: tableData.section,
+            session: rawPlanning.session || 'Normale',
+            creneau: {
+              date_creneau: tableData.date,
+              heure_creneau: tableData.time,
+              salle: tableData.examRoom
+            },
+            formation: {
+              niveau_cycle: tableData.level,
+              specialités: tableData.specialty,
+              modules: tableData.moduleName,
+              semestre: tableData.semester
+            }
+          },
+          role: firstSurveillant.est_charge_cours === 1 ? 'Main' : 'Assistant'
+        });
+        
+        setSendFormPopupOpen(true);
+      } else {
+        // Only show alert if we truly have no teacher information at all
+        alert("Aucun enseignant assigné à cette planification. Veuillez d'abord assigner un enseignant.");
+      }
+    } else {
+      console.error('No planning data found for ID:', planningIdNumber);
+      alert("Données de planification introuvables.");
+    }
   };
 
   // Handle successful update
@@ -237,13 +331,19 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
         />
       )}
 
-      {/* Send Email Confirmation Form */}
-      {selectedPlanningId && isSendFormOpen && (
-        <SendForm
-          setShowPopup={setSendFormOpen}
-          planningId={selectedPlanningId}
-        />
-      )}
+      {/* Send Email Popup for Individual Row */}
+      <SendFormPopup
+        isOpen={isSendFormPopupOpen}
+        onClose={() => {
+          setSendFormPopupOpen(false);
+          setSelectedRowDataForSend(null);
+        }}
+        rowData={selectedRowDataForSend}
+        onSuccess={() => {
+          // Show success modal after email is sent
+          openSuccessModal();
+        }}
+      />
     </>
   );
 };

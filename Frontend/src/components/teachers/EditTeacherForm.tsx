@@ -22,18 +22,31 @@ const EditTeacherForm: React.FC<EditFormProps> = ({ teacher, setShowPopup, onEdi
   const originalCode = teacher.Code_Enseignant
 
   // Controlled inputs initialized from teacher prop
-  const [teacherCode, setTeacherCode] = useState<string>(teacher.Code_Enseignant || "")
-  const [lastName, setLastName] = useState<string>(teacher.nom || "")
-  const [firstName, setFirstName] = useState<string>(teacher.prenom || "")
-  const [birthName, setBirthName] = useState<string>(teacher.nom_jeune_fille || "")
-  const [gender, setGender] = useState<string>(teacher.genre || "")
-  const [status, setStatus] = useState<string>(teacher.status || "")
-  const [department, setDepartment] = useState<string>(teacher.departement || "")
-  const [grade, setGrade] = useState<string>(teacher.grade || "")
-  const [email1, setEmail1] = useState<string>(teacher.email1 || "")
-  const [email2, setEmail2] = useState<string>(teacher.email2 || "")
-  const [phone1, setPhone1] = useState<string>(teacher.tel1 || "")
-  const [phone2, setPhone2] = useState<string>(teacher.tel2 || "")
+  const [formData, setFormData] = useState({
+    // Don't include Code_Enseignant in formData at all since it shouldn't be updated
+    nom: teacher.nom || "",
+    prenom: teacher.prenom || "",
+    nom_jeune_fille: teacher.nom_jeune_fille || "",
+    genre: teacher.genre || "",
+    etat: teacher.status || "",  // Map status to etat (Python field name)
+    département: teacher.departement || "",  // Python field name has accent
+    grade: teacher.grade || "",
+    email1: teacher.email1 || "",
+    email2: teacher.email2 || "",
+    tel1: teacher.tel1 || "",
+    tel2: teacher.tel2 || ""
+  })
+
+  // Store the code separately for display purposes only
+  const teacherCode = teacher.Code_Enseignant || ""
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,39 +59,54 @@ const EditTeacherForm: React.FC<EditFormProps> = ({ teacher, setShowPopup, onEdi
 
     setIsSubmitting(true)
 
-    // Build updates payload - map form fields to API fields
-    const updates: Record<string, any> = {
-      Code_Enseignant: teacherCode,
-      prenom: firstName,
-      nom: lastName,
-      nom_jeune_fille: birthName,
-      genre: gender,
-      departement: department,
-      etat: status, // Note: using 'etat' instead of 'status' to match backend field
-      grade: grade,
-      email1: email1,
-      email2: email2,
-      tel1: phone1,
-      tel2: phone2,
+    // Build updates payload - only include changed fields
+    const updates: Record<string, any> = {}
+    
+    // Compare each field and only include changed ones
+    const fieldMapping: Record<string, keyof Teacher> = {
+      'nom': 'nom',
+      'prenom': 'prenom',
+      'nom_jeune_fille': 'nom_jeune_fille',
+      'genre': 'genre',
+      'etat': 'status',  // Backend expects 'etat', frontend uses 'status'
+      'département': 'departement',  // Backend field has accent
+      'grade': 'grade',
+      'email1': 'email1',
+      'email2': 'email2',
+      'tel1': 'tel1',
+      'tel2': 'tel2'
+    }
+
+    Object.keys(formData).forEach(key => {
+      const teacherKey = fieldMapping[key]
+      if (teacherKey && formData[key as keyof typeof formData] !== teacher[teacherKey]) {
+        updates[key] = formData[key as keyof typeof formData]
+      }
+    })
+
+    // If no changes were made
+    if (Object.keys(updates).length === 0) {
+      setError("No changes were made")
+      setIsSubmitting(false)
+      return
     }
 
     try {
-      console.log("Updating teacher with ID:", originalCode)
+      console.log("Updating teacher with Code:", originalCode)
+      console.log("Updates to be applied:", updates)
 
-      // Use originalCode as the primary key value
       const res = await api.editModel(
         "Enseignants",
-        "Code_Enseignant", // Make sure this field name matches what's expected by the API
+        "Code_Enseignant",
         originalCode,
-        updates,
+        updates
       )
 
       console.log("Teacher updated successfully:", res)
       if (onEdited) {
         onEdited()
-      } else {
-        setShowPopup(false)
       }
+      setShowPopup(false)
     } catch (err: any) {
       console.error("Error updating teacher:", err)
       setError(err.message || "Failed to update teacher")
@@ -89,7 +117,7 @@ const EditTeacherForm: React.FC<EditFormProps> = ({ teacher, setShowPopup, onEdi
 
   return (
     <>
-      <div className={styles.blurOverlay} />
+      <div className={styles.blurOverlay} onClick={() => !isSubmitting && setShowPopup(false)} />
       <div className={styles.container}>
         <button
           className={styles.close}
@@ -118,44 +146,60 @@ const EditTeacherForm: React.FC<EditFormProps> = ({ teacher, setShowPopup, onEdi
         <div className={styles.content}>
           <form onSubmit={handleSubmit}>
             <div className={styles.userDetails}>
-              {/* Teacher Code */}
+              {/* Teacher Code - Read Only (Display Only) */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.teacherCode") || "Teacher Code"}</span>
                 <input
                   value={teacherCode}
-                  onChange={(e) => setTeacherCode(e.target.value)}
-                  required
-                  disabled={isSubmitting}
+                  disabled={true}  // Always disabled - primary keys should not be edited
+                  readOnly
+                  style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
                 />
               </div>
+
+              {/* Last Name */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.lastName") || "Last Name"}</span>
                 <input
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  name="nom"
+                  value={formData.nom}
+                  onChange={handleInputChange}
                   required
                   disabled={isSubmitting}
                 />
               </div>
+
+              {/* First Name */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.firstName") || "First Name"}</span>
                 <input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  name="prenom"
+                  value={formData.prenom}
+                  onChange={handleInputChange}
                   required
                   disabled={isSubmitting}
                 />
               </div>
+
+              {/* Birth Name */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.birthName") || "Birth Name"}</span>
-                <input value={birthName} onChange={(e) => setBirthName(e.target.value)} disabled={isSubmitting} />
+                <input 
+                  name="nom_jeune_fille"
+                  value={formData.nom_jeune_fille} 
+                  onChange={handleInputChange} 
+                  disabled={isSubmitting} 
+                />
               </div>
+
+              {/* Gender */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.gender") || "Gender"}</span>
                 <select
+                  name="genre"
                   className={styles.selectbox}
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
+                  value={formData.genre}
+                  onChange={handleInputChange}
                   required
                   disabled={isSubmitting}
                 >
@@ -164,68 +208,105 @@ const EditTeacherForm: React.FC<EditFormProps> = ({ teacher, setShowPopup, onEdi
                   <option value="F">Female</option>
                 </select>
               </div>
+
+              {/* Status */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.status") || "Status"}</span>
                 <select
+                  name="etat"
                   className={styles.selectbox}
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
+                  value={formData.etat}
+                  onChange={handleInputChange}
                   required
                   disabled={isSubmitting}
                 >
                   <option value="">{t("teachers.selectStatus") || "Select Status"}</option>
                   <option value="ACTIF">{t("teachers.statusActive") || "Active"}</option>
-                  <option value="RETIRED">{t("teachers.statusRetired") || "Retired"}</option>
-                  <option value="MUTATED">{t("teachers.statusMutated") || "Mutated"}</option>
-                  <option value="MED">{t("teachers.statusMed") || "Medical Leave"}</option>
-                  <option value="ADMIN">{t("teachers.statusAdmin") || "Administrative"}</option>
+                  <option value="RETRAITE">{t("teachers.statusRetired") || "Retired"}</option>
+                  <option value="MUTATION">{t("teachers.statusMutated") || "Mutated"}</option>
+                  <option value="CONGE">{t("teachers.statusMed") || "Medical Leave"}</option>
+                  <option value="DEMISSION">{t("teachers.statusResigned") || "Resigned"}</option>
+                  <option value="INACTIF">{t("teachers.statusInactive") || "Inactive"}</option>
                 </select>
               </div>
+
+              {/* Department */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.department") || "Department"}</span>
                 <input
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
+                  name="département"
+                  value={formData['département']}
+                  onChange={handleInputChange}
                   required
                   disabled={isSubmitting}
                 />
               </div>
+
+              {/* Grade */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.grade") || "Grade"}</span>
-                <input value={grade} onChange={(e) => setGrade(e.target.value)} required disabled={isSubmitting} />
+                <input 
+                  name="grade"
+                  value={formData.grade} 
+                  onChange={handleInputChange} 
+                  required 
+                  disabled={isSubmitting} 
+                />
               </div>
+
+              {/* Email 1 */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.email") || "Email"}</span>
                 <input
+                  name="email1"
                   type="email"
-                  value={email1}
-                  onChange={(e) => setEmail1(e.target.value)}
+                  value={formData.email1}
+                  onChange={handleInputChange}
                   required
                   disabled={isSubmitting}
                 />
               </div>
+
+              {/* Email 2 */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.email2") || "Secondary Email"}</span>
                 <input
+                  name="email2"
                   type="email"
-                  value={email2}
-                  onChange={(e) => setEmail2(e.target.value)}
+                  value={formData.email2}
+                  onChange={handleInputChange}
                   disabled={isSubmitting}
                 />
               </div>
+
+              {/* Phone 1 */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.phone") || "Phone"}</span>
-                <input value={phone1} onChange={(e) => setPhone1(e.target.value)} required disabled={isSubmitting} />
+                <input 
+                  name="tel1"
+                  value={formData.tel1} 
+                  onChange={handleInputChange} 
+                  required 
+                  disabled={isSubmitting} 
+                />
               </div>
+
+              {/* Phone 2 */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teachers.phone2") || "Secondary Phone"}</span>
-                <input value={phone2} onChange={(e) => setPhone2(e.target.value)} disabled={isSubmitting} />
+                <input 
+                  name="tel2"
+                  value={formData.tel2} 
+                  onChange={handleInputChange} 
+                  disabled={isSubmitting} 
+                />
               </div>
             </div>
+
             <div className={styles.button}>
               <input
                 type="submit"
-                value={isSubmitting ? t("teachers.saving") || "Saving..." : t("teachers.saveChanges") || "Save Changes"}
+                value={isSubmitting ? (t("teachers.saving") || "Saving...") : (t("teachers.saveChanges") || "Save Changes")}
                 disabled={isSubmitting || !originalCode}
               />
             </div>

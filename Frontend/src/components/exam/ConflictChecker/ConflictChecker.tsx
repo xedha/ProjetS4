@@ -7,8 +7,17 @@ interface WorkloadResponse {
   global_metrics: {
     total_charges_enseignement: number;
     total_plannings: number;
-    total_surveillances: number;
+    total_surveillances_needed: number;
+    total_surveillances_assigned: number;
+    unfilled_surveillances: number;
+    assignment_rate_percentage: number;
     global_nbrss: number | 'N/A';
+    first_semester_nbrss?: number;
+    second_semester_nbrss?: number;
+    first_semester_charges?: number;
+    second_semester_charges?: number;
+    first_semester_surveillances_needed?: number;
+    second_semester_surveillances_needed?: number;
     status: 'NEED_MORE_SURVEILLANCES' | 'TOO_MANY_SURVEILLANCES' | 'BALANCED' | 'PERFECTLY_BALANCED';
     recommendation: string;
     target_surveillances?: number | null;
@@ -16,8 +25,10 @@ interface WorkloadResponse {
   };
   teacher_distribution: {
     total_teachers: number;
-    total_surveillances: number;
+    total_surveillances_assigned: number;
+    total_surveillances_needed: number;
     average_per_teacher: number;
+    target_per_teacher: number;
     below_target?: number;
     on_target?: number;
     above_target?: number;
@@ -36,7 +47,10 @@ interface WorkloadResponse {
     statistics: {
       surveillance_count: number;
       courses_count: number;
+      odd_semester_courses?: number;
+      even_semester_courses?: number;
       average_surveillances: number;
+      expected_by_nbrss?: number;
       target_surveillances?: number;
       deviation: number;
       deviation_percentage: number;
@@ -78,9 +92,15 @@ interface TeacherConflict {
 
 interface ConflictCheckerProps {
   maxSupervisorsPerMonitoring?: number;
+  autoOpen?: boolean; // New prop to automatically open and check conflicts
+  onClose?: () => void; // Optional callback when closing
 }
 
-function ConflictChecker({ maxSupervisorsPerMonitoring = 3 }: ConflictCheckerProps) {
+function ConflictChecker({ 
+  maxSupervisorsPerMonitoring = 3, 
+  autoOpen = false,
+  onClose 
+}: ConflictCheckerProps) {
   const [dateConflicts, setDateConflicts] = useState<ModuleConflict[]>([]);
   const [teacherConflicts, setTeacherConflicts] = useState<TeacherConflict[]>([]);
   const [workloadData, setWorkloadData] = useState<WorkloadResponse | null>(null);
@@ -96,6 +116,13 @@ function ConflictChecker({ maxSupervisorsPerMonitoring = 3 }: ConflictCheckerPro
       setTargetSurveillances(maxSupervisorsPerMonitoring);
     }
   }, [maxSupervisorsPerMonitoring, useMaxSupervisorsAsSetting]);
+
+  // Auto-open and check conflicts if autoOpen is true
+  useEffect(() => {
+    if (autoOpen) {
+      checkAllConflicts();
+    }
+  }, [autoOpen]);
 
   const checkDateConflicts = async () => {
     console.log('🔥 checkDateConflicts - STARTING');
@@ -146,12 +173,12 @@ function ConflictChecker({ maxSupervisorsPerMonitoring = 3 }: ConflictCheckerPro
       setActiveTab('workload');
       
       console.log('🔥 Calculating target...');
-      const effectiveTarget = useMaxSupervisorsAsSetting ? maxSupervisorsPerMonitoring : targetSurveillances;
+      const effectiveTarget = useMaxSupervisorsAsSetting ? (targetSurveillances || maxSupervisorsPerMonitoring) : undefined;
       console.log('🔥 Effective target calculated:', effectiveTarget);
       
       console.log('🚀 About to call examApi.checkSurveillanceWorkload...');
       
-      // Direct API call without extra checks
+      // Direct API call - pass undefined when using NbrSS mode
       const response = await examApi.checkSurveillanceWorkload(effectiveTarget);
       
       console.log('✅ API response received:', response);
@@ -195,6 +222,13 @@ function ConflictChecker({ maxSupervisorsPerMonitoring = 3 }: ConflictCheckerPro
     }
   };
 
+  const handleCloseModal = () => {
+    setShowModal(false);
+    if (onClose) {
+      onClose();
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'BELOW_TARGET':
@@ -224,31 +258,33 @@ function ConflictChecker({ maxSupervisorsPerMonitoring = 3 }: ConflictCheckerPro
 
   return (
     <>
-      {/* Check Conflicts Button */}
-      <button 
-        className={styles.checkButton}
-        onClick={() => {
-          console.log('🚨 BUTTON CLICKED - Check Conflicts & Workload');
-          checkAllConflicts();
-        }}
-        disabled={loading}
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L2 7V12C2 16.5 4.23 20.68 7.62 23.15L12 24L16.38 23.15C19.77 20.68 22 16.5 22 12V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M12 8V12M12 16H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        Check Conflicts & Workload
-      </button>
+      {/* Check Conflicts Button - Only show if not auto-opening */}
+      {!autoOpen && (
+        <button 
+          className={styles.checkButton}
+          onClick={() => {
+            console.log('🚨 BUTTON CLICKED - Check Conflicts & Workload');
+            checkAllConflicts();
+          }}
+          disabled={loading}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7V12C2 16.5 4.23 20.68 7.62 23.15L12 24L16.38 23.15C19.77 20.68 22 16.5 22 12V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 8V12M12 16H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Check Conflicts & Workload
+        </button>
+      )}
 
       {/* Conflicts Modal */}
       {showModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
+        <div className={styles.modalOverlay} onClick={handleCloseModal}>
           <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h2>Scheduling Conflicts & Workload Analysis</h2>
               <button 
                 className={styles.closeButton}
-                onClick={() => setShowModal(false)}
+                onClick={handleCloseModal}
               >
                 ×
               </button>
@@ -408,35 +444,34 @@ function ConflictChecker({ maxSupervisorsPerMonitoring = 3 }: ConflictCheckerPro
 
                       {/* Target Surveillances Control */}
                       <div className={styles.targetInputCard}>
-                        <h3>Surveillance Target Configuration</h3>
+                        <h3>Analysis Mode</h3>
                         <div className={styles.targetOptions}>
-                          <label className={styles.targetOption}>
-                            <input
-                              type="radio"
-                              checked={useMaxSupervisorsAsSetting}
-                              onChange={() => setUseMaxSupervisorsAsSetting(true)}
-                            />
-                            <span>Use Max Supervisors Setting ({maxSupervisorsPerMonitoring})</span>
-                          </label>
                           <label className={styles.targetOption}>
                             <input
                               type="radio"
                               checked={!useMaxSupervisorsAsSetting}
                               onChange={() => setUseMaxSupervisorsAsSetting(false)}
                             />
-                            <span>Custom Target</span>
+                            <span>Use Semester-based NbrSS (Automatic Equity)</span>
+                          </label>
+                          <label className={styles.targetOption}>
+                            <input
+                              type="radio"
+                              checked={useMaxSupervisorsAsSetting}
+                              onChange={() => setUseMaxSupervisorsAsSetting(true)}
+                            />
+                            <span>Use Fixed Target ({maxSupervisorsPerMonitoring} per teacher)</span>
                           </label>
                         </div>
                         
-                        {!useMaxSupervisorsAsSetting && (
+                        {useMaxSupervisorsAsSetting && (
                           <div className={styles.targetInputGroup}>
-                            <label>Custom target surveillances per teacher:</label>
+                            <label>Target surveillances per teacher:</label>
                             <input
                               type="number"
                               min="0"
-                              value={targetSurveillances || ''}
+                              value={targetSurveillances || maxSupervisorsPerMonitoring}
                               onChange={(e) => setTargetSurveillances(e.target.value ? parseInt(e.target.value) : undefined)}
-                              placeholder="e.g., 3"
                               className={styles.targetInput}
                             />
                           </div>
@@ -450,13 +485,13 @@ function ConflictChecker({ maxSupervisorsPerMonitoring = 3 }: ConflictCheckerPro
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                             <path d="M1 4V10H1.582M23 20V14H22.418M21.721 9.506C20.969 6.218 18.167 3.5 14.672 3.042C10.6 2.507 6.782 4.736 5.062 8.293M2.279 14.494C3.031 17.782 5.833 20.5 9.328 20.958C13.4 21.493 17.218 19.264 18.938 15.707" stroke="currentColor" strokeWidth="2"/>
                           </svg>
-                          Recalculate with {useMaxSupervisorsAsSetting ? 'Settings' : 'Custom'} Target
+                          Recalculate
                         </button>
                         
                         <p className={styles.targetHint}>
                           {useMaxSupervisorsAsSetting 
-                            ? `Using the configured maximum of ${maxSupervisorsPerMonitoring} supervisors as the target per teacher.`
-                            : 'Leave custom target empty to use the calculated average as baseline.'
+                            ? `Using a fixed target of ${targetSurveillances || maxSupervisorsPerMonitoring} surveillances per teacher.`
+                            : 'Using semester-based NbrSS to calculate expected surveillances based on teaching load.'
                           }
                         </p>
                       </div>
@@ -476,13 +511,48 @@ function ConflictChecker({ maxSupervisorsPerMonitoring = 3 }: ConflictCheckerPro
                                 <span className={styles.metricValue}>{workloadData.global_metrics.total_plannings}</span>
                               </div>
                               <div className={styles.metricItem}>
-                                <span className={styles.metricLabel}>Total Surveillances</span>
-                                <span className={styles.metricValue}>{workloadData.global_metrics.total_surveillances || workloadData.teacher_distribution.total_surveillances}</span>
+                                <span className={styles.metricLabel}>Surveillances Needed</span>
+                                <span className={styles.metricValue}>{workloadData.global_metrics.total_surveillances_needed}</span>
                               </div>
                               <div className={styles.metricItem}>
-                                <span className={styles.metricLabel}>NbrSS Ratio</span>
+                                <span className={styles.metricLabel}>Surveillances Assigned</span>
+                                <span className={styles.metricValue}>{workloadData.global_metrics.total_surveillances_assigned}</span>
+                              </div>
+                              <div className={styles.metricItem}>
+                                <span className={styles.metricLabel}>Assignment Rate</span>
+                                <span className={styles.metricValue} style={{ 
+                                  color: workloadData.global_metrics.assignment_rate_percentage >= 90 ? '#059669' : 
+                                         workloadData.global_metrics.assignment_rate_percentage >= 70 ? '#f59e0b' : '#ef4444'
+                                }}>
+                                  {workloadData.global_metrics.assignment_rate_percentage}%
+                                </span>
+                              </div>
+                              <div className={styles.metricItem}>
+                                <span className={styles.metricLabel}>Global NbrSS</span>
                                 <span className={styles.metricValue}>{workloadData.global_metrics.global_nbrss}</span>
                               </div>
+                              {workloadData.global_metrics.first_semester_nbrss !== undefined && (
+                                <div className={styles.metricItem}>
+                                  <span className={styles.metricLabel}>1st Sem NbrSS</span>
+                                  <span className={styles.metricValue} style={{ color: '#0B8FAC' }}>
+                                    {workloadData.global_metrics.first_semester_nbrss.toFixed(2)}
+                                  </span>
+                                  <span style={{ fontSize: '11px', color: '#6b7280' }}>
+                                    (S1, S3, S5...)
+                                  </span>
+                                </div>
+                              )}
+                              {workloadData.global_metrics.second_semester_nbrss !== undefined && (
+                                <div className={styles.metricItem}>
+                                  <span className={styles.metricLabel}>2nd Sem NbrSS</span>
+                                  <span className={styles.metricValue} style={{ color: '#059669' }}>
+                                    {workloadData.global_metrics.second_semester_nbrss.toFixed(2)}
+                                  </span>
+                                  <span style={{ fontSize: '11px', color: '#6b7280' }}>
+                                    (S2, S4, S6...)
+                                  </span>
+                                </div>
+                              )}
                               {workloadData.global_metrics.target_surveillances !== null && workloadData.global_metrics.target_surveillances !== undefined && (
                                 <div className={styles.metricItem}>
                                   <span className={styles.metricLabel}>Target/Teacher</span>
@@ -490,6 +560,48 @@ function ConflictChecker({ maxSupervisorsPerMonitoring = 3 }: ConflictCheckerPro
                                 </div>
                               )}
                             </div>
+                            
+                            {/* Semester Breakdown Section */}
+                            {workloadData.global_metrics.first_semester_charges !== undefined && (
+                              <div style={{
+                                marginTop: '20px',
+                                padding: '16px',
+                                backgroundColor: '#f0f9ff',
+                                borderRadius: '8px',
+                                border: '1px solid #0891b2'
+                              }}>
+                                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', color: '#0c4a6e' }}>
+                                  📊 Semester Distribution
+                                </h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                  <div>
+                                    <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600', color: '#0B8FAC' }}>
+                                      1st Semester (S1, S3, S5...)
+                                    </h5>
+                                    <div style={{ fontSize: '13px', color: '#334155' }}>
+                                      <div>Courses: {workloadData.global_metrics.first_semester_charges}</div>
+                                      <div>Surveillances Needed: {workloadData.global_metrics.first_semester_surveillances_needed}</div>
+                                      <div style={{ fontWeight: '600', marginTop: '4px' }}>
+                                        NbrSS: {workloadData.global_metrics.first_semester_nbrss?.toFixed(2)}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600', color: '#059669' }}>
+                                      2nd Semester (S2, S4, S6...)
+                                    </h5>
+                                    <div style={{ fontSize: '13px', color: '#334155' }}>
+                                      <div>Courses: {workloadData.global_metrics.second_semester_charges}</div>
+                                      <div>Surveillances Needed: {workloadData.global_metrics.second_semester_surveillances_needed}</div>
+                                      <div style={{ fontWeight: '600', marginTop: '4px' }}>
+                                        NbrSS: {workloadData.global_metrics.second_semester_nbrss?.toFixed(2)}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            
                             <div className={`${styles.statusBadge} ${styles[workloadData.global_metrics.status.toLowerCase().replace(/_/g, '-')]}`}>
                               {workloadData.global_metrics.status.replace(/_/g, ' ')}
                             </div>
@@ -511,8 +623,20 @@ function ConflictChecker({ maxSupervisorsPerMonitoring = 3 }: ConflictCheckerPro
                               </div>
                               <div className={styles.distItem}>
                                 <span className={styles.distNumber}>{workloadData.teacher_distribution.average_per_teacher}</span>
-                                <span className={styles.distLabel}>Avg. Surveillances</span>
+                                <span className={styles.distLabel}>Avg. Assigned</span>
                               </div>
+                              <div className={styles.distItem}>
+                                <span className={styles.distNumber}>{workloadData.teacher_distribution.target_per_teacher}</span>
+                                <span className={styles.distLabel}>Target/Teacher</span>
+                              </div>
+                              {workloadData.global_metrics.unfilled_surveillances > 0 && (
+                                <div className={styles.distItem}>
+                                  <span className={styles.distNumber} style={{ color: '#ef4444' }}>
+                                    {workloadData.global_metrics.unfilled_surveillances}
+                                  </span>
+                                  <span className={styles.distLabel}>Unfilled</span>
+                                </div>
+                              )}
                               {workloadData.global_metrics.target_surveillances !== null && workloadData.global_metrics.target_surveillances !== undefined ? (
                                 <>
                                   <div className={styles.distItem}>
@@ -578,6 +702,11 @@ function ConflictChecker({ maxSupervisorsPerMonitoring = 3 }: ConflictCheckerPro
                                     <div className={styles.statItem}>
                                       <span className={styles.statLabel}>Courses</span>
                                       <span className={styles.statValue}>{teacher.statistics.courses_count}</span>
+                                      {teacher.statistics.odd_semester_courses !== undefined && teacher.statistics.even_semester_courses !== undefined && (
+                                        <span style={{ fontSize: '10px', color: '#6b7280', display: 'block' }}>
+                                          1st: {teacher.statistics.odd_semester_courses} | 2nd: {teacher.statistics.even_semester_courses}
+                                        </span>
+                                      )}
                                     </div>
                                     <div className={styles.statItem}>
                                       <span className={styles.statLabel}>

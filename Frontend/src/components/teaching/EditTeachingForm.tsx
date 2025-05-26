@@ -26,21 +26,23 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
   const [teachers, setTeachers] = useState<any[]>([])
   const [formations, setFormations] = useState<any[]>([])
 
-  // Controlled inputs initialized from teaching prop
-  const [teachingId, setTeachingId] = useState<number>(teaching.id_charge)
-  const [level, setLevel] = useState<string>(teaching.palier || "")
-  const [specialty, setSpecialty] = useState<string>(teaching.specialite || "")
-  const [semester, setSemester] = useState<string>(teaching.semestre || "")
-  const [section, setSection] = useState<string>(teaching.section || "")
-  const [group, setGroup] = useState<string>(teaching.groupe || "")
-  const [type, setType] = useState<string>(teaching.type || "")
-  const [moduleName, setModuleName] = useState<string>(teaching.intitule_module || "")
-  const [moduleAbbreviation, setModuleAbbreviation] = useState<string>(teaching.abv_module || "")
-  const [teacherCode, setTeacherCode] = useState<string>(teaching.teacher || "")
-  const [academicYear, setAcademicYear] = useState<string>(teaching.annee_universitaire || "")
-
-  // Selected formation state to track combo box selection
-  const [selectedFormation, setSelectedFormation] = useState<string>("")
+  // Controlled inputs initialized from teaching prop - matching the exact field names
+  const [formData, setFormData] = useState({
+    // Don't include id_charge in formData since it's the primary key
+    palier: teaching.palier || "",
+    specialite: teaching.specialite || "",
+    semestre: teaching.semestre || "",
+    section: teaching.section || "",
+    groupe: teaching.groupe || "",
+    type: teaching.type || "",
+    'intitulé_module': teaching['intitulé_module'] || "",
+    abv_module: teaching.abv_module || "",
+    Code_Enseignant_id_id: teaching.Code_Enseignant_id_id || teaching.Code_Enseignant_id || "",
+    annee_universitaire: teaching.annee_universitaire || ""
+  })
+  
+  // Store the ID separately for display purposes only
+  const teachingId = teaching.id_charge
 
   // Load teachers and formations data
   useEffect(() => {
@@ -51,7 +53,7 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
         // Fetch teachers
         const teachersData = await api.getModelData('Enseignants', {
           page: 1,
-          itemsPerPage: 1000, // Get more teachers to ensure we have all
+          itemsPerPage: 1000,
           search: '',
         })
         
@@ -72,7 +74,7 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
         // Fetch formations
         const formationsData = await api.getModelData('Formations', {
           page: 1,
-          itemsPerPage: 1000, // Get more formations to ensure we have all
+          itemsPerPage: 1000,
           search: '',
         })
         
@@ -88,24 +90,6 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
           
           console.log('Formations loaded:', formationsArray.length)
           setFormations(formationsArray)
-          
-          // Try to find and select the current formation based on module name
-          const currentFormation = formationsArray.find((f: { modules: string | (string | null | undefined)[] | null | undefined }) => 
-            f.modules === teaching.intitule_module || 
-            f.modules === teaching.abv_module ||
-            (f.modules &&
-              (
-                (typeof f.modules === "string" &&
-                  (f.modules.includes(teaching.intitule_module ?? "") || f.modules.includes(teaching.abv_module ?? "")))
-                ||
-                (Array.isArray(f.modules) &&
-                  (f.modules.includes(teaching.intitule_module ?? "") || f.modules.includes(teaching.abv_module ?? "")))
-              )
-            )
-          )
-          if (currentFormation) {
-            setSelectedFormation(currentFormation.id || '')
-          }
         }
         
       } catch (err) {
@@ -117,19 +101,26 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
     }
     
     fetchData()
-  }, [teaching.intitule_module, teaching.abv_module])
+  }, [])
+
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
 
   // Handle formation selection change
   const handleFormationChange = (formationId: string) => {
-    setSelectedFormation(formationId)
     const formation = formations.find(f => f.id?.toString() === formationId)
     if (formation && formation.modules) {
-      setModuleName(formation.modules)
-      // You might want to extract abbreviation from the formation if available
-      // For now, keeping the existing abbreviation or clearing it
-      if (!moduleAbbreviation && formation.abv_module) {
-        setModuleAbbreviation(formation.abv_module)
-      }
+      setFormData(prev => ({
+        ...prev,
+        'intitulé_module': formation.modules,
+        abv_module: formation.abv_module || prev.abv_module
+      }))
     }
   }
 
@@ -144,38 +135,40 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
 
     setIsSubmitting(true)
 
-    // Build updates payload - map form fields to API fields
-    const updates: Record<string, any> = {
-      id_charge: teachingId,
-      palier: level,
-      specialite: specialty,
-      semestre: semester,
-      section: section,
-      groupe: group,
-      type: type,
-      "intitulé_module": moduleName,
-      abv_module: moduleAbbreviation,
-      code_enseignant: teacherCode,
-      annee_universitaire: academicYear
+    // Build updates payload - only include changed fields
+    const updates: Record<string, any> = {}
+    
+    // Compare each field and only include changed ones (excluding primary key)
+    Object.keys(formData).forEach(key => {
+      if (formData[key as keyof typeof formData] !== teaching[key as keyof Teaching]) {
+        updates[key] = formData[key as keyof typeof formData]
+      }
+    })
+
+    // If no changes were made
+    if (Object.keys(updates).length === 0) {
+      setError("No changes were made")
+      setIsSubmitting(false)
+      return
     }
 
     try {
       console.log("Updating teaching assignment with ID:", originalId)
+      console.log("Updates to be applied:", updates)
 
-      // Use originalId as the primary key value
       const res = await api.editModel(
         "ChargesEnseignement",
-        "id_charge", // Make sure this field name matches what's expected by the API
+        "id_charge",
         originalId,
-        updates,
+        updates
       )
 
       console.log("Teaching assignment updated successfully:", res)
+      
       if (onEdited) {
         onEdited()
-      } else {
-        setShowPopup(false)
       }
+      setShowPopup(false)
     } catch (err: any) {
       console.error("Error updating teaching assignment:", err)
       setError(err.message || "Failed to update teaching assignment")
@@ -186,7 +179,7 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
 
   return (
     <>
-      <div className={styles.blurOverlay} />
+      <div className={styles.blurOverlay} onClick={() => !isSubmitting && setShowPopup(false)} />
       <div className={styles.container}>
         <button
           className={styles.close}
@@ -216,119 +209,140 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
         <div className={styles.content}>
           <form onSubmit={handleSubmit}>
             <div className={styles.userDetails}>
-              {/* Teaching ID (disabled as it's a primary key) */}
+              {/* Teaching ID (read-only - display only) */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teaching.id") || "Teaching ID"}</span>
                 <input
                   value={teachingId}
-                  onChange={(e) => setTeachingId(Number(e.target.value))}
-                  required
                   disabled={true}
+                  readOnly
+                  style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
                 />
               </div>
+
+              {/* Level */}
               <div className={styles.inputBox}>
-                <span className={styles.details}>{t("teaching.level") || "Level"}</span>
-                <input
-                  value={level}
-                  onChange={(e) => setLevel(e.target.value)}
-                  required
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t("teaching.specialty") || "Specialty"}</span>
-                <input
-                  value={specialty}
-                  onChange={(e) => setSpecialty(e.target.value)}
-                  required
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t("teaching.semester") || "Semester"}</span>
-                <input 
-                  value={semester} 
-                  onChange={(e) => setSemester(e.target.value)} 
-                  required
-                  disabled={isSubmitting} 
-                />
-              </div>
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t("teaching.section") || "Section"}</span>
-                <input
-                  value={section}
-                  onChange={(e) => setSection(e.target.value)}
-                  required
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t("teaching.group") || "Group"}</span>
-                <input
-                  value={group}
-                  onChange={(e) => setGroup(e.target.value)}
-                  required
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className={styles.inputBox}>
-                <span className={styles.details}>{t("teaching.type") || "Type"}</span>
+                <span className={styles.details}>{t("teaching.level") || "Level (Palier)"}</span>
                 <select
+                  name="palier"
                   className={styles.selectbox}
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  required
+                  value={formData.palier}
+                  onChange={handleInputChange}
                   disabled={isSubmitting}
                 >
-                  <option value="">{t("teaching.selectType") || "Select Type"}</option>
-                  <option value="COURS">{t("teaching.typeCOURS") || "Course"}</option>
-                  <option value="TD">{t("teaching.typeTD") || "TD"}</option>
-                  <option value="TP">{t("teaching.typeTP") || "TP"}</option>
-                </select>
-              </div>
-              
-              {/* Formation Selection - Now as a combo box */}
-              <div className={styles.inputBox} style={{ gridColumn: 'span 2' }}>
-                <span className={styles.details}>{t("teaching.formation") || "Formation (Module)"}</span>
-                <select
-                  className={styles.selectbox}
-                  value={selectedFormation}
-                  onChange={(e) => handleFormationChange(e.target.value)}
-                  disabled={isSubmitting || loading || formations.length === 0}
-                >
-                  <option value="">
-                    {moduleName 
-                      ? moduleName
-                      : t("teaching.selectFormation") || "Select Formation"
-                    }
-                  </option>
-                  {formations.map((formation) => {
-                    const formationId = formation.id || ''
-                    const filiere = formation.filière || formation.filiere || 'Unknown'
-                    const niveau = formation.niveau_cycle || 'Unknown'
-                    const modules = formation.modules || 'Unknown'
-                    return (
-                      <option key={formationId} value={formationId}>
-                        {filiere} - {niveau} - {modules}
-                      </option>
-                    )
-                  })}
+                  <option value="">Select Level</option>
+                  <option value="L1">L1</option>
+                  <option value="L2">L2</option>
+                  <option value="L3">L3</option>
+                  <option value="M1">M1</option>
+                  <option value="M2">M2</option>
                 </select>
               </div>
 
-              {/* Teacher Selection - Now as a combo box */}
+              {/* Specialty */}
+              <div className={styles.inputBox}>
+                <span className={styles.details}>{t("teaching.specialty") || "Specialty"}</span>
+                <input
+                  name="specialite"
+                  value={formData.specialite}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+                  placeholder="Enter specialty"
+                />
+              </div>
+
+              {/* Semester */}
+              <div className={styles.inputBox}>
+                <span className={styles.details}>{t("teaching.semester") || "Semester"}</span>
+                <select
+                  name="semestre"
+                  className={styles.selectbox}
+                  value={formData.semestre}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+                >
+                  <option value="">Select Semester</option>
+                  <option value="S1">S1</option>
+                  <option value="S2">S2</option>
+                </select>
+              </div>
+
+              {/* Section */}
+              <div className={styles.inputBox}>
+                <span className={styles.details}>{t("teaching.section") || "Section"}</span>
+                <input
+                  name="section"
+                  value={formData.section}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+                  placeholder="Enter section"
+                />
+              </div>
+
+              {/* Group */}
+              <div className={styles.inputBox}>
+                <span className={styles.details}>{t("teaching.group") || "Group"}</span>
+                <input
+                  name="groupe"
+                  value={formData.groupe}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+                  placeholder="Enter group"
+                />
+              </div>
+
+              {/* Type */}
+              <div className={styles.inputBox}>
+                <span className={styles.details}>{t("teaching.type") || "Type"}</span>
+                <select
+                  name="type"
+                  className={styles.selectbox}
+                  value={formData.type}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+                >
+                  <option value="">Select Type</option>
+                  <option value="COURS">Course (COURS)</option>
+                  <option value="TD">TD</option>
+                  <option value="TP">TP</option>
+                </select>
+              </div>
+
+              {/* Module Name */}
+              <div className={styles.inputBox}>
+                <span className={styles.details}>{t("teaching.moduleName") || "Module Name"}</span>
+                <input
+                  name="intitulé_module"
+                  value={formData['intitulé_module']}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+                  placeholder="Enter module name"
+                />
+              </div>
+
+              {/* Module Abbreviation */}
+              <div className={styles.inputBox}>
+                <span className={styles.details}>{t("teaching.moduleAbbreviation") || "Module Abbreviation"}</span>
+                <input
+                  name="abv_module"
+                  value={formData.abv_module}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+                  placeholder="Enter abbreviation"
+                />
+              </div>
+
+              {/* Teacher Selection */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teaching.teacher") || "Teacher"}</span>
                 <select
+                  name="Code_Enseignant_id_id"
                   className={styles.selectbox}
-                  value={teacherCode}
-                  onChange={(e) => setTeacherCode(e.target.value)}
-                  required
+                  value={formData.Code_Enseignant_id_id}
+                  onChange={handleInputChange}
                   disabled={isSubmitting || loading || teachers.length === 0}
                 >
-                  <option value="">
-                    {teacherCode || t("teaching.selectTeacher") || "Select Teacher"}
-                  </option>
+                  <option value="">Select Teacher</option>
                   {teachers.map((teacher) => {
                     const code = teacher.Code_Enseignant || teacher.code_enseignant || ''
                     const name = teacher.nom || 'Unknown'
@@ -342,20 +356,49 @@ const EditTeachingForm: React.FC<EditFormProps> = ({ teaching, setShowPopup, onE
                 </select>
               </div>
 
+              {/* Academic Year */}
               <div className={styles.inputBox}>
                 <span className={styles.details}>{t("teaching.academicYear") || "Academic Year"}</span>
-                <input 
-                  value={academicYear} 
-                  onChange={(e) => setAcademicYear(e.target.value)} 
-                  required
-                  disabled={isSubmitting} 
+                <input
+                  name="annee_universitaire"
+                  value={formData.annee_universitaire}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
+                  placeholder="e.g., 2023-2024"
                 />
               </div>
+
+              {/* Formation Selection (optional) */}
+              {formations.length > 0 && (
+                <div className={styles.inputBox} style={{ gridColumn: 'span 2' }}>
+                  <span className={styles.details}>{t("teaching.formation") || "Select from Formation (Optional)"}</span>
+                  <select
+                    className={styles.selectbox}
+                    onChange={(e) => handleFormationChange(e.target.value)}
+                    disabled={isSubmitting || loading}
+                    defaultValue=""
+                  >
+                    <option value="">Choose a formation to auto-fill module</option>
+                    {formations.map((formation) => {
+                      const formationId = formation.id || ''
+                      const filiere = formation.filière || formation.filiere || 'Unknown'
+                      const niveau = formation.niveau_cycle || 'Unknown'
+                      const modules = formation.modules || 'Unknown'
+                      return (
+                        <option key={formationId} value={formationId}>
+                          {filiere} - {niveau} - {modules}
+                        </option>
+                      )
+                    })}
+                  </select>
+                </div>
+              )}
             </div>
+
             <div className={styles.button}>
               <input
                 type="submit"
-                value={isSubmitting ? t("teaching.saving") || "Saving..." : t("teaching.saveChanges") || "Save Changes"}
+                value={isSubmitting ? (t("teaching.saving") || "Saving...") : (t("teaching.saveChanges") || "Save Changes")}
                 disabled={isSubmitting || !originalId || loading}
               />
             </div>

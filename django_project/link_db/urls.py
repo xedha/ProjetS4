@@ -3,7 +3,7 @@ from .views import register, login, logout
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
 from .views.Xcel_Api import UploadExcel_creneau, ChargesEnseignement_xlsx, UploadEnseignants_xlsx, UploadFormations_xlsx
-from .views.send_email_view import send_bulk_pv, send_bulk_convocations
+from .views.send_email_view import send_bulk_pv, send_bulk_convocations,send_convo, send_pv
 
 urlpatterns = [
     path('register/', register, name='register'),
@@ -33,6 +33,8 @@ urlpatterns = [
     # Email endpoints
     path('send_bulk_pv/', send_bulk_pv, name='send_bulk_pv'),
     path('send_bulk_convocations/', send_bulk_convocations, name='send_bulk_convocations'),
+    path('send_convo/', send_convo, name='send_convo'),
+    path('send_pv/', send_pv, name='send_pv'),
     
     # Updated workload endpoint - matches the ExamApi.ts method name
     path('check_surveillance_workload/', views.check_surveillance_workload_balance, name='check_surveillance_workload'),

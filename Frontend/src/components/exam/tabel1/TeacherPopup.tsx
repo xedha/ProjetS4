@@ -4,14 +4,15 @@ import styles from './Tabel.module.css';
 import buttonStyles from './TeacherPopup.module.css';
 import { examApi, SurveillantWithDetails, Enseignant, PlanningWithDetails } from '../../../services/ExamApi';
 import { api } from '../../../services/api';
-import ConflictChecker from '../ConflictChecker/ConflictChecker'; // Import ConflictChecker
+import ConflictChecker from './../ConflictChecker/ConflictChecker';
+import SendFormPopup from '../addbutton/SendformPopup';
 
 interface TeacherPopupProps {
   isOpen: boolean;
   onClose: () => void;
   planningId: number;
   onTeachersUpdated: () => void;
-  maxSupervisorsPerMonitoring?: number; // Add this prop
+  maxSupervisorsPerMonitoring?: number;
 }
 
 interface TeacherConflict {
@@ -31,7 +32,7 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
   onClose,
   planningId,
   onTeachersUpdated,
-  maxSupervisorsPerMonitoring = 3, // Default value
+  maxSupervisorsPerMonitoring = 3,
 }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
@@ -41,6 +42,8 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
   const [allTeachers, setAllTeachers] = useState<Enseignant[]>([]);
   const [editingTeacher, setEditingTeacher] = useState<SurveillantWithDetails | null>(null);
   const [editingSupervisor, setEditingSupervisor] = useState(false);
+  
+ 
   
   // State to control showing ConflictChecker modal
   const [showConflictChecker, setShowConflictChecker] = useState(false);
@@ -66,6 +69,7 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
     email1: '' 
   });
 
+
   // Original inline conflict checking
   const checkInlineTeacherConflicts = async () => {
     try {
@@ -83,8 +87,15 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
         );
         
         const planningIds = new Set<number>();
-        relevantConflicts.forEach(conflict => {
-          conflict.conflicts.forEach(c => {
+        relevantConflicts.forEach((conflict: TeacherConflict) => {
+          conflict.conflicts.forEach((c: {
+            surveillance1_id: number;
+            planning1_id: number;
+            surveillance2_id: number;
+            planning2_id: number;
+            date: string;
+            time: string;
+          }) => {
             planningIds.add(c.planning1_id);
             planningIds.add(c.planning2_id);
           });
@@ -300,7 +311,7 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
         );
         
         if (surveillantRecord) {
-          await api.deleteModel('Surveillant', 'id_surveillance', surveillantRecord);
+          await api.deleteModel('Surveillant', surveillantRecord);
           setTeachers(teachers.filter(t => t.code_enseignant !== teacherCode));
         }
       }
@@ -316,9 +327,9 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
 
   return (
     <>
-      <div className={styles.modalOverlay}>
-        <div className={styles.modalContent}>
-          <div className={styles.modalHeader}>
+      <div className={buttonStyles.modalOverlay}>
+        <div className={buttonStyles.modalContent}>
+          <div className={buttonStyles.modalHeader}>
             <h2>{t('teacher.management')}</h2>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               {/* Updated button to show ConflictChecker */}
@@ -353,12 +364,12 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
                 {checkingConflicts ? 'Checking...' : 'Quick Check'}
               </button>
               
-              <button onClick={onClose} className={styles.closeButton}>×</button>
+              <button onClick={onClose} className={buttonStyles.closeButton}>×</button>
             </div>
           </div>
 
-          {loading && <div className={styles.loadingMessage}>{t('teacher.loadingData') || 'Loading teacher information...'}</div>}
-          {error && <div className={styles.errorMessage}>{error}</div>}
+          {loading && <div className={buttonStyles.loadingMessage}>{t('teacher.loadingData') || 'Loading teacher information...'}</div>}
+          {error && <div className={buttonStyles.errorMessage}>{error}</div>}
 
           {/* Inline Conflicts Section (optional - for quick view) */}
           {showInlineConflicts && (
@@ -538,12 +549,12 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
             </div>
           )}
 
-          <div className={styles.teachersSection}>
-            <div className={styles.teacherHeader}>
+          <div className={buttonStyles.teachersSection}>
+            <div className={buttonStyles.teacherHeader}>
               <h3>{t('teacher.allTeachers')}</h3>
             </div>
             
-            <table className={styles.teacherTable}>
+            <table className={buttonStyles.teacherTable}>
               <thead>
                 <tr>
                   <th>{t('teacher.role')}</th>
@@ -564,14 +575,14 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
                             type="text"
                             value={supervisorForm.nom}
                             onChange={(e) => setSupervisorForm({ ...supervisorForm, nom: e.target.value })}
-                            className={styles.editInput}
+                            className={buttonStyles.editInput}
                             placeholder="Last Name"
                           />
                           <input
                             type="text"
                             value={supervisorForm.prenom}
                             onChange={(e) => setSupervisorForm({ ...supervisorForm, prenom: e.target.value })}
-                            className={styles.editInput}
+                            className={buttonStyles.editInput}
                             placeholder="First Name"
                             style={{ marginTop: '5px' }}
                           />
@@ -581,7 +592,7 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
                             type="email"
                             value={supervisorForm.email1}
                             onChange={(e) => setSupervisorForm({ ...supervisorForm, email1: e.target.value })}
-                            className={styles.editInput}
+                            className={buttonStyles.editInput}
                           />
                         </td>
                         <td>
@@ -602,6 +613,7 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
                           <button onClick={handleEditSupervisorClick} className={buttonStyles.editButton}>
                             {t('teacher.edit')}
                           </button>
+                          
                         </td>
                       </>
                     )}
@@ -619,14 +631,14 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
                             type="text"
                             value={editForm.nom}
                             onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })}
-                            className={styles.editInput}
+                            className={buttonStyles.editInput}
                             placeholder="Last Name"
                           />
                           <input
                             type="text"
                             value={editForm.prenom}
                             onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })}
-                            className={styles.editInput}
+                            className={buttonStyles.editInput}
                             placeholder="First Name"
                             style={{ marginTop: '5px' }}
                           />
@@ -636,7 +648,7 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
                             type="email"
                             value={editForm.email1}
                             onChange={(e) => setEditForm({ ...editForm, email1: e.target.value })}
-                            className={styles.editInput}
+                            className={buttonStyles.editInput}
                           />
                         </td>
                         <td>
@@ -657,6 +669,7 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
                           <button onClick={() => handleEditClick(teacher)} className={buttonStyles.editButton}>
                             {t('teacher.edit')}
                           </button>
+                          
                           <button 
                             onClick={() => handleRemoveTeacher(teacher.code_enseignant)} 
                             className={buttonStyles.cancelButton}
@@ -691,60 +704,13 @@ const TeacherPopup: React.FC<TeacherPopupProps> = ({
 
       {/* ConflictChecker Modal - Rendered separately */}
       {showConflictChecker && (
-        <div style={{ position: 'relative', zIndex: 2000 }}>
-          <ConflictChecker 
-            maxSupervisorsPerMonitoring={maxSupervisorsPerMonitoring}
-            // Add a custom wrapper to handle closing
-            {...{
-              // Wrap the component to add close functionality
-              children: (
-                <div style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 2000
-                }}>
-                  <div style={{
-                    position: 'relative',
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    maxWidth: '90%',
-                    maxHeight: '90vh',
-                    overflow: 'auto'
-                  }}>
-                    <button
-                      onClick={() => setShowConflictChecker(false)}
-                      style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        background: 'none',
-                        border: 'none',
-                        fontSize: '24px',
-                        cursor: 'pointer',
-                        padding: '5px',
-                        borderRadius: '4px',
-                        color: '#6B7280',
-                        zIndex: 10
-                      }}
-                    >
-                      ×
-                    </button>
-                    <ConflictChecker maxSupervisorsPerMonitoring={maxSupervisorsPerMonitoring} />
-                  </div>
-                </div>
-              )
-            }}
-          />
-        </div>
+        <ConflictChecker 
+          maxSupervisorsPerMonitoring={maxSupervisorsPerMonitoring}
+          autoOpen={true}
+          onClose={() => setShowConflictChecker(false)}
+        />
       )}
+
     </>
   );
 };

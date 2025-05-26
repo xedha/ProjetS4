@@ -3,28 +3,12 @@
 import React from "react"
 import styles from "../common/table.module.css"
 import { useTranslation } from "react-i18next"
-
-// Maintain the original Teaching interface to match Django backend
-export interface Teaching {
-  id_charge: number;
-  palier?: string | null;                     // PALIER
-  specialite?: string | null;                // SPECIALITE
-  semestre?: string | null;                  // SEMESTRE
-  section?: string | null;                   // SECTION
-  groupe?: string | null;                    // Groupe
-  type?: string | null;                      // Type
-  "intitulé_module"?: string | null;       // Intitulé MODULE
-  abv_module?: string | null;                // Abv MODULE
-  Code_Enseignant_id_id?: string | null;     // Code_Enseignant (foreign key)
-  annee_universitaire: string;        // annee_universitaire
-}
-
-
+import type { Teaching } from "../../types/teaching"
 
 interface TeachingTableProps {
   teachings: Teaching[]
   onEdit: (id: number) => void
-  onDelete: (TEA: Teaching) => void
+  onDelete: (teaching: Teaching) => void
   currentPage: number
   totalPages: number
   onPageChange: (page: number) => void
@@ -90,23 +74,25 @@ const TeachingTable: React.FC<TeachingTableProps> = ({
             ) : (
               teachings.map((teaching) => (
                 <tr key={teaching.id_charge} className={styles.tableRow}>
-                  <td className={styles.tableCell}>{teaching.palier}</td>
-                  <td className={styles.tableCell}>{teaching.specialite}</td>
-                  <td className={styles.tableCell}>{teaching.semestre}</td>
-                  <td className={styles.tableCell}>{teaching.section}</td>
-                  <td className={styles.tableCell}>{teaching.groupe}</td>
+                  <td className={styles.tableCell}>{teaching.palier || '-'}</td>
+                  <td className={styles.tableCell}>{teaching.specialite || '-'}</td>
+                  <td className={styles.tableCell}>{teaching.semestre || '-'}</td>
+                  <td className={styles.tableCell}>{teaching.section || '-'}</td>
+                  <td className={styles.tableCell}>{teaching.groupe || '-'}</td>
                   
                   <td className={styles.tableCell}>
                     <span className={`${styles.statusBadge} ${getTypeClass(teaching.type)}`}>
-                      {teaching.type}
+                      {teaching.type || '-'}
                     </span>
                   </td>
-                  <td className={styles.tableCell}>{teaching['intitulé_module']}</td>
-                  <td className={styles.tableCell}>{teaching.abv_module}</td>
                   <td className={styles.tableCell}>
-                    {teaching.Code_Enseignant_id_id || '-'}
+                    {teaching['intitulé_module'] || '-'}
                   </td>
-                  <td className={styles.tableCell}>{teaching.annee_universitaire}</td>
+                  <td className={styles.tableCell}>{teaching.abv_module || '-'}</td>
+                  <td className={styles.tableCell}>
+                    {teaching.Code_Enseignant_id || teaching.Code_Enseignant_id_id || '-'}
+                  </td>
+                  <td className={styles.tableCell}>{teaching.annee_universitaire || '-'}</td>
                   <td className={styles.actionCell}>
                     <button
                       className={styles.editButton}

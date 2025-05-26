@@ -2,7 +2,7 @@ import styles from './addbutton.module.css';
 import { useState, useRef } from 'react';
 import Form from './form';
 import Form2 from './Form2';
-import SendForm from './sendform';
+import SendFormPopup from './SendformPopup'; // Changed from SendForm to SendFormPopup
 import add from "/src/assets/add.svg";
 import { useTranslation } from 'react-i18next';
 import AddOptionsModal from './AddOptionsModal';
@@ -17,7 +17,7 @@ function AddButton({ onAddSuccess, onUploadSuccess }: AddButtonProps) {
   const { t } = useTranslation();
   const [showModuleForm, setShowModuleForm] = useState(false);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
-  const [showSendForm, setShowSendForm] = useState(false);
+  const [showSendFormPopup, setShowSendFormPopup] = useState(false); // Changed from showSendForm
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -28,7 +28,7 @@ function AddButton({ onAddSuccess, onUploadSuccess }: AddButtonProps) {
     // Close forms and trigger refresh
     setShowModuleForm(false);
     setShowScheduleForm(false);
-    setShowSendForm(false);
+    setShowSendFormPopup(false); // Updated
     
     // Call the parent callback if provided
     if (onAddSuccess) {
@@ -154,7 +154,7 @@ function AddButton({ onAddSuccess, onUploadSuccess }: AddButtonProps) {
   return (
     <>
       {/* Send Button */}
-      <button className={styles.send} onClick={() => setShowSendForm(true)}>
+      <button className={styles.send} onClick={() => setShowSendFormPopup(true)}>
         <div className={styles.svgWrapper}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -231,11 +231,12 @@ function AddButton({ onAddSuccess, onUploadSuccess }: AddButtonProps) {
         />
       )}
 
-      {showSendForm && (
-        <SendForm
-          setShowPopup={setShowSendForm}
-        />
-      )}
+      {/* SendFormPopup - pass isGeneralSend=true when called from AddButton */}
+      <SendFormPopup
+        isOpen={showSendFormPopup}
+        onClose={() => setShowSendFormPopup(false)}
+        isGeneralSend={true} // This indicates it's a general send, not row-specific
+      />
 
       {/* Options Modal */}
       {showOptionsModal && (

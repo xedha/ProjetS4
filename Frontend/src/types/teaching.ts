@@ -1,20 +1,25 @@
+// Teaching interface that matches the Django ChargesEnseignement model
 export interface Teaching {
-  id_charge: number                   // corresponds to id_charge PK in ChargesEnseignement
-  palier?: string | null              // nullable string, max length 20
-  specialite?: string | null          // nullable string, max length 50
-  semestre?: string | null            // nullable string, max length 10
-  section?: string | null             // nullable string, max length 10
-  groupe?: string | null              // nullable string, max length 10
-  type?: string | null                // nullable string, max length 20
-  intitule_module?: string | null    // nullable string, max length 100, corresponds to "intitulé_module"
-  abv_module?: string | null          // nullable string, max length 20, corresponds to "abv_module"
-  teacher?: string | null             // corresponds to Code_Enseignant (one-to-one FK) simplified as string here
-  annee_universitaire: string         // non-nullable string, length 7
-  formation?: number | null           // formation FK id, nullable number
+  id_charge: number                   // Primary key
+  palier?: string | null              // PALIER field
+  specialite?: string | null          // SPECIALITE field
+  semestre?: string | null            // SEMESTRE field
+  section?: string | null             // SECTION field
+  groupe?: string | null              // Groupe field
+  type?: string | null                // Type field (COURS, TD, TP)
+  'intitulé_module'?: string | null   // Intitulé MODULE field (exact Django field name with accent)
+  abv_module?: string | null          // Abv MODULE field
+  Code_Enseignant_id?: string | null  // Foreign key field (with capital C as in db_column)
+  Code_Enseignant_id_id?: string | null // Alternative field name that might be returned
+  annee_universitaire: string         // Academic year (required)
+  formation?: number | null           // Foreign key to Formations
 }
 
 // API response structure
 export interface TeachingResponse {
   teachings: Teaching[]
   total: number
+  total_count?: number
+  page?: number
+  items_per_page?: number
 }

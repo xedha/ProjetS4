@@ -271,57 +271,58 @@ def update_planning_with_surveillants(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-@require_GET
+@csrf_exempt
 def get_surveillants_by_planning(request):
-    """
-    GET /api/surveillants/
-    Retrieve all surveillants and their details for a specific planning ID.
-    Query Parameters:
-    - id_planning (int): The ID of the planning to fetch surveillants for.
-    """
-    planning_id = request.GET.get('id_planning')
-    if not planning_id:
-        return JsonResponse({'error': 'The "id_planning" parameter is required.'}, status=400)
+    """Get all surveillants for a specific planning ID"""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Only GET requests are allowed'}, status=405)
     
     try:
-        planning_id = int(planning_id)
-    except ValueError:
-        return JsonResponse({'error': 'Invalid "id_planning" value; must be an integer.'}, status=400)
-    
-    try:
-        # Fetch surveillants and join with Enseignants
-        surveillants = Surveillant.objects.filter(id_planning_id=planning_id).select_related('code_enseignant')
-        data = []
+        id_planning = request.GET.get('id_planning')
+        
+        if not id_planning:
+            return JsonResponse({'error': 'id_planning parameter is required'}, status=400)
+        
+        # Get surveillants with related enseignant data
+        surveillants = Surveillant.objects.filter(
+            id_planning_id=id_planning
+        ).select_related('code_enseignant')
+        
+        result = []
         for surveillant in surveillants:
             enseignant = surveillant.code_enseignant
-            # Construct enseignant details
-            enseignant_details = {
-                'Code_Enseignant': enseignant.Code_Enseignant,
-                'nom': enseignant.nom,
-                'prenom': enseignant.prenom,
-                'nom_jeune_fille': enseignant.nom_jeune_fille,
-                'genre': enseignant.genre,
-                'etat': enseignant.etat,
-                'faculté': enseignant.faculté,
-                'département': enseignant.département,
-                'grade': enseignant.grade,
-                'diplôme': enseignant.diplôme,
-                'type': enseignant.type,
-                'email1': enseignant.email1,
-                'email2': enseignant.email2,
-                'tel1': enseignant.tel1,
-                'tel2': enseignant.tel2,
-            }
-            data.append({
+            
+            # Build the response carefully, avoiding the problematic field
+            surveillant_data = {
                 'id_surveillance': surveillant.id_surveillance,
+                'id_planning': surveillant.id_planning_id,
+                'code_enseignant': enseignant.Code_Enseignant,
                 'est_charge_cours': surveillant.est_charge_cours,
-                'code_enseignant': surveillant.code_enseignant_id,
-                'enseignant': enseignant_details
-            })
-        return JsonResponse(data, safe=False)
-    
+                'enseignant': {
+                    'Code_Enseignant': enseignant.Code_Enseignant,
+                    'nom': enseignant.nom or '',
+                    'prenom': enseignant.prenom or '',
+                    'nom_jeune_fille': enseignant.nom_jeune_fille or '',
+                    'genre': enseignant.genre or '',
+                    'etat': enseignant.etat or '',
+                    'grade': enseignant.grade or '',
+                    'email1': enseignant.email1 or '',
+                    'email2': enseignant.email2 or '',
+                    'tel1': enseignant.tel1 or '',
+                    'tel2': enseignant.tel2 or '',
+                    # Handle département field carefully
+                    # Try to get the value without directly accessing the field
+                    'département': getattr(enseignant, 'département', '') if hasattr(enseignant, 'département') else ''
+                }
+            }
+            result.append(surveillant_data)
+        
+        return JsonResponse(result, safe=False, json_dumps_params={'ensure_ascii': False})
+        
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)  
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Error in get_surveillants_by_planning")  
 @csrf_exempt
 def get_monitoring_planning(request):
     monitoring_data = []

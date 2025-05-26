@@ -479,13 +479,6 @@ def get_pv_template():
     <div class="center-logo">
       <strong>FACULTÉ D'INFORMATIQUE</strong>
     </div>
-    <div class="right" style="text-align: right; direction: rtl;">
-      <p>
-        الجمهورية الجزائرية الديمقراطية الشعبية<br>
-        وزارة التعليم العالي و البحث العلمي<br>
-        جامعة هواري بومدين للعلوم والتكنولوجيا
-      </p>
-    </div>
   </div>
 
   <div class="usthb-date"><strong>USTHB Le, {date_document}</strong></div>
@@ -931,11 +924,6 @@ def get_convocation_template():
             </p>
         </div>
         <div class="right">
-            <p>
-                الجمهورية الجزائرية الديمقراطية الشعبية<br>
-                وزارة التعليم العالي و البحث العلمي<br>
-                جامعة هواري بومدين للعلوم والتكنولوجيا
-            </p>
         </div>
     </div>
 
@@ -976,3 +964,203 @@ def get_convocation_template():
 
 </body>
 </html>"""
+
+@csrf_exempt
+@require_POST
+def send_pv(request):
+    """Send PV email to a single recipient"""
+    try:
+        data = json.loads(request.body)
+        
+        # Required fields
+        email = data.get('email')
+        teacher_name = data.get('teacher_name', '')
+        
+        # Optional context data
+        context_data = {
+            'date_document': data.get('date_document', datetime.now().strftime("%d/%m/%Y")),
+            'nom_enseignant': teacher_name,
+            'semestre': data.get('semestre', 'Premier Semestre'),
+            'session': data.get('session', 'Session Normale'),
+            'annee_universitaire': data.get('annee_universitaire', '2024/2025'),
+            'module': data.get('module', 'Module'),
+            'module_nom': data.get('module_nom', 'MOD'),
+            'niveau': data.get('niveau', 'L1'),
+            'section': data.get('section', 'A'),
+            'date_exam': data.get('date_exam', datetime.now().strftime("%d/%m/%Y")),
+            'locaux': data.get('locaux', 'À déterminer'),
+            'surveillants_rows': data.get('surveillants_rows', build_default_surveillants_rows(teacher_name))
+        }
+        
+        if not email:
+            return JsonResponse({'error': 'Email is required'}, status=400)
+        
+        # Generate PDF
+        pdf_data = generate_pv_pdf(context_data)
+        if not pdf_data:
+            return JsonResponse({'error': 'Failed to generate PDF'}, status=500)
+        
+        # Send email
+        success = send_single_pv_email(email, teacher_name, context_data, pdf_data)
+        
+        if success:
+            return JsonResponse({'success': f'PV sent successfully to {email}'}, status=200)
+        else:
+            return JsonResponse({'error': 'Failed to send email'}, status=500)
+            
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': f'Error: {str(e)}'}, status=500)
+
+
+@csrf_exempt
+@require_POST
+def send_convo(request):
+    """Send convocation email to a single recipient"""
+    try:
+        data = json.loads(request.body)
+        
+        # Required fields
+        email = data.get('email')
+        teacher_name = data.get('teacher_name', '')
+        examens = data.get('examens', [])
+        
+        if not email:
+            return JsonResponse({'error': 'Email is required'}, status=400)
+        
+        if not examens:
+            return JsonResponse({'error': 'At least one exam is required'}, status=400)
+        
+        # Prepare convocation data
+        convocation_data = {
+            'date_document': data.get('date_document', datetime.now().strftime('%d/%m/%Y')),
+            'annee_universitaire': data.get('annee_universitaire', '2024/2025'),
+            'semestre': data.get('semestre', 'Premier Semestre'),
+            'session': data.get('session', 'Session Normale'),
+            'examens': examens
+        }
+        
+        # Generate PDF
+        pdf_data = generate_convocation_pdf(teacher_name, convocation_data)
+        if not pdf_data:
+            return JsonResponse({'error': 'Failed to generate PDF'}, status=500)
+        
+        # Send email
+        success = send_single_convocation_email(teacher_name, email, convocation_data, pdf_data)
+        
+        if success:
+            return JsonResponse({'success': f'Convocation sent successfully to {email}'}, status=200)
+        else:
+            return JsonResponse({'error': 'Failed to send email'}, status=500)
+            
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': f'Error: {str(e)}'}, status=500)
+
+
+def build_default_surveillants_rows(teacher_name):
+    """Build default surveillants rows with the teacher as responsible"""
+    html = f"""
+      <tr>
+        <td style="text-align: left; padding-left: 10px;">{teacher_name} (Responsable)</td>
+        <td style="border: 1px solid #000;">&nbsp;</td>
+        <td style="border: 1px solid #000;">&nbsp;</td>
+      </tr>"""
+    
+    # Add empty rows (minimum 15 total)
+    for _ in range(14):
+        html += """
+      <tr>
+        <td style="text-align: left; padding-left: 10px;">&nbsp;</td>
+        <td style="border: 1px solid #000;">&nbsp;</td>
+        <td style="border: 1px solid #000;">&nbsp;</td>
+      </tr>"""
+    
+    return html
+
+
+def send_single_pv_email(email, teacher_name, context, pdf_data):
+    """Send PV email to a single recipient"""
+    try:
+        subject = f"PV d'examen - {context['module']} - {context['date_exam']}"
+        
+        body = f"""Bonjour {teacher_name},
+
+En tant que responsable du module (chargé de cours), veuillez trouver ci-joint le procès-verbal d'examen pour:
+
+- Module: {context['module']} ({context['module_nom']})
+- Date: {context['date_exam']}
+- Niveau: {context['niveau']}
+- Section: {context['section']}
+- Locaux: {context['locaux']}
+
+Merci de compléter ce PV et de le remettre au département après l'examen.
+
+Cordialement,
+L'administration de la Faculté d'Informatique
+USTHB"""
+        
+        email_message = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=settings.EMAIL_HOST_USER,
+            to=[email]
+        )
+        
+        filename = f"PV_{context['module_nom']}_{context['section']}_{context['date_exam'].replace('/', '_')}.pdf"
+        email_message.attach(filename, pdf_data, 'application/pdf')
+        
+        email_message.send()
+        print(f"PV email sent successfully to {email}")
+        return True
+        
+    except Exception as e:
+        print(f"PV email sending failed for {email}: {str(e)}")
+        return False
+
+
+def send_single_convocation_email(teacher_name, email, convocation_data, pdf_data):
+    """Send convocation email to a single recipient"""
+    try:
+        subject = f"Convocation de surveillance - {convocation_data['semestre']} {convocation_data['session']}"
+        
+        # Build exam list for email body
+        exam_list = "\n".join([
+            f"  - {exam['date']} à {exam['horaire']}: {exam['module']} (Local: {exam['local']})"
+            for exam in convocation_data['examens']
+        ])
+        
+        body = f"""Bonjour {teacher_name},
+
+Vous êtes convoqué(e) pour la surveillance des examens suivants:
+
+{exam_list}
+
+Année universitaire: {convocation_data['annee_universitaire']}
+Session: {convocation_data['semestre']} - {convocation_data['session']}
+
+IMPORTANT: Votre présence est indispensable. Veuillez vous présenter au moins 10 minutes avant le début de l'examen.
+
+Cordialement,
+L'administration de la Faculté d'Informatique
+USTHB"""
+        
+        email_message = EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=settings.EMAIL_HOST_USER,
+            to=[email]
+        )
+        
+        filename = f"Convocation_{teacher_name.replace(' ', '_')}.pdf"
+        email_message.attach(filename, pdf_data, 'application/pdf')
+        
+        email_message.send()
+        print(f"Convocation sent successfully to {teacher_name} ({email})")
+        return True
+        
+    except Exception as e:
+        print(f"Convocation email sending failed for {teacher_name}: {str(e)}")
+        return False

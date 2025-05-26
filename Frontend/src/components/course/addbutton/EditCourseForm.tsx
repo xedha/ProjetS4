@@ -170,7 +170,6 @@ const EditCourseForm: React.FC<EditCourseFormProps> = ({ course, setShowPopup, o
                 />
               </div>
 
-              {/* ...remaining form fields... */}
             </div>
 
             <div className={styles.button}>

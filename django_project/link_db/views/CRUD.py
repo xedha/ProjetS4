@@ -78,39 +78,44 @@ def Edit_Model(request):
 
     try:
         data = json.loads(request.body)
-        model_name = data.get("model")
-        field_name = data.get("field")
+        model_name   = data.get("model")
+        field_name   = data.get("field")
         lookup_value = data.get("value")
-        update_val = data.get("updates")
+        updates      = data.get("updates")
 
-        if not all([model_name, field_name, lookup_value, update_val]):
-            return JsonResponse({'error': 'Missing required data: model, field, value, or updates'}, status=400)
+        if not all([model_name, field_name, lookup_value, updates]):
+            return JsonResponse(
+                {'error': 'Missing required data: model, field, value, or updates'},
+                status=400
+            )
 
-        
         logger.debug(f"Editing row in model: {model_name}")
 
         Model = apps.get_model('link_db', model_name)
         if not Model:
-            return JsonResponse({'error': f'Model "{model_name}" not found'}, status=404)
+            return JsonResponse({'error': f'Model \"{model_name}\" not found'}, status=404)
 
-        obj = Model.objects.get(**{field_name: lookup_value})
-        for key, val in update_val.items():
-            setattr(obj, key, val)
-        obj.save()
+        # Build a queryset matching the original record
+        qs = Model.objects.filter(**{field_name: lookup_value})
+        if not qs.exists():
+            return JsonResponse(
+                {'error': f'No {model_name} found with {field_name} = {lookup_value}'},
+                status=404
+            )
+
+        # Perform a direct UPDATE in the DB; can change PKs, FKs, etc.
+        updated_count = qs.update(**updates)
 
         return JsonResponse({
             'message': f'{model_name} row updated successfully',
-            'updated_fields': list(update_val.keys()),
+            'updated_fields': list(updates.keys()),
+            'rows_affected': updated_count,
             'lookup': {field_name: lookup_value}
         }, status=200)
-
-    except Model.DoesNotExist:
-        return JsonResponse({'error': f'No {model_name} found with {field_name} = {lookup_value}'}, status=404)
 
     except Exception as e:
         logger.exception("Error editing model row")
         return JsonResponse({'error': f'Unexpected error: {str(e)}'}, status=500)
-    
     
 def get_model_data(request):
     if request.method != 'GET':

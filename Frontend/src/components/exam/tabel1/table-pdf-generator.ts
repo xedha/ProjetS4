@@ -492,3 +492,187 @@ export const generateMonitoringPlanningPDF = async (
     return false;
   }
 };
+
+export const generatePVPDF = async (
+  planningId: number,
+  surveillants: any[],
+  planningDetails: any,
+  selectedTeacher?: any
+): Promise<boolean> => {
+  try {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    
+    // Get teacher name
+    const teacherName = selectedTeacher 
+      ? `${selectedTeacher.enseignant?.prenom || ''} ${selectedTeacher.enseignant?.nom || ''}`
+      : 'Responsable du module';
+
+    // Prepare data
+    const pvData = {
+      date_document: new Date().toLocaleDateString('fr-FR'),
+      nom_enseignant: teacherName,
+      semestre: planningDetails?.formation?.semestre || 'Premier Semestre',
+      session: planningDetails?.session || 'Session Normale',
+      annee_universitaire: getCurrentAcademicYear(),
+      module: planningDetails?.formation?.modules || '',
+      module_nom: planningDetails?.formation?.modules?.split('-')[0]?.trim() || 'MOD',
+      niveau: planningDetails?.formation?.niveau_cycle || 'L1',
+      section: planningDetails?.section || 'A',
+      date_exam: formatDate(planningDetails?.creneau?.date_creneau),
+      time_exam: planningDetails?.creneau?.heure_debut || '09:00',
+      locaux: planningDetails?.creneau?.salle || 'À déterminer'
+    };
+
+    // Header
+    doc.setFontSize(10);
+    doc.text('République Algérienne Démocratique et Populaire', 14, 20);
+    doc.text('Ministère de l\'Enseignement Supérieur', 14, 25);
+    doc.text('et de la Recherche Scientifique', 14, 30);
+    doc.text('Université des Sciences et de la', 14, 35);
+    doc.text('Technologie Houari Boumediene USTHB', 14, 40);
+    
+    // Faculty title
+    doc.setFontSize(14);
+    doc.setFont("Arial", 'bold');
+    doc.text('FACULTÉ D\'INFORMATIQUE', 105, 50, { align: 'center' });
+    
+    // Date
+    doc.setFont("Arial", 'normal');
+    doc.setFontSize(10);
+    doc.text(`USTHB Le, ${pvData.date_document}`, 140, 60);
+    
+    // Title
+    doc.setFontSize(16);
+    doc.setFont("Arial", 'bold');
+    doc.text('P.V d\'examen', 105, 75, { align: 'center' });
+    
+    // Session info
+    doc.setFontSize(12);
+    doc.setFont("Arial", 'normal');
+    doc.text(`${pvData.semestre} ${pvData.session} – Année ${pvData.annee_universitaire}`, 105, 85, { align: 'center' });
+    
+    // Box with teacher info
+    doc.rect(50, 95, 110, 25);
+    doc.setFontSize(11);
+    doc.text(pvData.nom_enseignant, 105, 103, { align: 'center' });
+    doc.text(pvData.module, 105, 110, { align: 'center' });
+    doc.text(`${pvData.niveau} ${pvData.section}`, 105, 117, { align: 'center' });
+    
+    // Exam details header - Fixed layout
+    const startY = 130;
+    doc.setFillColor(227, 242, 253);
+    doc.rect(14, startY, 182, 20, 'F');
+    doc.rect(14, startY, 182, 20);
+    doc.setFontSize(10);
+    
+    // First line of exam details
+    doc.text(`Date: ${pvData.date_exam}`, 20, startY + 8);
+    doc.text(`Heure: ${pvData.time_exam}`, 80, startY + 8);
+    doc.text(`Local: ${pvData.locaux}`, 140, startY + 8);
+    
+    // Second line of exam details
+    doc.text(`Module: ${pvData.module_nom}`, 20, startY + 15);
+    doc.text(`Niveau: ${pvData.niveau}`, 80, startY + 15);
+    doc.text(`Section: ${pvData.section}`, 140, startY + 15);
+    
+    // Prepare table data
+    const tableData = [];
+    surveillants.forEach(s => {
+      if (!s.enseignant) return;
+      const role = s.est_charge_cours === 1 ? ' (Responsable)' : '';
+      const name = `${s.enseignant.prenom} ${s.enseignant.nom}${role}`;
+      tableData.push([name, '', '']);
+    });
+    
+    // Add empty rows to reach minimum 15
+    const remainingRows = Math.max(0, 15 - surveillants.length);
+    for (let i = 0; i < remainingRows; i++) {
+      tableData.push(['', '', '']);
+    }
+    
+    // Add table
+    (doc as any).autoTable({
+      head: [['Surveillants', 'Emargement', 'Nombre d\'étudiants présents']],
+      body: tableData,
+      startY: startY + 25,
+      theme: 'grid',
+      styles: {
+        fontSize: 10,
+        cellPadding: 5
+      },
+      headStyles: {
+        fillColor: [240, 240, 240],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold'
+      },
+      columnStyles: {
+        0: { cellWidth: 90 },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 47 }
+      }
+    });
+    
+    // Total
+    const finalY = (doc as any).lastAutoTable.finalY;
+    doc.setFont("Arial", 'bold');
+    doc.text('Total : _________________', 140, finalY + 10);
+    
+    // Observations
+    doc.setFont("Arial", 'bold');
+    doc.setFontSize(11);
+    doc.text('Observations et Remarques :', 14, finalY + 25);
+    doc.setFont("Arial", 'normal');
+    doc.setFontSize(10);
+    doc.text('…………………………………………………………………………………………………………………………………………', 14, finalY + 35);
+    doc.text('…………………………………………………………………………………………………………………………………………', 14, finalY + 42);
+    doc.text('…………………………………………………………………………………………………………………………………………', 14, finalY + 49);
+    
+    // Signature
+    doc.setFont("Arial", 'italic');
+    doc.text('Signature du Responsable du Module', 120, finalY + 70);
+    doc.text('_______________________________', 120, finalY + 85);
+    
+    // Notes
+    doc.setFontSize(9);
+    doc.setFont("Arial", 'normal');
+    doc.text('• Les consignes particulières, s\'il y en a, sont à transmettre aux surveillants par mail avant l\'examen.', 14, finalY + 100);
+    doc.text('• Ce PV est à remplir par le responsable du module et à remettre au département juste après l\'examen.', 14, finalY + 106);
+    doc.text('• Il faut signaler les cas de remplacement.', 14, finalY + 112);
+    
+    // Save PDF
+    const filename = `PV_${pvData.module_nom}_${pvData.section}_${pvData.date_exam.replace(/\//g, '_')}.pdf`;
+    doc.save(filename);
+
+    return true;
+  } catch (error) {
+    console.error('Error generating PV PDF:', error);
+    return false;
+  }
+};
+
+// Helper function for date formatting
+const formatDate = (dateString?: string): string => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  } catch {
+    return dateString;
+  }
+};
+
+// Helper function for academic year
+const getCurrentAcademicYear = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  if (month >= 8) {
+    return `${year}/${year + 1}`;
+  } else {
+    return `${year - 1}/${year}`;
+  }
+};

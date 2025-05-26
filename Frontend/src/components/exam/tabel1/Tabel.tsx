@@ -9,6 +9,7 @@ import DeleteModal from '../send table button/deletepopup';
 import TeacherPopup from './TeacherPopup';
 import SendFormPopup from '../addbutton/SendformPopup';
 import { examApi } from '../../../services/ExamApi';
+import { generatePVPDF } from './table-pdf-generator';
 
 interface TabelProps {
   data: {
@@ -41,6 +42,7 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
   const [selectedPlanningIdForDelete, setSelectedPlanningIdForDelete] = useState<string | null>(null);
   const [selectedPlanningData, setSelectedPlanningData] = useState<any>(null);
   const [selectedRowDataForSend, setSelectedRowDataForSend] = useState<any>(null);
+  const [selectedPlanningIdForSend, setSelectedPlanningIdForSend] = useState<number | null>(null);
 
   // Modal controls
   const openEditModal = (planningId: string) => {
@@ -122,107 +124,54 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
     }
   };
 
-  // Updated send email functionality for individual row
+  // Simplified send email functionality
   const handleSendEmail = (planningId: string) => {
     const planningIdNumber = parseInt(planningId);
     
-    // Find the raw planning data
-    const rawPlanning = planningsRaw.find(p => p.id_planning === planningIdNumber);
+    console.log('[Tabel] Opening SendFormPopup with planning ID:', planningIdNumber);
     
-    // Find the corresponding table data
-    const tableData = data.find(d => parseInt(d.order) === planningIdNumber);
+    // Simply set the planning ID and open the popup
+    // SendFormPopup will fetch all the data it needs
+    setSelectedPlanningIdForSend(planningIdNumber);
+    setSendFormPopupOpen(true);
+  };
+
+  // Handle generating PV PDF
+  const handleGeneratePV = async (planningId: string) => {
+    const planningIdNumber = parseInt(planningId);
     
-    console.log('Planning ID:', planningIdNumber);
-    console.log('Raw Planning:', rawPlanning);
-    console.log('Table Data:', tableData);
-    
-    if (rawPlanning && tableData) {
-      // Get all surveillants from raw planning data
-      const surveillants = rawPlanning.surveillants || [];
+    try {
+      // Fetch surveillants
+      const surveillants = await examApi.getSurveillantsByPlanning(planningIdNumber);
       
-      console.log('Surveillants found:', surveillants);
+      // Find planning details
+      const rawPlanning = planningsRaw.find(p => p.id_planning === planningIdNumber);
+      const tableData = data.find(d => parseInt(d.order) === planningIdNumber);
       
-      // If no surveillants in the array, but we have teacher info in table data
-      // This handles the case where teacher info might be stored differently
-      if (surveillants.length === 0 && tableData.email) {
-        // Create a temporary teacher object from table data
-        setSelectedRowDataForSend({
-          teacher: {
-            code: '', // We might not have the code
-            nom: tableData.supervisor?.split(' ')[1] || '', // Assuming supervisor format is "FirstName LastName"
-            prenom: tableData.supervisor?.split(' ')[0] || '',
-            email: tableData.email,
-            email1: tableData.email,
-            department: '' // We might not have department info
-          },
-          planning: {
-            id_planning: planningIdNumber,
-            section: tableData.section,
-            session: rawPlanning.session || 'Normale',
-            creneau: {
-              date_creneau: tableData.date,
-              heure_creneau: tableData.time,
-              salle: tableData.examRoom
-            },
-            formation: {
-              niveau_cycle: tableData.level,
-              specialités: tableData.specialty,
-              modules: tableData.moduleName,
-              semestre: tableData.semester
-            }
-          },
-          role: 'Main' // Default role when we don't have the info
-        });
+      if (surveillants && rawPlanning) {
+        // Generate PDF
+        const success = await generatePVPDF(
+          planningIdNumber,
+          surveillants,
+          rawPlanning,
+          surveillants.find(s => s.est_charge_cours === 1) // Select supervisor
+        );
         
-        setSendFormPopupOpen(true);
-      } else if (surveillants.length > 0) {
-        // Original logic for when surveillants exist
-        const firstSurveillant = surveillants[0];
-        
-        console.log('First Surveillant:', firstSurveillant);
-        
-        setSelectedRowDataForSend({
-          teacher: {
-            code: firstSurveillant.code_enseignant || firstSurveillant.Code_Enseignant || '',
-            nom: firstSurveillant.enseignant?.nom || firstSurveillant.nom || '',
-            prenom: firstSurveillant.enseignant?.prenom || firstSurveillant.prenom || '',
-            email: firstSurveillant.enseignant?.email1 || firstSurveillant.email1 || firstSurveillant.enseignant?.email || firstSurveillant.email || tableData.email,
-            email1: firstSurveillant.enseignant?.email1 || firstSurveillant.email1,
-            email2: firstSurveillant.enseignant?.email2 || firstSurveillant.email2,
-            department: firstSurveillant.enseignant?.département || firstSurveillant.département || ''
-          },
-          planning: {
-            id_planning: planningIdNumber,
-            section: tableData.section,
-            session: rawPlanning.session || 'Normale',
-            creneau: {
-              date_creneau: tableData.date,
-              heure_creneau: tableData.time,
-              salle: tableData.examRoom
-            },
-            formation: {
-              niveau_cycle: tableData.level,
-              specialités: tableData.specialty,
-              modules: tableData.moduleName,
-              semestre: tableData.semester
-            }
-          },
-          role: firstSurveillant.est_charge_cours === 1 ? 'Main' : 'Assistant'
-        });
-        
-        setSendFormPopupOpen(true);
+        if (!success) {
+          alert('Failed to generate PV PDF');
+        }
       } else {
-        // Only show alert if we truly have no teacher information at all
-        alert("Aucun enseignant assigné à cette planification. Veuillez d'abord assigner un enseignant.");
+        alert('Unable to fetch data for PV generation');
       }
-    } else {
-      console.error('No planning data found for ID:', planningIdNumber);
-      alert("Données de planification introuvables.");
+    } catch (error) {
+      console.error('Error generating PV:', error);
+      alert('Error generating PV PDF');
     }
   };
 
-  // Handle successful update
+  // Handle update success
   const handleUpdateSuccess = () => {
+    closeEditModal();
     if (onDataRefresh) {
       onDataRefresh();
     }
@@ -243,7 +192,6 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
     t('actions')
   ];
   
-
   return (
     <>
       <div className={styles.tableWrapper}>
@@ -336,9 +284,11 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
         isOpen={isSendFormPopupOpen}
         onClose={() => {
           setSendFormPopupOpen(false);
-          setSelectedRowDataForSend(null);
+          setSelectedPlanningIdForSend(null);
+          setSelectedRowDataForSend(null); // Keep this for cleanup
         }}
-        rowData={selectedRowDataForSend}
+        planningId={selectedPlanningIdForSend || undefined}  // Pass planning ID directly
+        rowData={selectedRowDataForSend}  // Keep this for backward compatibility
         onSuccess={() => {
           // Show success modal after email is sent
           openSuccessModal();

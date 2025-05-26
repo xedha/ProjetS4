@@ -227,20 +227,37 @@ const SendFormPopup: React.FC<SendFormPopupProps> = ({
     return selectedTeacher.est_charge_cours === 1 ? 'Responsable Principal' : 'Surveillant';
   };
 
-  // Get all surveillants for PV - Format properly for the PV document
+  // Get all surveillants for PV - Format as HTML table rows
   const getAllSurveillantsForPV = (): string => {
-    const result = surveillants
-      .map(s => {
-        if (!s.enseignant) return null;
-        const role = s.est_charge_cours === 1 ? 'Responsable Principal' : 'Surveillant';
-        // Format: "NOM Prénom (Role)"
-        return `${s.enseignant.nom} ${s.enseignant.prenom} (${role})`;
-      })
-      .filter(Boolean)
-      .join('\n');
+    let html = '';
     
-    console.log('[SendFormPopup] getAllSurveillantsForPV:', result);
-    return result;
+    // Add rows for each surveillant
+    surveillants.forEach(s => {
+      if (!s.enseignant) return;
+      const role = s.est_charge_cours === 1 ? ' (Responsable)' : '';
+      const name = `${s.enseignant.prenom} ${s.enseignant.nom}${role}`;
+      
+      html += `
+      <tr>
+        <td style="text-align: left; padding-left: 10px;">${name}</td>
+        <td style="border: 1px solid #000;">&nbsp;</td>
+        <td style="border: 1px solid #000;">&nbsp;</td>
+      </tr>`;
+    });
+    
+    // Add empty rows to reach minimum 15 rows total
+    const remainingRows = Math.max(0, 15 - surveillants.length);
+    for (let i = 0; i < remainingRows; i++) {
+      html += `
+      <tr>
+        <td style="text-align: left; padding-left: 10px;">&nbsp;</td>
+        <td style="border: 1px solid #000;">&nbsp;</td>
+        <td style="border: 1px solid #000;">&nbsp;</td>
+      </tr>`;
+    }
+    
+    console.log('[SendFormPopup] getAllSurveillantsForPV - HTML rows generated');
+    return html;
   };
 
   const validateForm = (): string | null => {
@@ -549,7 +566,7 @@ const SendFormPopup: React.FC<SendFormPopupProps> = ({
                 }}>
                   {surveillants.map(s => {
                     if (!s.enseignant) return null;
-                    const role = s.est_charge_cours === 1 ? 'Responsable Principal' : 'Surveillant';
+                    const role = s.est_charge_cours === 1 ? 'Responsable' : 'Surveillant';
                     const isCurrent = selectedTeacher && s.code_enseignant === selectedTeacher.code_enseignant;
                     return (
                       <div key={s.code_enseignant} style={{ 
@@ -557,7 +574,7 @@ const SendFormPopup: React.FC<SendFormPopupProps> = ({
                         fontWeight: isCurrent ? 'bold' : 'normal',
                         color: isCurrent ? '#2563eb' : 'inherit'
                       }}>
-                        • {s.enseignant.nom} {s.enseignant.prenom} ({role})
+                        • {s.enseignant.prenom} {s.enseignant.nom} ({role})
                         {isCurrent && ' ← Destinataire'}
                       </div>
                     );

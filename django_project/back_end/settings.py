@@ -11,9 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-import environ
-env = environ.Env()
-environ.Env.read_env()
+from datetime import timedelta
+import os
+import ssl
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,47 +32,6 @@ ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
 
 
 # Application definition
-from datetime import timedelta
-import os
-CORS_ALLOW_ALL_ORIGINS = True 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
-}
-CORS_ALLOW_CREDENTIALS = True
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': False,
-
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-    'JWK_URL': None,
-    'LEEWAY': 0,
-
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
-
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
-
-    'JTI_CLAIM': 'jti'
-}
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -97,14 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    ]
-
-# CORS settings
-CORS_ALLOW_ALL_ORIGINS = [
-'http://localhost:5173',
-    'http://127.0.0.1:5173',
- ]
-CORS_ALLOW_CREDENTIALS = True
+]
 
 ROOT_URLCONF = 'back_end.urls'
 
@@ -130,22 +82,19 @@ WSGI_APPLICATION = 'back_end.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',  # Specifies the MySQL backend.
-        'NAME': env('NAME').strip(),           # Name of your MySQL database.
-        'USER': env('USER').strip(),                # Your MySQL username.
-        'PASSWORD': env('PASSWORD').strip(),            # Your MySQL password.
-        'HOST': env('HOST').strip(),                    # Usually 'localhost' or the server address.
-        'PORT': env('PORT').strip(),                         # The port where MySQL is running.
-        # Optionally add other settings such as:
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'railway',
+        'USER': 'root',
+        'PASSWORD': 'fLHozVhgEctZgmMhyylvQmXqncMRVyfZ',
+        'HOST': 'metro.proxy.rlwy.net',  # Change if needed
+        'PORT': '43395',
         'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+            'autocommit': True,
+        }
     }
 }
-
 
 
 # Password validation
@@ -177,13 +126,80 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+
+# REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+# Simple JWT Configuration
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': False,
+
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'JWK_URL': None,
+    'LEEWAY': 0,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
+
+    'JTI_CLAIM': 'jti'
+}
+
+# CORS settings - Fixed configuration
+CORS_ALLOW_ALL_ORIGINS = True  # This should be a boolean, not a list
+CORS_ALLOW_CREDENTIALS = True
+
+# If you want to restrict to specific origins, use this instead:
+# CORS_ALLOW_ALL_ORIGINS = False
+# CORS_ALLOWED_ORIGINS = [
+#     'http://localhost:5173',
+#     'http://127.0.0.1:5173',
+#     'http://localhost:3000',
+#     'http://127.0.0.1:3000',
+# ]
+
+# Email configuration with SSL fix
+# Use custom email backend that handles SSL issues
+EMAIL_BACKEND = 'link_db.custom_email_backend.UnverifiedSSLEmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-
-EMAIL_HOST_USER = 'pardefault4@gmail.com'          # <- your Gmail address
+EMAIL_USE_SSL = False  # Important: Don't use SSL when using TLS
+EMAIL_HOST_USER = 'pardefault4@gmail.com'
 EMAIL_HOST_PASSWORD = 'siqg mqkb vlwx tcso'
+DEFAULT_FROM_EMAIL = 'pardefault4@gmail.com'  # Add default from email
+EMAIL_TIMEOUT = 30  # Increase timeout for slow connections
+
+# Alternative: If you still want to use the default backend, uncomment these lines:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# # Fix SSL certificate verification issue for development
+# # This bypasses SSL certificate verification - use only in development!
+# if DEBUG:
+#     import ssl
+#     ssl._create_default_https_context = ssl._create_unverified_context
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/

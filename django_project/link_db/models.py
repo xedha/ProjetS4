@@ -164,7 +164,7 @@ class Enseignants(models.Model):
     genre = models.CharField(db_column='Genre', max_length=10, blank=True, null=True)  # Field name made lowercase.
     etat = models.CharField(db_column='Etat', max_length=30, blank=True, null=True)  # Field name made lowercase.
     faculté = models.CharField(db_column='Faculté', max_length=255, blank=True, null=True)  # Field name made lowercase.
-    departement = models.CharField(db_column='Département', max_length=255, blank=True, null=True)  # Field name made lowercase.
+    département = models.CharField(db_column='Département', max_length=255, blank=True, null=True)  # Field name made lowercase.
     grade = models.CharField(db_column='GRADE', max_length=20, blank=True, null=True)  # Field name made lowercase.
     diplôme = models.CharField(db_column='Diplôme', max_length=255, blank=True, null=True)  # Field name made lowercase.
     type = models.CharField(db_column='Type', max_length=100, blank=True, null=True)  # Field name made lowercase.

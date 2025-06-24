@@ -2,8 +2,16 @@ from django.urls import path
 from .views import register, login, logout
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
-from .views.Xcel_Api import UploadExcel_creneau, ChargesEnseignement_xlsx, UploadEnseignants_xlsx, UploadFormations_xlsx
-from .views.send_email_view import send_bulk_pv, send_bulk_convocations,send_convo, send_pv
+# Fixed imports - make sure these are importing the class-based views correctly
+from .views.Xcel_Api import (
+    UploadExcel_creneau, 
+    ChargesEnseignement_xlsx, 
+    UploadEnseignants_xlsx, 
+    UploadFormations_xlsx,
+    # Add debug views
+    AuthDebugView,
+)
+from .views.send_email_view import send_bulk_pv, send_bulk_convocations, send_convo, send_pv
 
 urlpatterns = [
     path('register/', register, name='register'),
@@ -24,11 +32,14 @@ urlpatterns = [
     path('get_monitoring_planning/', views.get_monitoring_planning),
     path('search_model/', views.search_model, name='search_model'),
     
-    # Excel upload endpoints
+    # Excel upload endpoints - using .as_view() for class-based views
     path('upload_creneau_xlsx/', UploadExcel_creneau.as_view(), name='upload_creneau_xlsx'),
     path('upload_charges_xlsx/', ChargesEnseignement_xlsx.as_view(), name='upload_charges_xlsx'),
     path('upload_enseignants_xlsx/', UploadEnseignants_xlsx.as_view(), name='upload_enseignants_xlsx'),
     path('upload_formations_xlsx/', UploadFormations_xlsx.as_view(), name='upload_formations_xlsx'),
+    
+    # Debug endpoints
+    path('auth/debug/', AuthDebugView.as_view(), name='auth_debug'),
     
     # Email endpoints
     path('send_bulk_pv/', send_bulk_pv, name='send_bulk_pv'),

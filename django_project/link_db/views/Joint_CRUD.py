@@ -80,29 +80,19 @@ def delete_planning_only(request):
 @csrf_exempt
 def create_planning_with_surveillants(request):
     """
-    POST /api/planning-surveillants/create/
+    POST /api/create_planning_with_surveillants/
     Crée un Planning et plusieurs Surveillants liés.
-
-    Corps JSON attendu :
-    {
-        "formation_id": <int>,
-        "section": <str>,
-        "nombre_surveillant": <int>,
-        "session": <str>,               # optionnel
-        "id_creneau": <int>,
-        "surveillants": [
-            {"code_enseignant": <str>, "est_charge_cours": <0|1>},  # au moins un avec 1
-            {"code_enseignant": <str>},                              # défaut est_charge_cours=0
-            ...
-        ]
-    }
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'Only POST allowed'}, status=405)
 
     try:
         data = json.loads(request.body)
-        required = ('formation_id','section','nombre_surveillant','id_creneau','surveillants')
+        
+        # Log received data
+        print(f"Create Planning - Received data: {json.dumps(data, indent=2)}")
+        
+        required = ('formation_id', 'section', 'nombre_surveillant', 'id_creneau', 'surveillants')
         for f in required:
             if f not in data:
                 return JsonResponse({'error': f'Field "{f}" is required'}, status=400)
@@ -111,38 +101,57 @@ def create_planning_with_surveillants(request):
         if not isinstance(surveillants, list) or not surveillants:
             return JsonResponse({'error': '"surveillants" must be a non-empty list'}, status=400)
 
-        # Vérifie et normalize le flag est_charge_cours
+        # Verify and normalize est_charge_cours flag
         pcs = [s for s in surveillants if s.get('est_charge_cours') == 1]
         if len(pcs) > 1:
             return JsonResponse({'error': 'Only one surveillant can have est_charge_cours=1'}, status=400)
         if len(pcs) == 0:
-            # aucun principal déclaré → on en fait le premier
             surveillants[0]['est_charge_cours'] = 1
 
+        # Verify all entities exist before creating
+        try:
+            formation = Formations.objects.get(pk=data['formation_id'])
+        except Formations.DoesNotExist:
+            return JsonResponse({'error': f'Formation with id {data["formation_id"]} not found'}, status=404)
+
+        try:
+            creneau = Creneau.objects.get(pk=data['id_creneau'])
+        except Creneau.DoesNotExist:
+            return JsonResponse({'error': f'Creneau with id {data["id_creneau"]} not found'}, status=404)
+
+        # Verify all enseignants exist
+        for s in surveillants:
+            code = s.get('code_enseignant')
+            if not code:
+                return JsonResponse({'error': 'Each surveillant needs "code_enseignant"'}, status=400)
+            if not Enseignants.objects.filter(Code_Enseignant=code).exists():
+                return JsonResponse({'error': f'Enseignant with code {code} not found'}, status=404)
+
         with transaction.atomic():
-            # Création du planning
+            # Create planning
             planning = Planning.objects.create(
-                formation_id = data['formation_id'],
-                section      = data['section'],
-                nombre_surveillant = data['nombre_surveillant'],
-                session      = data.get('session',''),
-                id_creneau_id= data['id_creneau']
+                formation=formation,
+                section=data['section'],
+                nombre_surveillant=data['nombre_surveillant'],
+                session=data.get('session', ''),
+                id_creneau=creneau
             )
 
             created = []
             for s in surveillants:
-                # chaque dict doit avoir code_enseignant
                 code = s.get('code_enseignant')
-                if not code:
-                    transaction.set_rollback(True)
-                    return JsonResponse({'error': 'Each surveillant needs "code_enseignant"'}, status=400)
-
+                enseignant = Enseignants.objects.get(Code_Enseignant=code)
+                
                 srv = Surveillant.objects.create(
-                    id_planning       = planning,
-                    code_enseignant_id= code,
-                    est_charge_cours  = s.get('est_charge_cours', 0)
+                    id_planning=planning,
+                    code_enseignant=enseignant,
+                    est_charge_cours=s.get('est_charge_cours', 0)
                 )
-                created.append(srv.id_surveillance)
+                created.append({
+                    'id_surveillance': srv.id_surveillance,
+                    'code_enseignant': code,
+                    'est_charge_cours': srv.est_charge_cours
+                })
 
         return JsonResponse({
             'message': 'Planning et surveillants créés avec succès',
@@ -150,41 +159,30 @@ def create_planning_with_surveillants(request):
             'surveillants': created
         }, status=201)
 
-    except Formations.DoesNotExist:
-        return JsonResponse({'error': 'Formation not found'}, status=404)
-    except Creneau.DoesNotExist:
-        return JsonResponse({'error': 'Creneau not found'}, status=404)
-    except Enseignants.DoesNotExist:
-        return JsonResponse({'error': 'Enseignant not found'}, status=404)
+    except json.JSONDecodeError as e:
+        return JsonResponse({'error': f'Invalid JSON: {str(e)}'}, status=400)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        import traceback
+        print(f"Error in create_planning_with_surveillants: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({'error': f'Internal server error: {str(e)}'}, status=500)
+
 
 @csrf_exempt   
 def update_planning_with_surveillants(request):
     """
-    PUT /api/planning-surveillants/update/
+    PUT /api/update_planning_with_surveillants/
     Met à jour un Planning et son ensemble de Surveillants associés.
-    Corps JSON attendu :
-    {
-        "id_planning": <int>,
-        # champs Planning optionnels :
-        "formation_id": <int>,
-        "section": <str>,
-        "nombre_surveillant": <int>,
-        "session": <str>,
-        "id_creneau": <int>,
-        # liste entière des surveillants à conserver/créer :
-        "surveillants": [
-            {"code_enseignant": <str>, "est_charge_cours": <0|1>},
-            ...
-        ]
-    }
     """
     if request.method != 'PUT':
         return JsonResponse({'error': 'Only PUT allowed'}, status=405)
 
     try:
         data = json.loads(request.body)
+        
+        # Log received data
+        print(f"Update Planning - Received data: {json.dumps(data, indent=2)}")
+        
         planning_id = data.get('id_planning')
         surveillants = data.get('surveillants')
 
@@ -201,36 +199,42 @@ def update_planning_with_surveillants(request):
             surveillants[0]['est_charge_cours'] = 1
 
         with transaction.atomic():
-            # Verify if planning exists
-            if not Planning.objects.filter(id_planning=planning_id).exists():
+            # Get the existing planning
+            try:
+                planning = Planning.objects.get(id_planning=planning_id)
+            except Planning.DoesNotExist:
                 return JsonResponse({'error': f'Planning with id {planning_id} not found'}, status=404)
+
+            # Update planning fields if provided
+            if 'formation_id' in data:
+                try:
+                    formation = Formations.objects.get(pk=data['formation_id'])
+                    planning.formation = formation
+                except Formations.DoesNotExist:
+                    return JsonResponse({'error': f'Formation with id {data["formation_id"]} not found'}, status=404)
+
+            if 'section' in data:
+                planning.section = data['section']
             
-            # Verify if formation exists if formation_id is provided
-            if 'formation_id' in data and not Formations.objects.filter(pk=data['formation_id']).exists():
-                return JsonResponse({'error': f'Formation with id {data["formation_id"]} not found'}, status=404)
+            if 'nombre_surveillant' in data:
+                planning.nombre_surveillant = data['nombre_surveillant']
             
-            # Verify if creneau exists if id_creneau is provided
-            if 'id_creneau' in data and not Creneau.objects.filter(pk=data['id_creneau']).exists():
-                return JsonResponse({'error': f'Creneau with id {data["id_creneau"]} not found'}, status=404)
+            if 'session' in data:
+                planning.session = data['session']
             
-            # Delete and recreate approach - delete the planning first
-            old_planning = Planning.objects.get(id_planning=planning_id)
-            planning_data = {
-                'id_planning': planning_id,  # Keep the same ID
-                'formation_id': data.get('formation_id', old_planning.formation_id),  # This is correct for Django ORM
-                'section': data.get('section', old_planning.section),
-                'nombre_surveillant': data.get('nombre_surveillant', old_planning.nombre_surveillant),
-                'session': data.get('session', old_planning.session),
-                'id_creneau_id': data.get('id_creneau', old_planning.id_creneau_id)
-            }
-            
-            # Delete old planning (cascades to delete related surveillants)
-            old_planning.delete()
-            
-            # Create new planning with same ID and updated data
-            planning = Planning.objects.create(**planning_data)
-            
-            # Create new surveillants
+            if 'id_creneau' in data:
+                try:
+                    creneau = Creneau.objects.get(pk=data['id_creneau'])
+                    planning.id_creneau = creneau
+                except Creneau.DoesNotExist:
+                    return JsonResponse({'error': f'Creneau with id {data["id_creneau"]} not found'}, status=404)
+
+            # Save the updated planning
+            planning.save()
+
+            # Delete existing surveillants and create new ones
+            Surveillant.objects.filter(id_planning=planning).delete()
+
             created = []
             for s in surveillants:
                 code = s.get('code_enseignant')
@@ -239,13 +243,15 @@ def update_planning_with_surveillants(request):
                     return JsonResponse({'error': 'Each surveillant needs "code_enseignant"'}, status=400)
                 
                 # Verify if enseignant exists
-                if not Enseignants.objects.filter(Code_Enseignant=code).exists():
+                try:
+                    enseignant = Enseignants.objects.get(Code_Enseignant=code)
+                except Enseignants.DoesNotExist:
                     transaction.set_rollback(True)
                     return JsonResponse({'error': f'Enseignant with code {code} not found'}, status=404)
 
                 srv = Surveillant.objects.create(
                     id_planning=planning,
-                    code_enseignant_id=code,
+                    code_enseignant=enseignant,
                     est_charge_cours=s.get('est_charge_cours', 0)
                 )
                 created.append({
@@ -254,22 +260,28 @@ def update_planning_with_surveillants(request):
                     'est_charge_cours': srv.est_charge_cours
                 })
 
-        # Return the updated planning data
+        # Return the updated planning data with IDs (not objects)
         return JsonResponse({
             'message': 'Planning et surveillants mis à jour avec succès',
             'planning': {
                 'id_planning': planning.id_planning,
-                'formation_id': planning.formation_id,
+                'formation_id': planning.formation.pk if planning.formation else None,
                 'section': planning.section,
                 'nombre_surveillant': planning.nombre_surveillant,
                 'session': planning.session,
-                'id_creneau': planning.id_creneau_id
+                'id_creneau': planning.id_creneau.pk if planning.id_creneau else None
             },
             'surveillants': created
         }, status=200)
 
+    except json.JSONDecodeError as e:
+        return JsonResponse({'error': f'Invalid JSON: {str(e)}'}, status=400)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        import traceback
+        print(f"Error in update_planning_with_surveillants: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({'error': f'Internal server error: {str(e)}'}, status=500)
+    
 
 @csrf_exempt
 def get_surveillants_by_planning(request):

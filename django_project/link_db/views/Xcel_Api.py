@@ -9,8 +9,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from link_db.models import Creneau, ChargesEnseignement, Enseignants, Formations
 from zipfile import BadZipFile
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator  
+from django.utils.decorators import method_decorator
+import logging
 
+logger = logging.getLogger(__name__)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class UploadExcel_creneau(APIView):
@@ -19,15 +21,20 @@ class UploadExcel_creneau(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        # Add debug logging
+        logger.info(f"Upload creneau request from user: {request.user}")
+        logger.info(f"Request headers: {dict(request.headers)}")
+        
         excel_file = request.FILES.get('excel_file')
 
         if not excel_file:
+            logger.error("No file uploaded in request")
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Log file details for debugging
-        print(f"Received file: {excel_file.name}")
-        print(f"File size: {excel_file.size} bytes")
-        print(f"Content type: {excel_file.content_type}")
+        logger.info(f"Received file: {excel_file.name}")
+        logger.info(f"File size: {excel_file.size} bytes")
+        logger.info(f"Content type: {excel_file.content_type}")
 
         try:
             # Check file extension
@@ -242,6 +249,7 @@ class UploadExcel_creneau(APIView):
                     'note': 'First row should be headers, data starts from row 2'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            logger.info(f"Upload successful: {len(inserted)} inserted, {len(skipped)} skipped")
             return Response({
                 'message': f'{len(inserted)} new time slots inserted, {len(skipped)} skipped.',
                 'inserted': inserted,
@@ -254,18 +262,21 @@ class UploadExcel_creneau(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except BadZipFile:
+            logger.error("Invalid Excel file uploaded")
             return Response({
                 'error': 'Invalid Excel file. The file appears to be corrupted or is not a valid Excel file.',
                 'hint': 'Please ensure you are uploading a valid .xlsx or .csv file.'
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             import traceback
-            traceback.print_exc()
+            logger.error(f"Upload error: {str(e)}")
+            logger.error(traceback.format_exc())
             return Response({
                 'error': f'Error processing file: {str(e)}',
                 'type': type(e).__name__,
                 'hint': 'Please ensure your file has the correct format and column structure'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ChargesEnseignement_xlsx(APIView):
@@ -274,6 +285,8 @@ class ChargesEnseignement_xlsx(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        logger.info(f"Upload charges request from user: {request.user}")
+        
         excel_file = request.FILES.get('excel_file')
         if not excel_file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
@@ -313,7 +326,7 @@ class ChargesEnseignement_xlsx(APIView):
 
                 # Validation: Required field
                 if not annee_universitaire:
-                    skipped.append({'row': row, 'reason': 'Missing annee_universitaire'})
+                    skipped.append({'row': f'Row {row_num}', 'reason': 'Missing annee_universitaire'})
                     continue
 
                 # Attempt to get Enseignant instance or None
@@ -322,7 +335,7 @@ class ChargesEnseignement_xlsx(APIView):
                     try:
                         enseignant = Enseignants.objects.get(Code_Enseignant=code_enseignant_val)
                     except ObjectDoesNotExist:
-                        skipped.append({'row': row, 'reason': f'Enseignant with code {code_enseignant_val} not found'})
+                        skipped.append({'row': f'Row {row_num}', 'reason': f'Enseignant with code {code_enseignant_val} not found'})
                         continue
 
                 # Attempt to get Formation instance or None
@@ -331,7 +344,7 @@ class ChargesEnseignement_xlsx(APIView):
                     try:
                         formation = Formations.objects.get(pk=formation_val)
                     except ObjectDoesNotExist:
-                        skipped.append({'row': row, 'reason': f'Formation with id {formation_val} not found'})
+                        skipped.append({'row': f'Row {row_num}', 'reason': f'Formation with id {formation_val} not found'})
                         continue
 
                 # Prevent duplicates: check if this charge exists by unique fields
@@ -350,7 +363,7 @@ class ChargesEnseignement_xlsx(APIView):
                 ).exists()
 
                 if exists:
-                    skipped.append({'row': row, 'reason': 'Duplicate entry'})
+                    skipped.append({'row': f'Row {row_num}', 'reason': 'Duplicate entry'})
                     continue
 
                 try:
@@ -388,6 +401,7 @@ class ChargesEnseignement_xlsx(APIView):
                         'reason': f'Database error: {str(e)}'
                     })
 
+            logger.info(f"Charges upload successful: {len(inserted)} inserted, {len(skipped)} skipped")
             return Response({
                 'message': f'{len(inserted)} rows inserted, {len(skipped)} rows skipped.',
                 'inserted': inserted,
@@ -395,6 +409,7 @@ class ChargesEnseignement_xlsx(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
+            logger.error(f"Charges upload error: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -405,14 +420,19 @@ class UploadEnseignants_xlsx(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        logger.info(f"Upload enseignants request from user: {request.user}")
+        logger.info(f"User authenticated: {request.user.is_authenticated}")
+        logger.info(f"Request headers: {dict(request.headers)}")
+        
         excel_file = request.FILES.get('excel_file')
         if not excel_file:
+            logger.error("No file uploaded")
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Log file details for debugging
-        print(f"Received file: {excel_file.name}")
-        print(f"File size: {excel_file.size} bytes")
-        print(f"Content type: {excel_file.content_type}")
+        logger.info(f"Received file: {excel_file.name}")
+        logger.info(f"File size: {excel_file.size} bytes")
+        logger.info(f"Content type: {excel_file.content_type}")
 
         try:
             # Check file extension
@@ -711,6 +731,7 @@ class UploadEnseignants_xlsx(APIView):
                     'note': 'First row should be headers, data starts from row 2. Supported formats: .xlsx, .xls, .csv'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            logger.info(f"Enseignants upload successful: {len(inserted)} inserted, {len(skipped)} skipped")
             return Response({
                 'message': f'Successfully processed file',
                 'inserted': inserted,
@@ -723,21 +744,21 @@ class UploadEnseignants_xlsx(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except BadZipFile:
+            logger.error("Invalid Excel file uploaded")
             return Response({
                 'error': 'Invalid Excel file. The file appears to be corrupted or is not a valid Excel file.',
                 'hint': 'Please ensure you are uploading a valid .xlsx, .xls, or .csv file. If you saved a CSV as .xlsx, please upload it as .csv instead.'
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             import traceback
-            traceback.print_exc()
+            logger.error(f"Enseignants upload error: {str(e)}")
+            logger.error(traceback.format_exc())
             return Response({
                 'error': f'Error processing file: {str(e)}',
                 'type': type(e).__name__,
                 'hint': 'Please ensure your file has the correct format and column structure'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class UploadFormations_xlsx(APIView):
@@ -746,14 +767,16 @@ class UploadFormations_xlsx(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        logger.info(f"Upload formations request from user: {request.user}")
+        
         excel_file = request.FILES.get('excel_file')
         if not excel_file:
             return Response({'error': 'No file uploaded'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Log file details for debugging
-        print(f"Received file: {excel_file.name}")
-        print(f"File size: {excel_file.size} bytes")
-        print(f"Content type: {excel_file.content_type}")
+        logger.info(f"Received file: {excel_file.name}")
+        logger.info(f"File size: {excel_file.size} bytes")
+        logger.info(f"Content type: {excel_file.content_type}")
 
         try:
             # Check file extension
@@ -811,13 +834,13 @@ class UploadFormations_xlsx(APIView):
                     # Check for duplicates
                     exists = Formations.objects.filter(
                         domaine=domaine,
-                            filière=filiere,
-                            niveau_cycle=niveau_cycle,
-                            specialités=specialites,
-                            nbr_sections=nbr_sections_int,
-                            nbr_groupes=nbr_groupes_int,
-                            semestre=semestre,
-                            modules=modules
+                        filière=filiere,
+                        niveau_cycle=niveau_cycle,
+                        specialités=specialites,
+                        nbr_sections=nbr_sections_int,
+                        nbr_groupes=nbr_groupes_int,
+                        semestre=semestre,
+                        modules=modules
                     ).exists()
                     
                     if exists:
@@ -960,6 +983,7 @@ class UploadFormations_xlsx(APIView):
                     'note': 'First row should be headers, data starts from row 2. Supported formats: .xlsx, .csv'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            logger.info(f"Formations upload successful: {len(inserted)} inserted, {len(skipped)} skipped")
             return Response({
                 'message': f'Successfully processed file',
                 'inserted': inserted,
@@ -972,15 +996,104 @@ class UploadFormations_xlsx(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except BadZipFile:
+            logger.error("Invalid Excel file uploaded")
             return Response({
                 'error': 'Invalid Excel file. The file appears to be corrupted or is not a valid Excel file.',
                 'hint': 'Please ensure you are uploading a valid .xlsx or .csv file.'
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             import traceback
-            traceback.print_exc()
+            logger.error(f"Formations upload error: {str(e)}")
+            logger.error(traceback.format_exc())
             return Response({
                 'error': f'Error processing file: {str(e)}',
                 'type': type(e).__name__,
                 'hint': 'Please ensure your file has the correct format and column structure'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Debug views for troubleshooting authentication
+@method_decorator(csrf_exempt, name='dispatch')
+class AuthDebugView(APIView):
+    """
+    Debug view to test authentication and provide detailed feedback
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """
+        Simple GET endpoint to test authentication
+        """
+        try:
+            # Log request details
+            logger.info(f"Auth Debug - User: {request.user}")
+            logger.info(f"Auth Debug - User ID: {request.user.id if request.user.is_authenticated else 'Not authenticated'}")
+            logger.info(f"Auth Debug - Is Authenticated: {request.user.is_authenticated}")
+            
+            return Response({
+                'message': 'Authentication successful!',
+                'user': {
+                    'id': request.user.id,
+                    'username': request.user.username,
+                    'email': request.user.email,
+                    'is_authenticated': request.user.is_authenticated,
+                    'is_active': request.user.is_active,
+                },
+                'headers_received': dict(request.headers),
+                'auth_header': request.headers.get('Authorization', 'Not provided'),
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Auth Debug Error: {str(e)}")
+            return Response({
+                'error': f'Debug error: {str(e)}',
+                'message': 'Authentication debug failed'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request, *args, **kwargs):
+        """
+        POST endpoint to test file upload authentication without processing files
+        """
+        try:
+            # Log detailed request information
+            logger.info(f"POST Auth Debug - User: {request.user}")
+            logger.info(f"POST Auth Debug - Headers: {dict(request.headers)}")
+            logger.info(f"POST Auth Debug - Content Type: {request.content_type}")
+            logger.info(f"POST Auth Debug - Files: {list(request.FILES.keys())}")
+            
+            response_data = {
+                'message': 'POST Authentication successful!',
+                'user': {
+                    'id': request.user.id,
+                    'username': request.user.username,
+                    'is_authenticated': request.user.is_authenticated,
+                },
+                'request_info': {
+                    'method': request.method,
+                    'content_type': request.content_type,
+                    'auth_header': request.headers.get('Authorization', 'Not provided')[:50] + '...' if request.headers.get('Authorization') else 'Not provided',
+                    'files_received': list(request.FILES.keys()),
+                    'file_count': len(request.FILES),
+                }
+            }
+            
+            # If files were uploaded, provide file info
+            if request.FILES:
+                file_info = {}
+                for key, file in request.FILES.items():
+                    file_info[key] = {
+                        'name': file.name,
+                        'size': file.size,
+                        'content_type': file.content_type,
+                    }
+                response_data['files_info'] = file_info
+                
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"POST Auth Debug Error: {str(e)}")
+            return Response({
+                'error': f'POST Debug error: {str(e)}',
+                'message': 'POST Authentication debug failed'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

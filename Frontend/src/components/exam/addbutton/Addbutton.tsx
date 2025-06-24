@@ -2,7 +2,8 @@ import styles from './addbutton.module.css';
 import { useState, useRef } from 'react';
 import Form from './form';
 import Form2 from './Form2';
-import SendFormPopup from './SendformPopup'; // Changed from SendForm to SendFormPopup
+import SendFormPopup from './SendformPopup'; // Keep existing import
+import SendForm from './sendform'; // Add SendForm import
 import add from "/src/assets/add.svg";
 import { useTranslation } from 'react-i18next';
 import AddOptionsModal from './AddOptionsModal';
@@ -17,7 +18,8 @@ function AddButton({ onAddSuccess, onUploadSuccess }: AddButtonProps) {
   const { t } = useTranslation();
   const [showModuleForm, setShowModuleForm] = useState(false);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
-  const [showSendFormPopup, setShowSendFormPopup] = useState(false); // Changed from showSendForm
+  const [showSendFormPopup, setShowSendFormPopup] = useState(false); // Keep existing
+  const [showSendForm, setShowSendForm] = useState(false); // Add new state for SendForm
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -28,7 +30,8 @@ function AddButton({ onAddSuccess, onUploadSuccess }: AddButtonProps) {
     // Close forms and trigger refresh
     setShowModuleForm(false);
     setShowScheduleForm(false);
-    setShowSendFormPopup(false); // Updated
+    setShowSendFormPopup(false); // Keep existing
+    setShowSendForm(false); // Add new
     
     // Call the parent callback if provided
     if (onAddSuccess) {
@@ -153,8 +156,8 @@ function AddButton({ onAddSuccess, onUploadSuccess }: AddButtonProps) {
 
   return (
     <>
-      {/* Send Button */}
-      <button className={styles.send} onClick={() => setShowSendFormPopup(true)}>
+      {/* Send Button - Now opens SendForm instead of SendFormPopup */}
+      <button className={styles.send} onClick={() => setShowSendForm(true)}>
         <div className={styles.svgWrapper}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -231,7 +234,15 @@ function AddButton({ onAddSuccess, onUploadSuccess }: AddButtonProps) {
         />
       )}
 
-      {/* SendFormPopup - pass isGeneralSend=true when called from AddButton */}
+      {/* SendForm - The main send form that opens when red button is clicked */}
+      {showSendForm && (
+        <SendForm
+          setShowPopup={setShowSendForm}
+          // planningId is optional, you can pass it if needed
+        />
+      )}
+
+      {/* SendFormPopup - Keep this for backward compatibility if used elsewhere */}
       <SendFormPopup
         isOpen={showSendFormPopup}
         onClose={() => setShowSendFormPopup(false)}

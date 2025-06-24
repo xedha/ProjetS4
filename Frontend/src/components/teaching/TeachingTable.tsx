@@ -90,7 +90,7 @@ const TeachingTable: React.FC<TeachingTableProps> = ({
                   </td>
                   <td className={styles.tableCell}>{teaching.abv_module || '-'}</td>
                   <td className={styles.tableCell}>
-                    {teaching.Code_Enseignant_id || teaching.Code_Enseignant_id_id || '-'}
+                    {teaching.Code_Enseignant_id || teaching.Code_Enseignant_id || '-'}
                   </td>
                   <td className={styles.tableCell}>{teaching.annee_universitaire || '-'}</td>
                   <td className={styles.actionCell}>

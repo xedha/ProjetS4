@@ -94,8 +94,8 @@ const fetchForEmailOperations = async (url: string, options: RequestInit = {}) =
     throw error;
   }
 };
-// Fixed TypeScript interfaces to match the Django backend response
 
+// Fixed TypeScript interfaces to match the Django backend response
 export interface WorkloadTeacherInfo {
   code: string;
   name: string;
@@ -160,27 +160,6 @@ export interface Creneau {
   salle: string;
 }
 
-export interface WorkloadTeacherInfo {
-  code: string;
-  name: string;
-  email: string;
-  department: string;
-}
-
-export interface WorkloadStatistics {
-  surveillance_count: number;
-  courses_count: number;
-  average_surveillances: number;
-  deviation_percentage: number;
-  status: 'NO_SURVEILLANCE' | 'OVERLOADED' | 'UNDERUTILIZED' | 'NORMAL' | 'BELOW_TARGET' | 'ABOVE_TARGET' | 'ON_TARGET';
-  severity: 'high' | 'medium' | 'low' | 'none';
-}
-
-export interface WorkloadTeacherAnalysis {
-  teacher_info: WorkloadTeacherInfo;
-  statistics: WorkloadStatistics;
-  recommendation: string;
-}
 export interface PVData {
   email: string;
   teacher_name: string;
@@ -213,6 +192,7 @@ export interface ConvocationData {
   annee_universitaire?: string;
   examens: ConvocationExam[];
 }
+
 export interface MonitoringPlanningItem {
   teacher_name: string;
   teacher_code: string;
@@ -244,6 +224,7 @@ export interface PlanningWithDetails {
   nombre_surveillant: number;
   creneau: Creneau;
   formation: Formation;
+  surveillants?: any[]; // Optional array of surveillants
 }
 
 export interface Enseignant {
@@ -274,6 +255,7 @@ export interface SurveillantWithDetails {
   est_charge_cours: 0 | 1;
   code_enseignant: string;
   enseignant: Enseignant;
+  id_planning?: number;
 }
 
 export interface CreatePlanningRequest {
@@ -294,38 +276,6 @@ export interface UpdatePlanningRequest {
   id_creneau?: number;
   surveillants: Surveillant[];
 }
-export interface PVData {
-  email: string;
-  teacher_name: string;
-  date_document?: string;
-  semestre?: string;
-  session?: string;
-  annee_universitaire?: string;
-  module?: string;
-  module_nom?: string;
-  niveau?: string;
-  section?: string;
-  date_exam?: string;
-  locaux?: string;
-  surveillants_rows?: string;
-}
-
-export interface ConvocationExam {
-  date: string;
-  horaire: string;
-  module: string;
-  local: string;
-}
-
-export interface ConvocationData {
-  email: string;
-  teacher_name: string;
-  date_document?: string;
-  semestre?: string;
-  session?: string;
-  annee_universitaire?: string;
-  examens: ConvocationExam[];
-}
 
 // Add these response interfaces
 export interface SendPVResponse {
@@ -343,7 +293,7 @@ export const examApi = {
    * Get all plannings with their creneau and formation details
    * GET /api/get_planning_with_creneau_and_formation/
    */
-  async getPlanningsWithDetails() {
+  async getPlanningsWithDetails(): Promise<PlanningWithDetails[]> {
     try {
       const response = await fetchWithTimeout(`${BASE_URL}/api/get_planning_with_creneau_and_formation/`);
       await handleApiError(response);
@@ -354,67 +304,65 @@ export const examApi = {
     }
   },
   
+  /**
+   * Send a PV (Procès-verbal) email to a single recipient
+   * POST /api/send_pv/
+   */
+  async sendPV(pvData: PVData): Promise<SendPVResponse> {
+    try {
+      console.log("✉️ sendPV payload:", JSON.stringify(pvData, null, 2));
+      
+      // Validate required fields
+      if (!pvData.email || !pvData.teacher_name) {
+        throw new Error("Missing required fields: email and teacher_name are required");
+      }
 
-// Add these functions to the examApi object
-/**
- * Send a PV (Procès-verbal) email to a single recipient
- * POST /api/send_pv/
- */
-async sendPV(pvData: PVData): Promise<SendPVResponse> {
-  try {
-    console.log("✉️ sendPV payload:", JSON.stringify(pvData, null, 2));
-    
-    // Validate required fields
-    if (!pvData.email || !pvData.teacher_name) {
-      throw new Error("Missing required fields: email and teacher_name are required");
+      const response = await fetchWithTimeout(`${BASE_URL}/api/send_pv/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pvData),
+      });
+      
+      await handleApiError(response);
+      return await response.json();
+    } catch (error: any) {
+      console.error('Error sending PV email:', error);
+      throw error;
     }
+  },
 
-    const response = await fetchWithTimeout(`${BASE_URL}/api/send_pv/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pvData),
-    });
-    
-    await handleApiError(response);
-    return await response.json();
-  } catch (error: any) {
-    console.error('Error sending PV email:', error);
-    throw error;
-  }
-},
+  /**
+   * Send a convocation email to a single recipient
+   * POST /api/send_convo/
+   */
+  async sendConvocation(convocationData: ConvocationData): Promise<SendConvocationResponse> {
+    try {
+      console.log("✉️ sendConvocation payload:", JSON.stringify(convocationData, null, 2));
+      
+      // Validate required fields
+      if (!convocationData.email || !convocationData.teacher_name || !convocationData.examens?.length) {
+        throw new Error("Missing required fields: email, teacher_name, and at least one exam are required");
+      }
 
-/**
- * Send a convocation email to a single recipient
- * POST /api/send_convo/
- */
-async sendConvocation(convocationData: ConvocationData): Promise<SendConvocationResponse> {
-  try {
-    console.log("✉️ sendConvocation payload:", JSON.stringify(convocationData, null, 2));
-    
-    // Validate required fields
-    if (!convocationData.email || !convocationData.teacher_name || !convocationData.examens?.length) {
-      throw new Error("Missing required fields: email, teacher_name, and at least one exam are required");
+      const response = await fetchWithTimeout(`${BASE_URL}/api/send_convo/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(convocationData),
+      });
+      
+      await handleApiError(response);
+      return await response.json();
+    } catch (error: any) {
+      console.error('Error sending convocation email:', error);
+      throw error;
     }
-
-    const response = await fetchWithTimeout(`${BASE_URL}/api/send_convo/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(convocationData),
-    });
-    
-    await handleApiError(response);
-    return await response.json();
-  } catch (error: any) {
-    console.error('Error sending convocation email:', error);
-    throw error;
-  }
-},
+  },
 
   /**
    * Get all surveillants for a specific planning ID
-   * GET /api/surveillants/?id_planning={planningId}
+   * GET /api/get_surveillants_by_planning/?id_planning={planningId}
    */
-  async getSurveillantsByPlanning(planningId: number) {
+  async getSurveillantsByPlanning(planningId: number): Promise<SurveillantWithDetails[]> {
     try {
       if (!planningId) {
         throw new Error("Invalid planning ID provided");
@@ -422,7 +370,7 @@ async sendConvocation(convocationData: ConvocationData): Promise<SendConvocation
 
       const response = await fetchWithTimeout(`${BASE_URL}/api/get_surveillants_by_planning/?id_planning=${planningId}`);
       await handleApiError(response);
-      return await response.json() as SurveillantWithDetails[];
+      return await response.json();
     } catch (error: any) {
       console.error(`Failed to fetch surveillants for planning ${planningId}:`, error);
       throw error;
@@ -504,11 +452,16 @@ async sendConvocation(convocationData: ConvocationData): Promise<SendConvocation
       throw error;
     }
   },
-  async getMonitoringPlanning() {
+
+  /**
+   * Get monitoring planning data
+   * GET /api/get_monitoring_planning/
+   */
+  async getMonitoringPlanning(): Promise<MonitoringPlanningItem[]> {
     try {
-      const response = await fetchWithTimeout(`${BASE_URL}/api/get_monitoring_planning`);
+      const response = await fetchWithTimeout(`${BASE_URL}/api/get_monitoring_planning/`);
       await handleApiError(response);
-      return await response.json() as MonitoringPlanningItem[];
+      return await response.json();
     } catch (error: any) {
       console.error('Failed to fetch monitoring planning:', error);
       throw error;
@@ -545,7 +498,7 @@ async sendConvocation(convocationData: ConvocationData): Promise<SendConvocation
       console.log("Headers:", { "Content-Type": "application/json" });
       console.log("Body:", JSON.stringify(requestBody, null, 2));
 
-      const response = await fetchWithTimeout(`${BASE_URL}/api/create_planning_with_surveillants`, {
+      const response = await fetchWithTimeout(`${BASE_URL}/api/create_planning_with_surveillants/`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -573,54 +526,60 @@ async sendConvocation(convocationData: ConvocationData): Promise<SendConvocation
    * PUT /api/update_planning_with_surveillants/
    */
   async updatePlanningWithSurveillants(planningData: UpdatePlanningRequest) {
-  try {
-    if (!planningData.id_planning || !planningData.surveillants?.length) {
-      throw new Error("Missing required fields for updating planning");
+    try {
+      if (!planningData.id_planning || !planningData.surveillants?.length) {
+        throw new Error("Missing required fields for updating planning");
+      }
+
+      // Build the request body, only including fields that are provided
+      const requestBody: any = {
+        id_planning: planningData.id_planning,
+        surveillants: planningData.surveillants.map((s, index) => ({
+          code_enseignant: s.code_enseignant,
+          est_charge_cours: s.est_charge_cours !== undefined ? s.est_charge_cours : (index === 0 ? 1 : 0)
+        }))
+      };
+
+      // Only add optional fields if they are provided
+      if (planningData.formation_id !== undefined) {
+        requestBody.formation_id = planningData.formation_id;
+      }
+      
+      if (planningData.section !== undefined) {
+        requestBody.section = planningData.section;
+      }
+      
+      if (planningData.nombre_surveillant !== undefined) {
+        requestBody.nombre_surveillant = planningData.nombre_surveillant;
+      }
+      
+      if (planningData.session !== undefined) {
+        requestBody.session = planningData.session;
+      }
+      
+      if (planningData.id_creneau !== undefined) {
+        requestBody.id_creneau = planningData.id_creneau;
+      }
+
+      console.log("✉️ updatePlanningWithSurveillants - Request Details:");
+      console.log("URL:", `${BASE_URL}/api/update_planning_with_surveillants/`);
+      console.log("Method: PUT");
+      console.log("Headers:", { "Content-Type": "application/json" });
+      console.log("Body:", JSON.stringify(requestBody, null, 2));
+
+      const response = await fetchWithTimeout(`${BASE_URL}/api/update_planning_with_surveillants/`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+      
+      await handleApiError(response);
+      return await response.json();
+    } catch (error: any) {
+      console.error(`Error updating planning ${planningData.id_planning}:`, error);
+      throw error;
     }
-
-    // Build the request body, only including fields that are provided
-    const requestBody: any = {
-      id_planning: planningData.id_planning,
-      surveillants: planningData.surveillants.map((s, index) => ({
-        code_enseignant: s.code_enseignant,
-        est_charge_cours: s.est_charge_cours !== undefined ? s.est_charge_cours : (index === 0 ? 1 : 0)
-      }))
-    };
-
-    // Only add optional fields if they are provided
-    // Extract the formation_id correctly - if we receive an object with 'id', use that id
-    if (planningData.formation_id !== undefined) {
-      requestBody.formation_id = planningData.formation_id;
-    }
-    
-    if (planningData.section !== undefined) requestBody.section = planningData.section;
-    if (planningData.nombre_surveillant !== undefined) requestBody.nombre_surveillant = planningData.nombre_surveillant;
-    if (planningData.session !== undefined) requestBody.session = planningData.session;
-    
-    // Handle creneau_id extraction similar to formation_id
-    if (planningData.id_creneau !== undefined) {
-      requestBody.id_creneau = planningData.id_creneau;
-    }
-
-    console.log("✉️ updatePlanningWithSurveillants - Request Details:");
-    console.log("URL:", `${BASE_URL}/api/update_planning_with_surveillants`);
-    console.log("Method: PUT");
-    console.log("Headers:", { "Content-Type": "application/json" });
-    console.log("Body:", JSON.stringify(requestBody, null, 2));
-
-    const response = await fetchWithTimeout(`${BASE_URL}/api/update_planning_with_surveillants`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    });
-    
-    await handleApiError(response);
-    return await response.json();
-  } catch (error: any) {
-    console.error(`Error updating planning ${planningData.id_planning}:`, error);
-    throw error;
-  }
-},
+  },
 
   /**
    * Check exam date conflicts
@@ -699,148 +658,136 @@ async sendConvocation(convocationData: ConvocationData): Promise<SendConvocation
       throw error;
     }
   },
-  
 
-/**
- * Send a convocation email to a single recipient
- * POST /api/send_convo/
- */
-
-
-  /**
-   * Check surveillance workload balance
-   * POST /api/check_surveillance_workload/
-   */
   /**
    * Check surveillance workload balance
    * POST /api/check_surveillance_workload/
    * @param targetSurveillances Optional target number of surveillances per teacher
    */
- async checkSurveillanceWorkload(targetSurveillances?: number): Promise<WorkloadResponse> {
-  try {
-    console.log("🎯 checkSurveillanceWorkload - STARTING WORKLOAD ANALYSIS");
-    console.log("🌐 BASE_URL:", BASE_URL);
-    console.log("📊 Target surveillances:", targetSurveillances);
-    console.log("📊 Target type:", typeof targetSurveillances);
-
-    // Prepare headers
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-    };
-
-    // Add auth token if available
-    const authToken = getAuthToken();
-    if (authToken) {
-      headers["Authorization"] = `Bearer ${authToken}`;
-      console.log("🔐 Auth token added");
-    }
-
-    // Add CSRF token if available
-    const csrfToken = getCSRFToken();
-    if (csrfToken) {
-      headers["X-CSRFToken"] = csrfToken;
-      console.log("🛡️ CSRF token added");
-    }
-
-    // Prepare request body
-    const requestBody = targetSurveillances !== undefined 
-      ? { target_surveillances: targetSurveillances }
-      : {};
-
-    console.log("📤 Request details:");
-    console.log("  URL:", `${BASE_URL}/api/check_surveillance_workload/`);
-    console.log("  Method: POST");
-    console.log("  Headers:", headers);
-    console.log("  Body:", JSON.stringify(requestBody, null, 2));
-
-    // Make the API call with detailed logging
-    console.log("🚀 Making API call...");
-    
-    const response = await fetchWithTimeout(`${BASE_URL}/api/check_surveillance_workload/`, {
-      method: "POST",
-      headers,
-      credentials: 'include',
-      body: JSON.stringify(requestBody),
-    });
-    
-    console.log("📥 Response received:");
-    console.log("  Status:", response.status);
-    console.log("  Status Text:", response.statusText);
-    console.log("  OK:", response.ok);
-    console.log("  Headers:", Object.fromEntries(response.headers.entries()));
-
-    // Check if response is successful
-    if (!response.ok) {
-      console.error("❌ Response not OK, attempting to read error");
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      
-      try {
-        const errorText = await response.text();
-        console.error("❌ Error response body:", errorText);
-        
-        // Try to parse as JSON for more details
-        try {
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.error || errorJson.message || errorMessage;
-        } catch (e) {
-          errorMessage = errorText || errorMessage;
-        }
-      } catch (e) {
-        console.error("❌ Could not read error response body");
-      }
-      
-      throw new Error(errorMessage);
-    }
-
-    // Parse response
-    console.log("📊 Parsing response...");
-    const responseText = await response.text();
-    console.log("📄 Raw response body:", responseText);
-    
-    let result: WorkloadResponse;
+  async checkSurveillanceWorkload(targetSurveillances?: number): Promise<WorkloadResponse> {
     try {
-      result = JSON.parse(responseText);
-      console.log("✅ Parsed response successfully");
-    } catch (parseError) {
-      console.error("❌ Failed to parse JSON response:", parseError);
-      throw new Error(`Invalid JSON response: ${responseText.substring(0, 200)}...`);
-    }
+      console.log("🎯 checkSurveillanceWorkload - STARTING WORKLOAD ANALYSIS");
+      console.log("🌐 BASE_URL:", BASE_URL);
+      console.log("📊 Target surveillances:", targetSurveillances);
+      console.log("📊 Target type:", typeof targetSurveillances);
 
-    // Validate response structure
-    if (!result.global_metrics) {
-      console.warn("⚠️ Response missing global_metrics");
-      throw new Error("Invalid response format: missing global_metrics");
-    }
+      // Prepare headers
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
 
-    if (!result.teacher_distribution) {
-      console.warn("⚠️ Response missing teacher_distribution");
-      throw new Error("Invalid response format: missing teacher_distribution");
-    }
+      // Add auth token if available
+      const authToken = getAuthToken();
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+        console.log("🔐 Auth token added");
+      }
 
-    if (!Array.isArray(result.teacher_analysis)) {
-      console.warn("⚠️ Response missing or invalid teacher_analysis");
-      result.teacher_analysis = [];
-    }
+      // Add CSRF token if available
+      const csrfToken = getCSRFToken();
+      if (csrfToken) {
+        headers["X-CSRFToken"] = csrfToken;
+        console.log("🛡️ CSRF token added");
+      }
 
-    console.log("✅ WORKLOAD ANALYSIS COMPLETED SUCCESSFULLY");
-    console.log("📊 Summary:");
-    console.log("  Total teachers:", result.teacher_distribution.total_teachers);
-    console.log("  Total surveillances:", result.teacher_distribution.total_surveillances);
-    console.log("  Average per teacher:", result.teacher_distribution.average_per_teacher);
-    console.log("  Global status:", result.global_metrics.status);
-    console.log("  Teacher analyses:", result.teacher_analysis.length);
-    
-    return result;
-    
-  } catch (error: any) {
-    console.error('❌ checkSurveillanceWorkload FAILED:', error);
-    console.error('❌ Error name:', error.name);
-    console.error('❌ Error message:', error.message);
-    console.error('❌ Error stack:', error.stack);
-    throw error;
-  }
-},
- 
+      // Prepare request body
+      const requestBody = targetSurveillances !== undefined 
+        ? { target_surveillances: targetSurveillances }
+        : {};
+
+      console.log("📤 Request details:");
+      console.log("  URL:", `${BASE_URL}/api/check_surveillance_workload/`);
+      console.log("  Method: POST");
+      console.log("  Headers:", headers);
+      console.log("  Body:", JSON.stringify(requestBody, null, 2));
+
+      // Make the API call with detailed logging
+      console.log("🚀 Making API call...");
+      
+      const response = await fetchWithTimeout(`${BASE_URL}/api/check_surveillance_workload/`, {
+        method: "POST",
+        headers,
+        credentials: 'include',
+        body: JSON.stringify(requestBody),
+      });
+      
+      console.log("📥 Response received:");
+      console.log("  Status:", response.status);
+      console.log("  Status Text:", response.statusText);
+      console.log("  OK:", response.ok);
+      console.log("  Headers:", Object.fromEntries(response.headers.entries()));
+
+      // Check if response is successful
+      if (!response.ok) {
+        console.error("❌ Response not OK, attempting to read error");
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        
+        try {
+          const errorText = await response.text();
+          console.error("❌ Error response body:", errorText);
+          
+          // Try to parse as JSON for more details
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.error || errorJson.message || errorMessage;
+          } catch (e) {
+            errorMessage = errorText || errorMessage;
+          }
+        } catch (e) {
+          console.error("❌ Could not read error response body");
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Parse response
+      console.log("📊 Parsing response...");
+      const responseText = await response.text();
+      console.log("📄 Raw response body:", responseText);
+      
+      let result: WorkloadResponse;
+      try {
+        result = JSON.parse(responseText);
+        console.log("✅ Parsed response successfully");
+      } catch (parseError) {
+        console.error("❌ Failed to parse JSON response:", parseError);
+        throw new Error(`Invalid JSON response: ${responseText.substring(0, 200)}...`);
+      }
+
+      // Validate response structure
+      if (!result.global_metrics) {
+        console.warn("⚠️ Response missing global_metrics");
+        throw new Error("Invalid response format: missing global_metrics");
+      }
+
+      if (!result.teacher_distribution) {
+        console.warn("⚠️ Response missing teacher_distribution");
+        throw new Error("Invalid response format: missing teacher_distribution");
+      }
+
+      if (!Array.isArray(result.teacher_analysis)) {
+        console.warn("⚠️ Response missing or invalid teacher_analysis");
+        result.teacher_analysis = [];
+      }
+
+      console.log("✅ WORKLOAD ANALYSIS COMPLETED SUCCESSFULLY");
+      console.log("📊 Summary:");
+      console.log("  Total teachers:", result.teacher_distribution.total_teachers);
+      console.log("  Total surveillances:", result.teacher_distribution.total_surveillances);
+      console.log("  Average per teacher:", result.teacher_distribution.average_per_teacher);
+      console.log("  Global status:", result.global_metrics.status);
+      console.log("  Teacher analyses:", result.teacher_analysis.length);
+      
+      return result;
+      
+    } catch (error: any) {
+      console.error('❌ checkSurveillanceWorkload FAILED:', error);
+      console.error('❌ Error name:', error.name);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error stack:', error.stack);
+      throw error;
+    }
+  },
 };
 
 // Helper function from original api.ts
@@ -876,7 +823,7 @@ function getPrimaryKey(record: any): { field: string; value: any } {
   throw new Error("No valid primary key found in record");
 }
 
-// Export individual functions for convenience (similar to how api.ts could be used)
+// Export individual functions for convenience
 export const {
   getPlanningsWithDetails,
   getSurveillantsByPlanning,
@@ -891,7 +838,6 @@ export const {
   getMonitoringPlanning,
   sendPV,
   sendConvocation,
-  
 } = examApi;
 
 // Default export

@@ -10,7 +10,6 @@ export interface Teaching {
   'intitulé_module'?: string | null   // Intitulé MODULE field (exact Django field name with accent)
   abv_module?: string | null          // Abv MODULE field
   Code_Enseignant_id?: string | null  // Foreign key field (with capital C as in db_column)
-  Code_Enseignant_id_id?: string | null // Alternative field name that might be returned
   annee_universitaire: string         // Academic year (required)
   formation?: number | null           // Foreign key to Formations
 }

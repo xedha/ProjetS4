@@ -72,7 +72,25 @@ const TeachingTable: React.FC<TeachingTableProps> = ({
                 </td>
               </tr>
             ) : (
-              teachings.map((teaching) => (
+              teachings.map((teaching: any) => {
+                // Comprehensive debug logging
+                console.log('=== Teaching Debug ===');
+                console.log('Full teaching object:', JSON.stringify(teaching, null, 2));
+                console.log('All keys:', Object.keys(teaching));
+                
+                // Try all possible variations
+                const possibleKeys = Object.keys(teaching).filter(key => 
+                  key.toLowerCase().includes('enseignant') || 
+                  key.toLowerCase().includes('code')
+                );
+                console.log('Keys containing "enseignant" or "code":', possibleKeys);
+                
+                // Log each possible key and its value
+                possibleKeys.forEach(key => {
+                  console.log(`${key}:`, teaching[key]);
+                });
+                
+                return (
                 <tr key={teaching.id_charge} className={styles.tableRow}>
                   <td className={styles.tableCell}>{teaching.palier || '-'}</td>
                   <td className={styles.tableCell}>{teaching.specialite || '-'}</td>
@@ -90,7 +108,7 @@ const TeachingTable: React.FC<TeachingTableProps> = ({
                   </td>
                   <td className={styles.tableCell}>{teaching.abv_module || '-'}</td>
                   <td className={styles.tableCell}>
-                    {teaching.Code_Enseignant_id || teaching.Code_Enseignant_id || '-'}
+                    {teaching.Code_Enseignant_id_id || teaching.Code_Enseignant_id || teaching['Code_Enseignant_id_id'] || JSON.stringify(teaching).substring(0, 50) || '-'}
                   </td>
                   <td className={styles.tableCell}>{teaching.annee_universitaire || '-'}</td>
                   <td className={styles.actionCell}>
@@ -117,7 +135,8 @@ const TeachingTable: React.FC<TeachingTableProps> = ({
                     </button>
                   </td>
                 </tr>
-              ))
+                )
+              })
             )}
           </tbody>
         </table>

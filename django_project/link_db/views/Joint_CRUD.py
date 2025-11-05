@@ -56,6 +56,8 @@ def get_planning_with_creneau_and_formation(request):
 
 
 
+
+
 @csrf_exempt
 def delete_planning_only(request):
     if request.method != 'DELETE':
@@ -64,16 +66,32 @@ def delete_planning_only(request):
     try:
         payload = json.loads(request.body)
         planning_id = payload.get('id_planning')
+        
         if not planning_id:
             return JsonResponse({'error': 'Field "id_planning" is required'}, status=400)
 
+        # Check if planning exists
         planning = Planning.objects.get(id_planning=planning_id)
-        planning.delete()
-        return JsonResponse({'message': f'Planning {planning_id} deleted successfully'}, status=200)
+        
+        # Use transaction to ensure data consistency
+        with transaction.atomic():
+            # Delete all surveillant records that reference this planning
+            surveillant_count = Surveillant.objects.filter(id_planning=planning_id).delete()[0]
+            
+            # Then delete the planning record
+            planning.delete()
+            
+            return JsonResponse({
+                'message': f'Planning {planning_id} deleted successfully',
+                'surveillant_deleted': surveillant_count
+            }, status=200)
 
     except Planning.DoesNotExist:
         return JsonResponse({'error': f'No Planning found with id_planning = {planning_id}'}, status=404)
-
+    
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON in request body'}, status=400)
+    
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 

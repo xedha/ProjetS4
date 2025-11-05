@@ -1,32 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
-
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap");
 
 html {
   font-size: min(1vw, 1.8vh); /* Adapts to both width and height */
 }
-
-
 
 .tabel {
   position: absolute;
   top: 15.87rem;
   right: 0.44rem;
 
-
   table-layout: fixed;
   border-collapse: separate;
-  border-spacing: 0;           /* Remove inner spacing */
-  border: 1px solid #000;       /* Outer border */
-  border-radius: 0.75rem;    
- /* Outer border radius */
- margin-left: 23rem;
-
+  border-spacing: 0; /* Remove inner spacing */
+  border: 1px solid #000; /* Outer border */
+  border-radius: 0.75rem;
+  /* Outer border radius */
+  margin-left: 23rem;
 }
 
-
-
-
-thead, .mainraw {
+thead,
+.mainraw {
   border-radius: 0;
 }
 
@@ -50,24 +43,20 @@ thead, .mainraw {
   border: 1px solid #000;
 
   /* Use solid background */
-  background: var(--tabel, #EBEBEB); /* same color but 100% opacity */
+  background: var(--tabel, #ebebeb); /* same color but 100% opacity */
   backdrop-filter: none; /* just in case something else is blurring it */
 }
 
-
-
-
 .lines {
- height: 4.625rem;
+  height: 4.625rem;
   padding: 1rem;
   border: 1px solid #000;
-  background: var(--light-blue, #EAF2F9);
-  
+  background: var(--light-blue, #eaf2f9);
 }
 
 /* Alternate coloring using one class */
 .lines:nth-child(odd) {
-  background-color: var(--light-blue, #EAF2F9);
+  background-color: var(--light-blue, #eaf2f9);
 }
 
 .lines:nth-child(even) {
@@ -79,7 +68,7 @@ thead, .mainraw {
   position: relative;
   overflow: hidden;
   border: none; /* remove the border from the row */
-  background: #FFF;
+  background: #fff;
 }
 
 .textnormal {
@@ -90,7 +79,7 @@ thead, .mainraw {
   font-style: normal;
   font-weight: 500;
   line-height: normal;
-  word-wrap: break-word;  /* Allow text to wrap */
+  word-wrap: break-word; /* Allow text to wrap */
   overflow-wrap: break-word; /* Ensures text breaks if it overflows */
   white-space: normal; /* Ensure that the text can wrap onto the next line */
   padding: 0.5rem;
@@ -103,13 +92,11 @@ thead, .mainraw {
   font-size: 0.875rem;
   color: #050505;
   color: #000;
-font-family: Montserrat;
-font-size: 0.875rem;
-font-style: normal;
-font-weight: 500;
-line-height: normal
-
-  
+  font-family: Montserrat;
+  font-size: 0.875rem;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
 }
 
 .headtext {
@@ -123,60 +110,46 @@ line-height: normal
   font-weight: 700;
   font-size: 0.875rem;
   color: #050505;
-  
 }
 
-.buttonss{
+.buttonss {
   display: flex;
   align-items: center;
-  gap: 0.5rem; 
+  gap: 0.5rem;
 }
 
-.modifybutton{
-  
+.modifybutton {
   width: 2rem;
-  height: 2rem; 
- 
-    background-image: url('/src/components/exam/assets/edit.svg');
-    background-size: contain;
-    background-repeat: no-repeat;
-    border: none;
-    
-    margin-right: 0.3rem;
-    
- 
+  height: 2rem;
+
+  background-image: url("/src/components/exam/assets/edit.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  border: none;
+
+  margin-right: 0.3rem;
 }
-.trashbutton{
-
-
-
-  
+.trashbutton {
   width: 2rem;
-height: 2rem;
-background-image: url('/src/components/exam/assets/trash.svg');
-background-size: contain;
-background-repeat: no-repeat;
-border: none;
+  height: 2rem;
+  background-image: url("/src/components/exam/assets/trash.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  border: none;
 }
 
-
-
-/* From Uiverse.io by mrhyddenn */ 
+/* From Uiverse.io by mrhyddenn */
 .uiverse {
-
- 
   position: relative;
-  background-image: url('/src/components/exam/assets/trash.svg');
+  background-image: url("/src/components/exam/assets/trash.svg");
   background-size: contain;
   background-repeat: no-repeat;
   border: none;
   color: #000;
-  
-  
- 
+
   width: 2rem;
   height: 2rem;
-  
+
   font-size: 17px;
   display: flex;
   justify-content: center;
@@ -201,19 +174,17 @@ border: none;
   opacity: 0;
   pointer-events: none;
   transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  
-    width: 200px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  
-    font-size: clamp(10px, 5vw, 25px); /* Auto-scaling font */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  
-  
+
+  width: 200px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: clamp(10px, 5vw, 25px); /* Auto-scaling font */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Adjust the small triangle to the right side */
@@ -235,7 +206,6 @@ border: none;
   pointer-events: auto;
 }
 
-
 svg:hover span,
 svg:hover .tooltip {
   text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.1);
@@ -248,14 +218,9 @@ svg:hover .tooltip {
   color: #ffffff;
 }
 
-
-
-
 .modifybutton {
- 
   position: relative;
- 
-  
+
   outline: none;
   background-color: transparent;
   color: white;
@@ -273,10 +238,9 @@ svg:hover .tooltip {
   left: 3%;
   width: 95%;
   height: 40%;
-  
+
   transition: 0.5s;
   transform-origin: center;
-  
 }
 
 .modifybutton::before {
@@ -291,8 +255,9 @@ svg:hover .tooltip {
   transition: 0.5s;
 }
 
-.modifybutton:hover::before, button:hover::after {
-  transform: scale(0)
+.modifybutton:hover::before,
+button:hover::after {
+  transform: scale(0);
 }
 
 .modifybutton:hover {
@@ -457,7 +422,9 @@ svg:hover .tooltip {
   font-size: 0.875rem;
 }
 
-.editButton, .saveButton, .cancelButton {
+.editButton,
+.saveButton,
+.cancelButton {
   display: flex;
   width: 10.625rem;
   height: 2.9375rem;
@@ -476,17 +443,17 @@ svg:hover .tooltip {
   cursor: pointer;
 }
 
- .cancelButton {
-  background:linear-gradient(90deg, #F61D1D 0%, #4B2D2D 100%);
-  color: #FFF;
+.cancelButton {
+  background: linear-gradient(90deg, #f61d1d 0%, #4b2d2d 100%);
+  color: #fff;
 }
-.editButton{
-  background: linear-gradient(90deg, #0B8FAC 0%, #043A46 100%);
-  color: #FFF;
+.editButton {
+  background: linear-gradient(90deg, #0b8fac 0%, #043a46 100%);
+  color: #fff;
 }
 .saveButton {
-  background: linear-gradient(90deg, #45D699 0.03%, #08B2AC 99.95%);
-  color: #FFF;
+  background: linear-gradient(90deg, #45d699 0.03%, #08b2ac 99.95%);
+  color: #fff;
 }
 
 .teacherButton {
@@ -499,8 +466,8 @@ svg:hover .tooltip {
   gap: 0.5rem;
   flex-shrink: 0;
   border-radius: 0.5rem;
-  background: linear-gradient(90deg, #0B8FAC 0%, #043A46 100%);
-  color: #FFF;
+  background: linear-gradient(90deg, #0b8fac 0%, #043a46 100%);
+  color: #fff;
   font-family: Montserrat;
   font-size: 0.9375rem;
   font-style: normal;
@@ -559,8 +526,8 @@ svg:hover .tooltip {
   gap: 0.5rem;
   flex-shrink: 0;
   border-radius: 0.5rem;
-  background: linear-gradient(90deg, #0B8FAC 0%, #043A46 100%);
-  color: #FFF;
+  background: linear-gradient(90deg, #0b8fac 0%, #043a46 100%);
+  color: #fff;
   font-family: Montserrat;
   font-size: 0.9375rem;
   font-style: normal;
@@ -578,7 +545,8 @@ svg:hover .tooltip {
   align-items: center;
 }
 
-.cancelButton, .saveButton {
+.cancelButton,
+.saveButton {
   width: 7rem;
   height: 2.2rem;
   font-size: 0.8rem;
@@ -720,8 +688,8 @@ svg:hover .tooltip {
   align-items: center;
   gap: 0.5rem;
   border-radius: 0.5rem;
-  background: linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%);
-  color: #FFF;
+  background: linear-gradient(90deg, #ff6b6b 0%, #ff8e53 100%);
+  color: #fff;
   font-family: Montserrat;
   font-size: 0.875rem;
   font-weight: 600;
@@ -731,7 +699,7 @@ svg:hover .tooltip {
 }
 
 .notifyButton:hover {
-  background: linear-gradient(90deg, #FF5252 0%, #FF7043 100%);
+  background: linear-gradient(90deg, #ff5252 0%, #ff7043 100%);
   box-shadow: 0px 4px 12px rgba(255, 107, 107, 0.3);
 }
 
@@ -768,7 +736,7 @@ svg:hover .tooltip {
 
 .editInput:focus {
   outline: none;
-  border-color: #0B8FAC;
+  border-color: #0b8fac;
   box-shadow: 0 0 0 2px rgba(11, 143, 172, 0.2);
 }
 
@@ -909,6 +877,26 @@ svg:hover .tooltip {
   background-color: #359a5f;
 }
 
+/* Add styles for empty state */
+.emptyState {
+  padding: 2rem 1rem !important;
+  text-align: center;
+  border: 1px solid #000;
+  background: #fff;
+}
 
+.emptyStateContent {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 4.625rem;
+}
 
-
+.emptyStateText {
+  font-family: Montserrat;
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #666;
+  margin: 0;
+  text-align: center;
+}

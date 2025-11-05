@@ -1,60 +1,63 @@
-import React, { useState } from "react";
-import { useTranslation } from 'react-i18next';
-import styles from "./Tabel.module.css";
-import Button from "./deletButton";
-import Editbutton from "./editbutton";
-import SendButton from "../send table button/send";
-import SuccessModal from '../send table button/success';
-import DeleteModal from '../send table button/deletepopup';
-import TeacherPopup from './TeacherPopup';
-import SendFormPopup from '../addbutton/SendformPopup';
-import { examApi } from '../../../services/ExamApi';
-import { generatePVPDF } from './table-pdf-generator';
+"use client"
+
+import type React from "react"
+import { useState } from "react"
+import { useTranslation } from "react-i18next"
+import styles from "./Tabel.module.css"
+import Button from "./deletButton"
+import Editbutton from "./editbutton"
+import SendButton from "../send table button/send"
+import SuccessModal from "../send table button/success"
+import DeleteModal from "../send table button/deletepopup"
+import TeacherPopup from "./TeacherPopup"
+import SendFormPopup from "../addbutton/SendformPopup"
+import { examApi } from "../../../services/ExamApi"
+import { generatePVPDF } from "./table-pdf-generator"
 
 interface TabelProps {
   data: {
-    level: string;
-    specialty: string;
-    semester: string;
-    section: string;
-    date: string;
-    time: string;
-    examRoom: string;
-    moduleName: string;
-    moduleAbbreviation: string;
-    supervisor: string;
-    order: string;
-    nbrSE: string;
-    email: string;
-  }[];
-  planningsRaw?: any[]; // Add raw planning data from API
-  onDataRefresh?: () => void;
+    level: string
+    specialty: string
+    semester: string
+    section: string
+    date: string
+    time: string
+    examRoom: string
+    moduleName: string
+    moduleAbbreviation: string
+    supervisor: string
+    order: string
+    nbrSE: string
+    email: string
+  }[]
+  planningsRaw?: any[] // Add raw planning data from API
+  onDataRefresh?: () => void
 }
 
 const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh }) => {
-  const { t } = useTranslation();
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
-  const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
-  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [isSendFormPopupOpen, setSendFormPopupOpen] = useState(false);
-  const [isTeacherPopupOpen, setTeacherPopupOpen] = useState(false);
-  const [selectedPlanningId, setSelectedPlanningId] = useState<number | null>(null);
-  const [selectedPlanningIdForDelete, setSelectedPlanningIdForDelete] = useState<string | null>(null);
-  const [selectedPlanningData, setSelectedPlanningData] = useState<any>(null);
-  const [selectedRowDataForSend, setSelectedRowDataForSend] = useState<any>(null);
-  const [selectedPlanningIdForSend, setSelectedPlanningIdForSend] = useState<number | null>(null);
+  const { t } = useTranslation()
+  const [isEditModalOpen, setEditModalOpen] = useState(false)
+  const [isSuccessModalOpen, setSuccessModalOpen] = useState(false)
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [isSendFormPopupOpen, setSendFormPopupOpen] = useState(false)
+  const [isTeacherPopupOpen, setTeacherPopupOpen] = useState(false)
+  const [selectedPlanningId, setSelectedPlanningId] = useState<number | null>(null)
+  const [selectedPlanningIdForDelete, setSelectedPlanningIdForDelete] = useState<string | null>(null)
+  const [selectedPlanningData, setSelectedPlanningData] = useState<any>(null)
+  const [selectedRowDataForSend, setSelectedRowDataForSend] = useState<any>(null)
+  const [selectedPlanningIdForSend, setSelectedPlanningIdForSend] = useState<number | null>(null)
 
   // Modal controls
   const openEditModal = (planningId: string) => {
-    const planningIdNumber = parseInt(planningId);
-    setSelectedPlanningId(planningIdNumber);
-    
+    const planningIdNumber = Number.parseInt(planningId)
+    setSelectedPlanningId(planningIdNumber)
+
     // Find the raw planning data
-    const rawPlanning = planningsRaw.find(p => p.id_planning === planningIdNumber);
-    
+    const rawPlanning = planningsRaw.find((p) => p.id_planning === planningIdNumber)
+
     // Find the corresponding table data
-    const tableData = data.find(d => parseInt(d.order) === planningIdNumber);
-    
+    const tableData = data.find((d) => Number.parseInt(d.order) === planningIdNumber)
+
     if (rawPlanning && tableData) {
       // Combine raw API data with table data format for the form
       setSelectedPlanningData({
@@ -77,121 +80,121 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
         formation_id: rawPlanning.formation_id,
         session: rawPlanning.session,
         id_creneau: rawPlanning.id_creneau,
-        surveillants: rawPlanning.surveillants || []
-      });
+        surveillants: rawPlanning.surveillants || [],
+      })
     }
-    
-    setEditModalOpen(true);
-  };
-  
+
+    setEditModalOpen(true)
+  }
+
   const closeEditModal = () => {
-    setEditModalOpen(false);
-    setSelectedPlanningId(null);
-  };
-  
-  const openSuccessModal = () => setSuccessModalOpen(true);
-  const closeSuccessModal = () => setSuccessModalOpen(false);
-  
+    setEditModalOpen(false)
+    setSelectedPlanningId(null)
+  }
+
+  const openSuccessModal = () => setSuccessModalOpen(true)
+  const closeSuccessModal = () => setSuccessModalOpen(false)
+
   const openDeleteModal = (planningId: string) => {
-    setSelectedPlanningIdForDelete(planningId);
-    setDeleteModalOpen(true);
-  };
-  
+    setSelectedPlanningIdForDelete(planningId)
+    setDeleteModalOpen(true)
+  }
+
   const closeDeleteModal = () => {
-    setDeleteModalOpen(false);
-    setSelectedPlanningIdForDelete(null);
-  };
+    setDeleteModalOpen(false)
+    setSelectedPlanningIdForDelete(null)
+  }
 
   // Handle teacher popup
   const handleTeacherClick = (planningId: string) => {
-    setSelectedPlanningId(parseInt(planningId));
-    setTeacherPopupOpen(true);
-  };
+    setSelectedPlanningId(Number.parseInt(planningId))
+    setTeacherPopupOpen(true)
+  }
 
   // Handle delete confirmation
   const handleDelete = async () => {
-    if (!selectedPlanningIdForDelete) return;
-    
+    if (!selectedPlanningIdForDelete) return
+
     try {
-      await examApi.deletePlanning(parseInt(selectedPlanningIdForDelete));
-      closeDeleteModal();
+      await examApi.deletePlanning(Number.parseInt(selectedPlanningIdForDelete))
+      closeDeleteModal()
       if (onDataRefresh) {
-        onDataRefresh();
+        onDataRefresh()
       }
     } catch (error) {
-      console.error('Error deleting planning:', error);
-      alert('Failed to delete planning. Please try again.');
+      console.error("Error deleting planning:", error)
+      alert("Failed to delete planning. Please try again.")
     }
-  };
+  }
 
   // Simplified send email functionality
   const handleSendEmail = (planningId: string) => {
-    const planningIdNumber = parseInt(planningId);
-    
-    console.log('[Tabel] Opening SendFormPopup with planning ID:', planningIdNumber);
-    
+    const planningIdNumber = Number.parseInt(planningId)
+
+    console.log("[Tabel] Opening SendFormPopup with planning ID:", planningIdNumber)
+
     // Simply set the planning ID and open the popup
     // SendFormPopup will fetch all the data it needs
-    setSelectedPlanningIdForSend(planningIdNumber);
-    setSendFormPopupOpen(true);
-  };
+    setSelectedPlanningIdForSend(planningIdNumber)
+    setSendFormPopupOpen(true)
+  }
 
   // Handle generating PV PDF
   const handleGeneratePV = async (planningId: string) => {
-    const planningIdNumber = parseInt(planningId);
-    
+    const planningIdNumber = Number.parseInt(planningId)
+
     try {
       // Fetch surveillants
-      const surveillants = await examApi.getSurveillantsByPlanning(planningIdNumber);
-      
+      const surveillants = await examApi.getSurveillantsByPlanning(planningIdNumber)
+
       // Find planning details
-      const rawPlanning = planningsRaw.find(p => p.id_planning === planningIdNumber);
-      const tableData = data.find(d => parseInt(d.order) === planningIdNumber);
-      
+      const rawPlanning = planningsRaw.find((p) => p.id_planning === planningIdNumber)
+      const tableData = data.find((d) => Number.parseInt(d.order) === planningIdNumber)
+
       if (surveillants && rawPlanning) {
         // Generate PDF
         const success = await generatePVPDF(
           planningIdNumber,
           surveillants,
           rawPlanning,
-          surveillants.find(s => s.est_charge_cours === 1) // Select supervisor
-        );
-        
+          surveillants.find((s) => s.est_charge_cours === 1), // Select supervisor
+        )
+
         if (!success) {
-          alert('Failed to generate PV PDF');
+          alert("Failed to generate PV PDF")
         }
       } else {
-        alert('Unable to fetch data for PV generation');
+        alert("Unable to fetch data for PV generation")
       }
     } catch (error) {
-      console.error('Error generating PV:', error);
-      alert('Error generating PV PDF');
+      console.error("Error generating PV:", error)
+      alert("Error generating PV PDF")
     }
-  };
+  }
 
   // Handle update success
   const handleUpdateSuccess = () => {
-    closeEditModal();
+    closeEditModal()
     if (onDataRefresh) {
-      onDataRefresh();
+      onDataRefresh()
     }
-  };
+  }
 
   const tableHeaders = [
-    t('level'),
-    t('specialty'),
-    t('semester'),
-    t('section'),
-    t('date'),
-    t('time'),
-    t('examRoom'),
-    t('moduleName'),
-    t('moduleAbbreviation'),
-    t('supervisor'),
-    t('nbrSE'),
-    t('actions')
-  ];
-  
+    t("level"),
+    t("specialty"),
+    t("semester"),
+    t("section"),
+    t("date"),
+    t("time"),
+    t("examRoom"),
+    t("moduleName"),
+    t("moduleAbbreviation"),
+    t("supervisor"),
+    t("nbrSE"),
+    t("actions"),
+  ]
+
   return (
     <>
       <div className={styles.tableWrapper}>
@@ -206,52 +209,68 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
             </tr>
           </thead>
           <tbody>
-            {data.map((row, index) => (
-              <tr key={index} className={styles.lines}>
-                <td className={styles.textnormal}>{row.level}</td>
-                <td className={styles.textnormal}>{row.specialty}</td>
-                <td className={styles.textnormal}>{row.semester}</td>
-                <td className={styles.textnormal}>{row.section}</td>
-                <td className={styles.textnormal}>{row.date}</td>
-                <td className={styles.textnormal}>{row.time}</td>
-                <td className={styles.textnormal}>{row.examRoom}</td>
-                <td className={styles.textnormal}>{row.moduleName}</td>
-                <td className={styles.textnormal}>{row.moduleAbbreviation}</td>
-                <td className={styles.textnormal}>
-                  <button 
-                    className={styles.viewTeachersButton}
-                    onClick={() => handleTeacherClick(row.order)}
+            {data.length === 0 ? (
+              <tr className={styles.lines}>
+                {tableHeaders.map((header, index) => (
+                  <td
+                    key={header}
+                    className={styles.textnormal}
+                    style={{
+                      visibility: index === Math.floor(tableHeaders.length / 2) ? "visible" : "hidden",
+                      padding: index === Math.floor(tableHeaders.length / 2) ? "1rem" : "0",
+                    }}
                   >
-                    {t('viewTeachers')}
-                  </button>
-                </td>
-                <td className={styles.textnormal}>{row.nbrSE}</td>
-                <td className={styles.textnormal}>
-                  <div className={styles.buttonss}>
-                    <Editbutton 
-                      isOpen={isEditModalOpen && selectedPlanningId === parseInt(row.order)} 
-                      onClose={closeEditModal} 
-                      onClick={() => openEditModal(row.order)}
-                      planningData={selectedPlanningData}
-                      onUpdateSuccess={handleUpdateSuccess}
-                    />
-                    <Button onClick={() => openDeleteModal(row.order)} />
-                    <SendButton 
-                      onClick={() => handleSendEmail(row.order)}
-                    />
-                  </div>
-                </td>
+                    {index === Math.floor(tableHeaders.length / 2) && (
+                      <div className={styles.emptyStateContent}>
+                        <p className={styles.emptyStateText}>{t("exam.noExamsFound") || "No exams found"}</p>
+                      </div>
+                    )}
+                  </td>
+                ))}
               </tr>
-            ))}
+            ) : (
+              data.map((row, index) => (
+                <tr key={index} className={styles.lines}>
+                  <td className={styles.textnormal}>{row.level}</td>
+                  <td className={styles.textnormal}>{row.specialty}</td>
+                  <td className={styles.textnormal}>{row.semester}</td>
+                  <td className={styles.textnormal}>{row.section}</td>
+                  <td className={styles.textnormal}>{row.date}</td>
+                  <td className={styles.textnormal}>{row.time}</td>
+                  <td className={styles.textnormal}>{row.examRoom}</td>
+                  <td className={styles.textnormal}>{row.moduleName}</td>
+                  <td className={styles.textnormal}>{row.moduleAbbreviation}</td>
+                  <td className={styles.textnormal}>
+                    <button className={styles.viewTeachersButton} onClick={() => handleTeacherClick(row.order)}>
+                      {t("viewTeachers")}
+                    </button>
+                  </td>
+                  <td className={styles.textnormal}>{row.nbrSE}</td>
+                  <td className={styles.textnormal}>
+                    <div className={styles.buttonss}>
+                      <Editbutton
+                        isOpen={isEditModalOpen && selectedPlanningId === Number.parseInt(row.order)}
+                        onClose={closeEditModal}
+                        onClick={() => openEditModal(row.order)}
+                        planningData={selectedPlanningData}
+                        onUpdateSuccess={handleUpdateSuccess}
+                      />
+                      <Button onClick={() => openDeleteModal(row.order)} />
+                      <SendButton onClick={() => handleSendEmail(row.order)} />
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Success Modal for Email Sent */}
-      <SuccessModal 
+      <SuccessModal
         isOpen={isSuccessModalOpen}
         onClose={closeSuccessModal}
-        message={t('exam.successMessage') || "Email sent successfully!"}
+        message={t("exam.successMessage") || "Email sent successfully!"}
       />
 
       {/* Delete Confirmation Modal */}
@@ -259,7 +278,7 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
         isOpen={isDeleteModalOpen}
         onClose={closeDeleteModal}
         onConfirm={handleDelete}
-        message={t('exam.deleteConfirmation') || "Are you sure you want to delete this exam planning?"}
+        message={t("exam.deleteConfirmation") || "Are you sure you want to delete this exam planning?"}
       />
 
       {/* Teacher Management Popup */}
@@ -267,13 +286,13 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
         <TeacherPopup
           isOpen={isTeacherPopupOpen}
           onClose={() => {
-            setTeacherPopupOpen(false);
-            setSelectedPlanningId(null);
+            setTeacherPopupOpen(false)
+            setSelectedPlanningId(null)
           }}
           planningId={selectedPlanningId}
           onTeachersUpdated={() => {
             if (onDataRefresh) {
-              onDataRefresh();
+              onDataRefresh()
             }
           }}
         />
@@ -283,19 +302,19 @@ const Tabel: React.FC<TabelProps> = ({ data, planningsRaw = [], onDataRefresh })
       <SendFormPopup
         isOpen={isSendFormPopupOpen}
         onClose={() => {
-          setSendFormPopupOpen(false);
-          setSelectedPlanningIdForSend(null);
-          setSelectedRowDataForSend(null); // Keep this for cleanup
+          setSendFormPopupOpen(false)
+          setSelectedPlanningIdForSend(null)
+          setSelectedRowDataForSend(null) // Keep this for cleanup
         }}
-        planningId={selectedPlanningIdForSend || undefined}  // Pass planning ID directly
-        rowData={selectedRowDataForSend}  // Keep this for backward compatibility
+        planningId={selectedPlanningIdForSend || undefined} // Pass planning ID directly
+        rowData={selectedRowDataForSend} // Keep this for backward compatibility
         onSuccess={() => {
           // Show success modal after email is sent
-          openSuccessModal();
+          openSuccessModal()
         }}
       />
     </>
-  );
-};
+  )
+}
 
-export default Tabel;
+export default Tabel

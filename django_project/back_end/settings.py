@@ -85,11 +85,11 @@ WSGI_APPLICATION = 'back_end.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'railway',
+        'NAME': 'examtrack',
         'USER': 'root',
-        'PASSWORD': 'fLHozVhgEctZgmMhyylvQmXqncMRVyfZ',
-        'HOST': 'metro.proxy.rlwy.net',  
-        'PORT': '43395',
+        'PASSWORD': 'UNTILTED16000',
+        'HOST': 'localhost',  
+        'PORT': '3306',
         'OPTIONS': {
             'autocommit': True,
         }
